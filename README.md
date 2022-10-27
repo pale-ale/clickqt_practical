@@ -3,7 +3,6 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![GitHub Workflow Status](https://img.shields.io/github/workflow/status/dokempf/clickqt/CI)](https://github.com/dokempf/clickqt/actions?query=workflow%3ACI)
 [![Documentation Status](https://readthedocs.org/projects/clickqt/badge/)](https://clickqt.readthedocs.io/)
-[![codecov](https://codecov.io/gh/dokempf/clickqt/branch/main/graph/badge.svg)](https://codecov.io/gh/dokempf/clickqt)
 
 ## Installation
 
