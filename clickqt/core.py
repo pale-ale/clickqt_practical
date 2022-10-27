@@ -49,5 +49,8 @@ def qtgui_from_click(cmd):
     layout.addWidget(optional)
     layout.addWidget(run_button)
 
-    window.show()
-    app.exec()
+    def run_app():
+        window.show()
+        app.exec()
+
+    return run_app
