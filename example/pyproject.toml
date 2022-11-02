@@ -1,0 +1,37 @@
+[build-system]
+requires = [
+    "setuptools >=61",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "example"
+version = "0.0.1"
+description = "Example of using clickqt"
+readme = "README.md"
+maintainers = [
+    { name = "Dominic Kempf", email = "ssc@iwr.uni-heidelberg.de" },
+]
+license = { text = "MIT" }
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "License :: OSI Approved :: MIT License",
+]
+dependencies = [
+    "click",
+    "clickqt",
+]
+
+# This is the CLI
+[project.scripts]
+example_cli = "example.__main__:main"
+
+# This is the gui
+[project.gui-scripts]
+example_gui = "example.__main__:gui"
+
+[tool.setuptools]
+packages = [
+    "example",
+]

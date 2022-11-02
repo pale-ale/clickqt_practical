@@ -19,4 +19,4 @@ gui = clickqt.qtgui_from_click(main)
 
 
 if __name__ == "__main__":
-    gui()
+    main()
