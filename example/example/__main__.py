@@ -2,7 +2,7 @@ import click
 import clickqt
 
 
-@click.command
+@click.command()
 @click.option(
     "--verbose",
     type=bool,
@@ -17,6 +17,5 @@ def main(verbose, filename):
 
 gui = clickqt.qtgui_from_click(main)
 
-
 if __name__ == "__main__":
-    main()
+    gui()
