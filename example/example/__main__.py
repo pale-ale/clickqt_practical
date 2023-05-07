@@ -5,14 +5,25 @@ import clickqt
 @click.command()
 @click.option(
     "--verbose",
-    type=bool,
+    count=True,
+    help="Verbosity of the output"
+)
+@click.option(
+    "--suppress",
     is_flag=True,
-    help="Whether we want verbose output"
+    help="Mute output"
 )
 @click.argument("filename")
-def main(verbose, filename):
-    if verbose:
-        click.echo(f"Work on file '{filename}'")
+def main(verbose, suppress, filename):
+    if suppress:
+        return
+    match verbose:
+        case 0:
+            click.echo("<<Secrets you know nothing about>>")
+        case 1:
+            click.echo("Working...")
+        case _:
+            click.echo(f"Working on file '{filename}'...")
 
 
 gui = clickqt.qtgui_from_click(main)

@@ -1,7 +1,7 @@
 import click
 import inspect
 
-from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QCheckBox, QPushButton, QLineEdit, QGroupBox
+from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QCheckBox, QPushButton, QLineEdit, QGroupBox, QSpinBox, QToolTip
 
 
 def qtgui_from_click(cmd):
@@ -10,13 +10,21 @@ def qtgui_from_click(cmd):
     def parameter_to_widget(o):
         if isinstance(o.type, click.types.BoolParamType):
             widget = QCheckBox(o.name)
+            add_tooltip(widget, o)
             if o.default:
                 widget.setChecked(True)
             widget_registry[o.name] = lambda: widget.isChecked()
             return widget
-        
+
+        if isinstance(o.type, click.types.IntParamType):
+            widget = QSpinBox()
+            add_tooltip(widget, o)
+            widget_registry[o.name] = lambda: widget.value()
+            return widget
+
         if isinstance(o.type, click.types.StringParamType):
             widget = QLineEdit(o.name)
+            add_tooltip(widget, o)
             widget_registry[o.name] = lambda: widget.text()
             return widget
     
@@ -28,6 +36,9 @@ def qtgui_from_click(cmd):
             group_elements.addWidget(w)
         return group
     
+    def add_tooltip(widget:QWidget, o):
+        widget.setToolTip(o.help if hasattr(o, "help") else "No info available.")
+
     app = QApplication([])
     window = QWidget()
     layout = QVBoxLayout()
@@ -38,6 +49,12 @@ def qtgui_from_click(cmd):
 
     optional = grouped_widgets("Optional arguments:", [parameter_to_widget(p) for p in cmd.params if isinstance(p, click.core.Option)])
     layout.addWidget(optional)
+
+    app.setStyleSheet("""QToolTip { 
+                           background-color: black; 
+                           color: white; 
+                           border: black solid 1px
+                           }""")
 
     run_button = QPushButton("&Run")
     def run():
