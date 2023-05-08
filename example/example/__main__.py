@@ -24,9 +24,25 @@ def main(verbose, suppress, filename):
             click.echo("Working...")
         case _:
             click.echo(f"Working on file '{filename}'...")
+            
+@click.group()
+def cli():
+    pass
+
+@cli.command()
+@click.option('--name', type=str, help='The name to greet.')
+@click.option('--age', type=float, help='Your age in years.')
+def greet(name, age):
+    click.echo(f"Hello, {name}! You are {age} years old.")
+
+@cli.command()
+@click.option('--coordinates', nargs=2, type=float, help='The x and y coordinates')
+def plot(coordinates):
+    x, y = coordinates
+    click.echo(f"Plotting point ({x}, {y})")
 
 
-gui = clickqt.qtgui_from_click(main)
+gui = clickqt.qtgui_from_click(cli)
 
 if __name__ == "__main__":
     gui()
