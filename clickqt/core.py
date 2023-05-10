@@ -37,6 +37,17 @@ def qtgui_from_click(cmd):
                 widget_registry[cmd.name + '.' + o.name] = lambda: widget.text()
             return widget
         
+        if isinstance(o.type, click.types.IntParamType):
+            if o.nargs == 2:
+                widget1 = QLineEdit(o.name + '1')
+                widget2 = QLineEdit(o.name + '2')
+                widget = (widget1, widget2)
+                widget_registry[cmd.name + '.' + o.name] = lambda: (float(widget1.text()), float(widget2.text()))
+            else:
+                widget = QLineEdit(o.name)
+                widget_registry[cmd.name + '.' + o.name] = lambda: widget.text()
+            return widget
+        
         if isinstance(o.type, click.types.Choice):
             widget = QComboBox()
             widget.addItems(o.type.choices)

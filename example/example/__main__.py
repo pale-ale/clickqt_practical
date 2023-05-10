@@ -31,7 +31,7 @@ def cli():
 
 @cli.command()
 @click.option('--name', type=str, help='The name to greet.')
-@click.option('--age', type=float, help='Your age in years.')
+@click.option('--age', type=int, help='Your age in years.')
 def greet(name, age):
     click.echo(f"Hello, {name}! You are {age} years old.")
 
@@ -45,4 +45,4 @@ def plot(coordinates):
 gui = clickqt.qtgui_from_click(cli)
 
 if __name__ == "__main__":
-    gui()
+    main()
