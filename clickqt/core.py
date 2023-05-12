@@ -31,10 +31,13 @@ def qtgui_from_click(cmd):
                     widget_registry[o.name] = lambda: widget.text()
                 case click.types.IntRange() | click.types.FloatRange():
                     widget = QSpinBox() if isinstance(o.type, click.types.IntRange) else QDoubleSpinBox()
-                    widget.setMinimum(o.to_info_dict()["type"]["min"] or 0)
-                    #QSpinBox is limited to maximum value of an integer, sys.maxsize returns 2**63 - 1
+                    #QSpinBox is limited to [-2**31; 2**31-1], but sys.maxsize returns 2**63 - 1
+                    widget.setMinimum(o.to_info_dict()["type"]["min"] if o.to_info_dict()["type"]["min"] is not None 
+                                      else (-2**31 if isinstance(o.type, click.types.IntRange) 
+                                            else -sys.float_info.max-10))
                     widget.setMaximum(o.to_info_dict()["type"]["max"] or 
-                                      (2**31 - 1 if isinstance(o.type, click.types.IntRange) else sys.float_info.max) ) 
+                                      (2**31 - 1 if isinstance(o.type, click.types.IntRange) 
+                                       else sys.float_info.max) ) 
                     widget.setValue((o.default() if callable(o.default) else o.default) or 0)
                     widget_registry[o.name] = lambda: widget.value()
                 case click.types.IntParamType():

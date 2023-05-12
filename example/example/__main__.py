@@ -30,7 +30,7 @@ def utilgroup():
               type=click.Choice(['MD5', 'SHA1']),
               multiple=True)
 @click.option('-r', '--range',
-              type=click.FloatRange(0, 20.23, clamp=True))
+              type=click.FloatRange(max=20.23, clamp=True))
 @click.password_option()
 def passwd(verbose, username, count, hash_type_single, hash_type_multiple, range, password):
     click.echo(f"\nverbose: '{verbose}'\n" +
@@ -52,4 +52,4 @@ def greet(name, age):
 gui = clickqt.qtgui_from_click(utilgroup)
 
 if __name__ == "__main__":
-    utilgroup()
+    gui()
