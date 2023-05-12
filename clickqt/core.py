@@ -34,7 +34,7 @@ def qtgui_from_click(cmd):
                     #QSpinBox is limited to [-2**31; 2**31-1], but sys.maxsize returns 2**63 - 1
                     widget.setMinimum(o.to_info_dict()["type"]["min"] if o.to_info_dict()["type"]["min"] is not None 
                                       else (-2**31 if isinstance(o.type, click.types.IntRange) 
-                                            else -sys.float_info.max-10))
+                                            else -sys.float_info.max))
                     widget.setMaximum(o.to_info_dict()["type"]["max"] or 
                                       (2**31 - 1 if isinstance(o.type, click.types.IntRange) 
                                        else sys.float_info.max) ) 
