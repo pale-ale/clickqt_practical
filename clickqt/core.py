@@ -1,60 +1,72 @@
 import click
 import inspect
-from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QCheckBox, QPushButton, QLineEdit, QGroupBox, QLabel, QComboBox
+from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QCheckBox, QPushButton, QLineEdit, QGroupBox, QLabel, QComboBox, QDateTimeEdit, QSpinBox
 from clickqt.checkableComboBox import CheckableComboBox
-
+from .postprocessing import PostProcessor
 
 def qtgui_from_click(cmd):
     widget_registry = {}
+    postprocessor = PostProcessor()           
 
-    def parameter_to_widget(o):
+    def parameter_to_widget(o:click.Argument|click.Option):
         if o.name:
             param = QWidget()
             hBox = QHBoxLayout()
-            widget = None
             param.setLayout(hBox)
             label = QLabel(f"{o.name}: ")
             add_tooltip(label, o)
             hBox.addWidget(label)
 
-            match o.type:
-                case click.types.BoolParamType():
-                    widget = QCheckBox()
-                    if o.default() if callable(o.default) else o.default:
-                        widget.setChecked(True)
-                    widget_registry[o.name] = lambda: widget.isChecked()
-                case click.types.StringParamType():
-                    widget = QLineEdit(o.default() if callable(
-                        o.default) else o.default)
-                    if hasattr(o, "hide_input"):
-                        widget.setEchoMode(QLineEdit.EchoMode.Password)
-                    widget_registry[o.name] = lambda: widget.text()
-                case click.types.IntRange():
-                    widget = QLineEdit()
-                    widget_registry[o.name] = lambda: len(
-                        widget.text()) if not widget.text().isnumeric() else int(widget.text())
-                case click.types.IntParamType():
-                    widget = QLineEdit()
-                    widget_registry[o.name] = lambda: widget.text()
-                case click.types.Choice():
-                    if not o.multiple:
-                        widget = QComboBox()
-                        widget.addItems(o.to_info_dict()["type"]["choices"])
-                        widget_registry[o.name] = lambda: widget.currentText()
-                    else:
-                        widget = CheckableComboBox()
-                        widget.addItems(o.to_info_dict()["type"]["choices"])
-                        widget_registry[o.name] = lambda: widget.currentData()
-                case _:
-                    raise NotImplementedError(o.type)
+            widget = type_to_widget(o.type, o.name)
 
             assert widget is not None, "Widget not initialized"
+
+            if postprocessor:
+                postprocessor.post_process(widget, o)
 
             hBox.addWidget(widget)
 
             return param
         else:
             raise SyntaxError("No parameter name specified")
+    
+    def type_to_widget(otype, oname, hints:list[str] = list()):
+        def add_to_registry(widget, oname, func):
+            if oname in widget_registry:
+                widget_registry[oname].append(func)
+            else:
+                widget_registry[oname] = func
+    
+        match otype:
+            case click.types.BoolParamType():
+                widget = QCheckBox()
+                add_to_registry(widget, oname, lambda: widget.isChecked())
+            case click.types.StringParamType():
+                widget = QLineEdit()
+                add_to_registry(widget, oname, lambda: widget.text())
+            case click.types.IntRange():
+                widget = QSpinBox()
+                add_to_registry(widget, oname, lambda:
+                    len(widget.text()) if not widget.text().isnumeric() else int(widget.text()))
+            case click.types.IntParamType():
+                widget = QSpinBox()
+                add_to_registry(widget, oname, lambda: widget.value())
+            case click.types.Choice():
+                widget = CheckableComboBox() if "multiple" in hints else QComboBox()
+                add_to_registry(widget, oname, lambda: widget.currentText())
+            case click.types.DateTime():
+                widget = QDateTimeEdit()
+                add_to_registry(widget, oname, lambda: widget.date())
+            case click.types.Tuple():
+                widget = QGroupBox()
+                hBox = QHBoxLayout()
+                widget.setLayout(hBox)
+                widget_registry[oname] = []
+                for t in otype.types:
+                    hBox.addWidget(type_to_widget(t, oname, hints))
+            case _:
+                raise NotImplementedError(otype)
+        return widget
 
     def parse_cmd_group(cmdgroup: click.Group) -> list[QGroupBox]:
         groupbox = QGroupBox(cmdgroup.name)
@@ -92,8 +104,14 @@ def qtgui_from_click(cmd):
     def run():
         if isinstance(cmd, click.Group):
             for subcmd in cmd.commands.values():
-                subcmd.callback(
-                    *tuple(widget_registry[a]() for a in inspect.getfullargspec(subcmd.callback).args))
+                args = []
+                for a in inspect.getfullargspec(subcmd.callback).args:
+                    widgetcb = widget_registry[a]
+                    if isinstance(widgetcb, list):
+                        args.append((a2() for a2 in widgetcb))
+                        continue
+                    args.append(widgetcb())
+                subcmd.callback(*args)
 
     run_button.clicked.connect(run)
 
