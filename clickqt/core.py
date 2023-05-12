@@ -1,8 +1,8 @@
 import click
 import inspect
-from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QCheckBox, QPushButton, QLineEdit, QGroupBox, QLabel, QComboBox
+import sys
+from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QCheckBox, QPushButton, QLineEdit, QGroupBox, QLabel, QComboBox, QSpinBox, QDoubleSpinBox
 from clickqt.checkableComboBox import CheckableComboBox
-
 
 def qtgui_from_click(cmd):
     widget_registry = {}
@@ -29,10 +29,17 @@ def qtgui_from_click(cmd):
                     if hasattr(o, "hide_input"):
                         widget.setEchoMode(QLineEdit.EchoMode.Password)
                     widget_registry[o.name] = lambda: widget.text()
-                case click.types.IntRange():
-                    widget = QLineEdit()
-                    widget_registry[o.name] = lambda: len(
-                        widget.text()) if not widget.text().isnumeric() else int(widget.text())
+                case click.types.IntRange() | click.types.FloatRange():
+                    widget = QSpinBox() if isinstance(o.type, click.types.IntRange) else QDoubleSpinBox()
+                    #QSpinBox is limited to [-2**31; 2**31-1], but sys.maxsize returns 2**63 - 1
+                    widget.setMinimum(o.to_info_dict()["type"]["min"] if o.to_info_dict()["type"]["min"] is not None 
+                                      else (-2**31 if isinstance(o.type, click.types.IntRange) 
+                                            else -sys.float_info.max))
+                    widget.setMaximum(o.to_info_dict()["type"]["max"] or 
+                                      (2**31 - 1 if isinstance(o.type, click.types.IntRange) 
+                                       else sys.float_info.max) ) 
+                    widget.setValue((o.default() if callable(o.default) else o.default) or 0)
+                    widget_registry[o.name] = lambda: widget.value()
                 case click.types.IntParamType():
                     widget = QLineEdit()
                     widget_registry[o.name] = lambda: widget.text()
