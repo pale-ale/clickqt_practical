@@ -1,11 +1,10 @@
 #Credits to https://gis.stackexchange.com/questions/350148/qcombobox-multiple-selection-pyqt5
 
-from PyQt6.QtWidgets import *
+from PyQt6.QtWidgets import QComboBox, QStyledItemDelegate
 from PyQt6.QtCore import Qt, QEvent
-from PyQt6 import QtCore, QtGui, QtWidgets
 from PyQt6.QtGui import QStandardItem, QFontMetrics
 
-class CheckableComboBox(QComboBox):
+class QCheckableComboBox(QComboBox):
     # Subclass Delegate to increase item height
     class Delegate(QStyledItemDelegate):
         def sizeHint(self, option, index):
@@ -21,7 +20,7 @@ class CheckableComboBox(QComboBox):
         self.lineEdit().setReadOnly(True)
 
         # Use custom delegate
-        self.setItemDelegate(CheckableComboBox.Delegate())
+        self.setItemDelegate(QCheckableComboBox.Delegate())
 
         # Update the text when an item is toggled
         self.model().dataChanged.connect(self.updateText)
@@ -108,7 +107,7 @@ class CheckableComboBox(QComboBox):
                 data = None
             self.addItem(text, data)
 
-    def currentData(self):
+    def getData(self):
         # Return the list of selected items data
         res = []
         for i in range(self.model().rowCount()):

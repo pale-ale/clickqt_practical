@@ -1,65 +1,46 @@
 import click
 import inspect
 import sys
-from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QCheckBox, QPushButton, QLineEdit, QGroupBox, QLabel, QComboBox, QSpinBox, QDoubleSpinBox
-from clickqt.checkableComboBox import CheckableComboBox
+from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QCheckBox, QPushButton, \
+    QLineEdit, QGroupBox, QLabel, QComboBox, QSpinBox, QDoubleSpinBox, QFormLayout
+from clickqt.checkbox import CheckBox
+from clickqt.textfield import TextField
+from clickqt.numericfields import IntField, RealField
+from clickqt.combobox import ComboBox, CheckableComboBox
+
+from typing import Dict, Callable
 
 def qtgui_from_click(cmd):
-    widget_registry = {}
+    widget_registry: Dict[str, Callable] = {}
 
     def parameter_to_widget(o):
         if o.name:
-            param = QWidget()
-            hBox = QHBoxLayout()
             widget = None
-            param.setLayout(hBox)
-            label = QLabel(f"{o.name}: ")
-            add_tooltip(label, o)
-            hBox.addWidget(label)
 
             match o.type:
                 case click.types.BoolParamType():
-                    widget = QCheckBox()
-                    if o.default() if callable(o.default) else o.default:
-                        widget.setChecked(True)
-                    widget_registry[o.name] = lambda: widget.isChecked()
+                    widget = CheckBox(options=o.to_info_dict())
                 case click.types.StringParamType():
-                    widget = QLineEdit(o.default() if callable(
-                        o.default) else o.default)
-                    if hasattr(o, "hide_input"):
-                        widget.setEchoMode(QLineEdit.EchoMode.Password)
-                    widget_registry[o.name] = lambda: widget.text()
-                case click.types.IntRange() | click.types.FloatRange():
-                    widget = QSpinBox() if isinstance(o.type, click.types.IntRange) else QDoubleSpinBox()
-                    #QSpinBox is limited to [-2**31; 2**31-1], but sys.maxsize returns 2**63 - 1
-                    widget.setMinimum(o.to_info_dict()["type"]["min"] if o.to_info_dict()["type"]["min"] is not None 
-                                      else (-2**31 if isinstance(o.type, click.types.IntRange) 
-                                            else -sys.float_info.max))
-                    widget.setMaximum(o.to_info_dict()["type"]["max"] or 
-                                      (2**31 - 1 if isinstance(o.type, click.types.IntRange) 
-                                       else sys.float_info.max) ) 
-                    widget.setValue((o.default() if callable(o.default) else o.default) or 0)
-                    widget_registry[o.name] = lambda: widget.value()
-                case click.types.IntParamType():
-                    widget = QLineEdit()
-                    widget_registry[o.name] = lambda: widget.text()
+                    widget = TextField(options=o.to_info_dict(), hide_input=o.hide_input if hasattr(o, "hide_input") else False) 
+                case click.types.IntRange()|click.types.IntParamType(): 
+                    widget = IntField(options=o.to_info_dict())
+                case click.types.FloatRange():
+                    widget = RealField(options=o.to_info_dict())
                 case click.types.Choice():
                     if not o.multiple:
-                        widget = QComboBox()
-                        widget.addItems(o.to_info_dict()["type"]["choices"])
-                        widget_registry[o.name] = lambda: widget.currentText()
+                        widget = ComboBox(options=o.to_info_dict())
                     else:
-                        widget = CheckableComboBox()
-                        widget.addItems(o.to_info_dict()["type"]["choices"])
-                        widget_registry[o.name] = lambda: widget.currentData()
+                        widget = CheckableComboBox(options=o.to_info_dict())
                 case _:
                     raise NotImplementedError(o.type)
+            
 
             assert widget is not None, "Widget not initialized"
+            assert widget.widget is not None, "Qt-Widget not initialized"
+            
+            widget_registry[o.name] = lambda: widget.getValue()
 
-            hBox.addWidget(widget)
-
-            return param
+            return widget.container
         else:
             raise SyntaxError("No parameter name specified")
 
@@ -76,10 +57,6 @@ def qtgui_from_click(cmd):
                     cmd_elements.addWidget(parameter_to_widget(param))
             group_elements.addWidget(cmdbox)
         return groupbox
-
-    def add_tooltip(widget: QWidget, o):
-        widget.setToolTip(o.help if hasattr(o, "help")
-                          else "No info available.")
 
     app = QApplication([])
     app.setApplicationName("GUI for CLI")
@@ -101,6 +78,8 @@ def qtgui_from_click(cmd):
             for subcmd in cmd.commands.values():
                 subcmd.callback(
                     *tuple(widget_registry[a]() for a in inspect.getfullargspec(subcmd.callback).args))
+                
+        app.exit()
 
     run_button.clicked.connect(run)
 
