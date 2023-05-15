@@ -40,18 +40,8 @@ def passwd(verbose, username, count, hash_type_single, hash_type_multiple, passw
 def greet(userinfo):
     name, date = userinfo
     click.echo(f"Hello, {name}! You are {0} years old. Today is {date}.")
-    
-@utilgroup.command()
-@click.option('--pos', nargs=2, type=float)
-def findme(pos):
-    a, b = pos
-    click.echo(f"{a}, {b}")
 
-@click.command()
-def hello():
-    click.echo("Hello World")
-
-gui = clickqt.qtgui_from_click(hello)
+gui = clickqt.qtgui_from_click(utilgroup)
 
 if __name__ == "__main__":
-    hello()
+    utilgroup()

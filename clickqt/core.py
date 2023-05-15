@@ -20,10 +20,7 @@ def qtgui_from_click(cmd):
             add_tooltip(label, o)
             hBox.addWidget(label)
 
-            if o.nargs > 1 and not isinstance(o.type, click.types.Tuple):
-                widget = mult_value_widget(o.nargs, o.name, o.type)
-            else:
-                widget = type_to_widget(o.type, o.name)
+            widget = type_to_widget(o.type, o.name)
             
             assert widget is not None, "Widget not initialized"
 
@@ -77,68 +74,21 @@ def qtgui_from_click(cmd):
                 raise NotImplementedError(otype)
         return widget
     
-    def mult_value_widget(nargs, oname, otype):
-        def add_to_registry(widget, oname, func):
-            if oname in widget_registry:
-                widget_registry[oname].append(func)
-            else:
-                widget_registry[oname] = func
-
-        match otype:
-            case click.types.StringParamType():
-                widgets = [type_to_widget(otype, f"{oname}[{i+1}]") for i in range(nargs)]    
-                vbox = QVBoxLayout()
-                for widget in widgets:
-                    vbox.addWidget(widget)
-
-                param = QWidget()
-                param.setLayout(vbox)
-                add_to_registry(param, oname, lambda: tuple(widget.text() for widget in widgets))
-                return param
-            case click.types.IntParamType():
-                widgets = [type_to_widget(otype, f"{oname}[{i+1}]") for i in range(nargs)]    
-                vbox = QVBoxLayout()
-                for widget in widgets:
-                    vbox.addWidget(widget)
-
-                param = QWidget()
-                param.setLayout(vbox)
-                add_to_registry(param, oname, lambda: tuple(widget.text() for widget in widgets))
-                return param
-            case click.types.FloatParamType():
-                widgets = [type_to_widget(otype, f"{oname}[{i+1}]") for i in range(nargs)]    
-                vbox = QVBoxLayout()
-                for widget in widgets:
-                    vbox.addWidget(widget)
-
-                param = QWidget()
-                param.setLayout(vbox)
-                add_to_registry(param, oname, lambda: tuple(widget.text() for widget in widgets))
-                return param
-            case _:
-                pass
-
     def parse_cmd_group(cmdgroup: click.Group) -> list[QGroupBox]:
-        groupbox = QGroupBox(cmdgroup.name)
+        groupwidget = QWidget()
         group_elements = QVBoxLayout()
-        groupbox.setLayout(group_elements)
+        groupwidget.setLayout(group_elements)
         for cmd in cmdgroup.commands.values():
-            cmdbox = QGroupBox(cmd.name)
-            cmd_elements = QVBoxLayout()
-            cmdbox.setLayout(cmd_elements)
-            for param in cmd.params:
-                if isinstance(param, (click.core.Argument, click.core.Option)):
-                    cmd_elements.addWidget(parameter_to_widget(param))
-            group_elements.addWidget(cmdbox)
-        return groupbox
+            group_elements.addWidget(parse_cmd(cmd))
+        return groupwidget
     
-    def parse_cmd(cmd):
+    def parse_cmd(cmd: click.Command):
         cmdbox = QGroupBox(cmd.name)
         cmd_elements = QVBoxLayout()
         cmdbox.setLayout(cmd_elements)
         for param in cmd.params:
-                if isinstance(param, (click.core.Argument, click.core.Option)):
-                    cmd_elements.addWidget(parameter_to_widget(param))
+            if isinstance(param, (click.core.Argument, click.core.Option)):
+                cmd_elements.addWidget(parameter_to_widget(param))
         return cmdbox
 
     def add_tooltip(widget: QWidget, o):
@@ -147,11 +97,15 @@ def qtgui_from_click(cmd):
 
     app = QApplication([])
     app.setApplicationName("GUI for CLI")
-    #run_button = QPushButton("&Run")
     tab_widget = QTabWidget()
-    # window = QWidget()
-    # layout = QVBoxLayout()
-    # window.setLayout(layout)
+    window = QWidget()
+    layout = QVBoxLayout()
+    window.setLayout(layout)
+    layout.addWidget(tab_widget)
+    standalone_group = QWidget()
+    standalone_group_layout = QVBoxLayout()
+    standalone_group.setLayout(standalone_group_layout)
+    tab_widget.addTab(standalone_group, "(No Group)")
 
     app.setStyleSheet("""QToolTip { 
                            background-color: #182035; 
@@ -160,33 +114,14 @@ def qtgui_from_click(cmd):
                            }""")
     
     if isinstance(cmd, click.Group):
-        for command in cmd.commands.values():
-            command_str = str(command)
-            match = regex.findall(command_str)
-            tab_i = QWidget()
-            tab_i_layout = QVBoxLayout()
-            tab_i.setLayout(tab_i_layout)
-            tab_i_layout.addWidget(parse_cmd(cmd.get_command(None, match[0])))
-            run_button = QPushButton("&Run")
-            tab_i_layout.addWidget(run_button)
-            tab_widget.addTab(tab_i, "Utilgroup")
+        tab_widget.addTab(parse_cmd_group(cmd), cmd.name)
     else:
-        window = QWidget()
-        layout = QVBoxLayout()
-        window.setLayout(layout)
-        layout.addWidget(parse_cmd(cmd))
-        run_button = QPushButton("&Run")
-        layout.addWidget(run_button)
+        standalone_group_layout.addWidget(parse_cmd(cmd))
         
-                
-    #There needs to be a case distinction here.    
-    #layout.addWidget(parse_cmd_group(cmd))
-    #tab2 = QWidget()
-    # tab_widget.addTab(window, "utilgroup")
-    # tab_widget.addTab(tab2, "Tab 2")
-    #run_button = QPushButton("&Run")  # Shortcut Alt+R
+    run_button = QPushButton("&Run")  # Shortcut Alt+R
 
     def run():
+        active_tab = tab_widget.currentIndex()
         if isinstance(cmd, click.Group):
             for subcmd in cmd.commands.values():
                 args = []
@@ -200,14 +135,10 @@ def qtgui_from_click(cmd):
 
     run_button.clicked.connect(run)
 
-    # layout.addWidget(run_button)
+    layout.addWidget(run_button)
 
     def run_app():
-        #window.show()
-        if isinstance(cmd, click.Group):
-            tab_widget.show()
-        else:
-            window.show()
+        window.show()
         app.exec()
 
     return run_app
