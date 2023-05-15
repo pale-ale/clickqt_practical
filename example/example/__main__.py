@@ -43,11 +43,10 @@ def passwd(verbose, username, count, hash_type_single, hash_type_multiple, range
 
 
 @utilgroup.command()
-@click.option('--name', type=str, help='The name to greet.')
-@click.option('--age', type=int, help='Your age in years.')
-def greet(name, age):
-    click.echo(f"Hello, {name}! You are {age} years old.")
-
+@click.option('--userinfo', type=(str, click.types.DateTime()))
+def greet(userinfo):
+    name, date = userinfo
+    click.echo(f"Hello, {name}! Some Date: {date}.")
 
 gui = clickqt.qtgui_from_click(utilgroup)
 
