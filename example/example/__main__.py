@@ -43,10 +43,10 @@ def passwd(verbose, username, count, hash_type_single, hash_type_multiple, range
 
 
 @utilgroup.command()
-@click.option('--userinfo', type=(str, click.types.DateTime()))
+@click.option('--userinfo', type=((str, str), (int, click.types.DateTime())))
 def greet(userinfo):
-    name, date = userinfo
-    click.echo(f"Hello, {name}! Some Date: {date}.")
+    (fname, lname), (no, date) = userinfo
+    click.echo(f"Hello, {fname} {lname}! Int, Date: {no, date}.")
 
 gui = clickqt.qtgui_from_click(utilgroup)
 

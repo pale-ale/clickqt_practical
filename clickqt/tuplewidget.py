@@ -1,23 +1,32 @@
-from PyQt6.QtWidgets import QWidget
+from PyQt6.QtWidgets import QGroupBox, QHBoxLayout
 from clickqt.base_widget import BaseWidget
 from click import Parameter
 from typing import Callable, Any
 
 class TupleWidget(BaseWidget):
-    widget_type = QWidget
+    widget_type = QGroupBox
 
-    def __init__(self, options, *args, o:Any=None, widgetsource:Callable[[Any], BaseWidget]=None, **kwargs):
+    def __init__(self, options, *args, o:Parameter=None, widgetsource:Callable[[Any], BaseWidget]=None, recinfo:list=None, **kwargs):
         super().__init__(options, *args, **kwargs)
         self.children = []
-        assert widgetsource
-        assert o
-        assert isinstance(o, Parameter)
-        for t in o.type.types:
-            bw = widgetsource(t, options)
-            assert isinstance(bw, BaseWidget)
+        recinfo = recinfo if recinfo else []
+        self.widget.setLayout(QHBoxLayout())
+
+        for i,t in enumerate(TupleWidget.getTypesRecursive(o.type.types, recinfo)):
+            recinfo.append(i)
+            bw = widgetsource(t, options, *args, o=o, widgetsource=widgetsource, recinfo=recinfo, **kwargs)
+            recinfo.pop()
             bw.layout.removeWidget(bw.label)
-            self.layout.addWidget(bw.container)
+            self.widget.layout().addWidget(bw.container)
             self.children.append(bw)
+    
+    @staticmethod
+    def getTypesRecursive(o, recinfo):
+        print(recinfo)
+        optiontype = o
+        for i in recinfo:
+            optiontype = optiontype[i]
+        yield from optiontype.types if hasattr(optiontype, "types") else optiontype
     
     def setValue(self, value):
         assert len(value) == len(self.children)
