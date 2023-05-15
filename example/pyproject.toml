@@ -25,7 +25,7 @@ dependencies = [
 
 # This is the CLI
 [project.scripts]
-example_cli = "example.__main__:main"
+example_cli = "example.__main__:utilgroup"
 
 # This is the gui
 [project.gui-scripts]
