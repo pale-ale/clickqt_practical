@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QSpinBox, QDoubleSpinBox
+from PySide6.QtWidgets import QSpinBox, QDoubleSpinBox
 from clickqt.base_widget import NumericField
 import sys
 

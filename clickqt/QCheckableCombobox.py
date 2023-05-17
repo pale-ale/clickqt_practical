@@ -1,8 +1,8 @@
 #Credits to https://gis.stackexchange.com/questions/350148/qcombobox-multiple-selection-pyqt5
 
-from PyQt6.QtWidgets import QComboBox, QStyledItemDelegate
-from PyQt6.QtCore import Qt, QEvent
-from PyQt6.QtGui import QStandardItem, QFontMetrics
+from PySide6.QtWidgets import QComboBox, QStyledItemDelegate
+from PySide6.QtCore import Qt, QEvent
+from PySide6.QtGui import QStandardItem, QFontMetrics
 
 class QCheckableComboBox(QComboBox):
     # Subclass Delegate to increase item height

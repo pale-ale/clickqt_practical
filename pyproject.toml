@@ -28,7 +28,7 @@ classifiers = [
 ]
 dependencies = [
     "click",
-    "PyQT6",
+    "PySide6",
 ]
 
 [project.optional-dependencies]

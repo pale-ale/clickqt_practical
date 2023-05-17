@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QGroupBox, QHBoxLayout
+from PySide6.QtWidgets import QGroupBox, QHBoxLayout
 from clickqt.base_widget import BaseWidget
 from click import Parameter
 from typing import Callable, Any

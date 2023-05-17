@@ -1,5 +1,5 @@
 from typing import List
-from PyQt6.QtWidgets import QComboBox
+from PySide6.QtWidgets import QComboBox
 from clickqt.base_widget import CheckBoxBase
 from clickqt.QCheckableCombobox import QCheckableComboBox
 

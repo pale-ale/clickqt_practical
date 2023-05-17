@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QLineEdit
+from PySide6.QtWidgets import QLineEdit
 from clickqt.base_widget import BaseWidget
 
 class TextField(BaseWidget):
@@ -10,7 +10,7 @@ class TextField(BaseWidget):
         self.setValue(options.get("default")() if callable(options.get("default")) \
                 else options.get("default") or "")
         
-        if kwargs.get("hide_input", False):
+        if kwargs.get("o") is not None and hasattr(kwargs["o"], "hide_input") and kwargs["o"].hide_input:
             self.widget.setEchoMode(QLineEdit.EchoMode.Password)
 
     def setValue(self, value: str):

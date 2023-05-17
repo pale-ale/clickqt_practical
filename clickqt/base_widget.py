@@ -1,6 +1,6 @@
 from typing import Any
 from abc import ABC, abstractmethod
-from PyQt6.QtWidgets import QWidget, QLabel, QHBoxLayout
+from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout
 
 class BaseWidget(ABC):
     # The type of this widget

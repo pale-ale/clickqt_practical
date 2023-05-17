@@ -1,6 +1,6 @@
 import click
 import inspect
-from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QGroupBox, QTabWidget
+from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QGroupBox, QTabWidget
 from clickqt.checkbox import CheckBox
 from clickqt.textfield import TextField
 from clickqt.numericfields import IntField, RealField
@@ -34,7 +34,7 @@ def qtgui_from_click(cmd):
             click.types.StringParamType: TextField,
             click.types.DateTime: DateTimeEdit,
             click.types.Tuple: TupleWidget,
-            click.types.Choice: CheckableComboBox if "multiple" in kwargs else ComboBox 
+            click.types.Choice: CheckableComboBox if kwargs.get("o") is not None and kwargs["o"].multiple else ComboBox 
         }
         for t,widgetclass in typedict.items():
             if isinstance(otype, t):

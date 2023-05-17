@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QDateTimeEdit
+from PySide6.QtWidgets import QDateTimeEdit
 from clickqt.base_widget import BaseWidget
 
 
