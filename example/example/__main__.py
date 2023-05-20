@@ -47,6 +47,12 @@ def passwd(verbose, username, count, hash_type_single, hash_type_multiple, range
 def greet(userinfo):
     (fname, lname), (no, date) = userinfo
     click.echo(f"Hello, {fname} {lname}! Int, Date: {no, date}.")
+    
+@utilgroup.command()
+@click.option('--pos', type=int, nargs=2)
+def position(pos):
+    a, b = pos
+    click.echo(f"{a}/{b}")
 
 gui = clickqt.qtgui_from_click(utilgroup)
 
