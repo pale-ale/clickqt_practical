@@ -7,6 +7,7 @@ from clickqt.numericfields import IntField, RealField
 from clickqt.combobox import ComboBox, CheckableComboBox
 from clickqt.datetimeedit import DateTimeEdit
 from clickqt.tuplewidget import TupleWidget
+from clickqt.multivaluewidget import MultiValueWidget
 
 from typing import Dict, Callable
 
@@ -16,6 +17,8 @@ def qtgui_from_click(cmd):
     def parameter_to_widget(o):
         if o.name:
             widget = create_widget(o.type, o.to_info_dict(), o=o, widgetsource=create_widget)
+            # if o.nargs == 1 or isinstance(o.type, click.types.Tuple):
+            #     widget = create_widget(o.type, o.to_info_dict(), o=o, widgetsource=create_widget)
 
             assert widget is not None, "Widget not initialized"
             assert widget.widget is not None, "Qt-Widget not initialized"
@@ -40,6 +43,9 @@ def qtgui_from_click(cmd):
             if isinstance(otype, t):
                 return widgetclass(*args, **kwargs)
         raise NotImplementedError(otype)
+    
+    def create_widget(otype, onargs, *args, **kwargs):
+        return MultiValueWidget(otype, onargs, *args, **kwargs)
         
     def parse_cmd_group(cmdgroup: click.Group) -> list[QGroupBox]:
         groupwidget = QWidget()
