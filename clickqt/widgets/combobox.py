@@ -1,7 +1,8 @@
-from typing import List
+from typing import List, Tuple
 from PySide6.QtWidgets import QComboBox
 from clickqt.widgets.base_widget import ComboBoxBase
 from clickqt.widgets.core.QCheckableCombobox import QCheckableComboBox
+from clickqt.core.error import ClickQtError
 
 class ComboBox(ComboBoxBase):
     widget_type = QComboBox
@@ -9,8 +10,8 @@ class ComboBox(ComboBoxBase):
     def addItems(self, items: List[str]):
         self.widget.addItems(items)
 
-    def getValue(self) -> str:
-        return self.widget.currentText()
+    def getValue(self) -> Tuple[str, ClickQtError]:
+        return self.widget.currentText(), ClickQtError.NO_ERROR
    
 class CheckableComboBox(ComboBoxBase):
     widget_type = QCheckableComboBox
@@ -18,5 +19,5 @@ class CheckableComboBox(ComboBoxBase):
     def addItems(self, items: List[str]):
         self.widget.addItems(items)
 
-    def getValue(self) -> List[str]:
-        return self.widget.getData()
+    def getValue(self) -> Tuple[List[str], ClickQtError]:
+        return self.widget.getData(), ClickQtError.NO_ERROR
