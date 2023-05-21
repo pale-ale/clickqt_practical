@@ -1,12 +1,12 @@
 import click
 import inspect
 from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QGroupBox, QTabWidget
-from clickqt.checkbox import CheckBox
-from clickqt.textfield import TextField
-from clickqt.numericfields import IntField, RealField
-from clickqt.combobox import ComboBox, CheckableComboBox
-from clickqt.datetimeedit import DateTimeEdit
-from clickqt.tuplewidget import TupleWidget
+from clickqt.widgets.checkbox import CheckBox
+from clickqt.widgets.textfield import TextField
+from clickqt.widgets.numericfields import IntField, RealField
+from clickqt.widgets.combobox import ComboBox, CheckableComboBox
+from clickqt.widgets.datetimeedit import DateTimeEdit
+from clickqt.widgets.tuplewidget import TupleWidget
 
 from typing import Dict, Callable
 

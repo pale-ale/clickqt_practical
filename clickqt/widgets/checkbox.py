@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QCheckBox
-from clickqt.base_widget import BaseWidget
+from clickqt.widgets.base_widget import BaseWidget
 
 class CheckBox(BaseWidget):
     widget_type = QCheckBox

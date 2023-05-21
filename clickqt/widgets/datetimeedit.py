@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QDateTimeEdit
-from clickqt.base_widget import BaseWidget
+from clickqt.widgets.base_widget import BaseWidget
 
 
 class DateTimeEdit(BaseWidget):

@@ -1,7 +1,7 @@
 import click
 from click.types import ParamType, BoolParamType, StringParamType, IntParamType, Choice
 from PySide6.QtWidgets import QWidget, QCheckBox, QLineEdit, QSpinBox, QComboBox
-from clickqt.checkableComboBox import CheckableComboBox
+from clickqt.widgets.combobox import CheckableComboBox
 from typing import Callable
 
 Parameter = click.Argument|click.Option

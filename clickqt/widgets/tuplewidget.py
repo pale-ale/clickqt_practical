@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QGroupBox, QHBoxLayout
-from clickqt.base_widget import BaseWidget
+from clickqt.widgets.base_widget import BaseWidget
 from click import Parameter
 from typing import Callable, Any
 
