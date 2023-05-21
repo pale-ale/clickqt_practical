@@ -1,9 +1,9 @@
 from typing import List
 from PySide6.QtWidgets import QComboBox
-from clickqt.base_widget import CheckBoxBase
+from clickqt.base_widget import ComboBoxBase
 from clickqt.QCheckableCombobox import QCheckableComboBox
 
-class ComboBox(CheckBoxBase):
+class ComboBox(ComboBoxBase):
     widget_type = QComboBox
 
     def addItems(self, items: List[str]):
@@ -12,7 +12,7 @@ class ComboBox(CheckBoxBase):
     def getValue(self) -> str:
         return self.widget.currentText()
    
-class CheckableComboBox(CheckBoxBase):
+class CheckableComboBox(ComboBoxBase):
     widget_type = QCheckableComboBox
 
     def addItems(self, items: List[str]):

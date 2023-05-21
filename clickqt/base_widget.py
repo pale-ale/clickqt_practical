@@ -55,7 +55,7 @@ class NumericField(BaseWidget):
         return self.widget.value()
 
 
-class CheckBoxBase(BaseWidget):
+class ComboBoxBase(BaseWidget):
     def __init__(self, options, *args, **kwargs):
         super().__init__(options, *args, **kwargs)
 
