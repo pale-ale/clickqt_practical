@@ -33,6 +33,6 @@ class PathField(TextField):
 
 
     def getValue(self) -> Tuple[str, ClickQtError]:
-        return self.widget.text(), ClickQtError.PATH_NOT_EXIST if self._options.get("type").get("exists") and not QFile.exists(self.widget.text()) \
+        return self.widget.text(), ClickQtError.PATH_NOT_EXIST_ERROR if self._options.get("type").get("exists") and not QFile.exists(self.widget.text()) \
                                     else ClickQtError.NO_ERROR
    
