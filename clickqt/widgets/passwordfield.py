@@ -35,8 +35,8 @@ class PasswordField(TextField):
 
             def onValueChanged():
                 if self.widget.text() != self.confirmationField.widget.text():
-                    self.confirmationField.widget.setStyleSheet("border: 2px solid red")
-                    self.widget.setStyleSheet("border: 2px solid red")
+                    self.confirmationField.widget.setStyleSheet("border: 1px solid red")
+                    self.widget.setStyleSheet("border: 1px solid red")
                 else: # Reset the border color
                     self.confirmationField.widget.setStyleSheet("")
                     self.widget.setStyleSheet("")

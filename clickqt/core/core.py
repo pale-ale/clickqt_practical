@@ -1,6 +1,5 @@
 import click
 import inspect
-
 from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QGroupBox, QTabWidget, QMessageBox
 from clickqt.widgets.checkbox import CheckBox
 from clickqt.widgets.textfield import TextField
@@ -9,7 +8,6 @@ from clickqt.widgets.numericfields import IntField, RealField
 from clickqt.widgets.combobox import ComboBox, CheckableComboBox
 from clickqt.widgets.datetimeedit import DateTimeEdit
 from clickqt.widgets.tuplewidget import TupleWidget
-from clickqt.widgets.pathfield import PathField
 from clickqt.core.error import ClickQtError
 
 from typing import Dict, Callable, List, Any, Tuple
@@ -38,8 +36,7 @@ def qtgui_from_click(cmd):
             click.types.StringParamType: PasswordField if hasattr(kwargs.get("o"), "hide_input") and kwargs["o"].hide_input else TextField,
             click.types.DateTime: DateTimeEdit,
             click.types.Tuple: TupleWidget,
-            click.types.Choice: CheckableComboBox if hasattr(kwargs.get("o"), "multiple") and kwargs["o"].multiple else ComboBox,
-            click.types.Path: PathField
+            click.types.Choice: CheckableComboBox if hasattr(kwargs.get("o"), "multiple") and kwargs["o"].multiple else ComboBox 
         }
         for t,widgetclass in typedict.items():
             if isinstance(otype, t):

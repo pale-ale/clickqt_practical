@@ -35,9 +35,8 @@ def utilgroup():
 @click.option('-r', '--range',
               type=click.FloatRange(max=20.23, clamp=True))
 @click.password_option()
-@click.confirmation_option(expose_value=True, prompt='Are you sure you want to run the application with these options?')
-@click.argument('filename', type=click.Path())
-def passwd(verbose, username, count, hash_type_single, hash_type_multiple, range, password, yes, filename):
+@click.confirmation_option(prompt='Are you sure you want to run the application with these options?')
+def passwd(verbose, username, count, hash_type_single, hash_type_multiple, range, password, yes):
     click.echo(f"\nverbose: '{verbose}'\n" +
                f"username: '{username}'\n" +
                f"count: '{count}'\n" +
@@ -45,8 +44,7 @@ def passwd(verbose, username, count, hash_type_single, hash_type_multiple, range
                f"hash_type_multiple: '{hash_type_multiple}'\n" +
                f"range: '{range}'\n" +
                f"password: '{password}'\n" +
-               f"yes: '{yes}'\n" +
-               f"filename: '{click.format_filename(filename)}'\n")
+               f"yes: '{yes}'\n")
 
 
 @utilgroup.command()
