@@ -16,7 +16,7 @@ class PathField(TextField):
         
         def onValueChanged():
             if options.get("type").get("exists") and self.widget.text() and not QFile.exists(self.widget.text()):
-                self.widget.setStyleSheet("border: 2px solid red")
+                self.widget.setStyleSheet("border: 1px solid red")
             else: # Reset the border color
                 self.widget.setStyleSheet("")
 
