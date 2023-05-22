@@ -1,14 +1,16 @@
 import click
 import inspect
-from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QGroupBox, QTabWidget
+from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QGroupBox, QTabWidget, QMessageBox
 from clickqt.widgets.checkbox import CheckBox
 from clickqt.widgets.textfield import TextField
+from clickqt.widgets.passwordfield import PasswordField
 from clickqt.widgets.numericfields import IntField, RealField
 from clickqt.widgets.combobox import ComboBox, CheckableComboBox
 from clickqt.widgets.datetimeedit import DateTimeEdit
 from clickqt.widgets.tuplewidget import TupleWidget
+from clickqt.core.error import ClickQtError
 
-from typing import Dict, Callable
+from typing import Dict, Callable, List, Any, Tuple
 
 def qtgui_from_click(cmd):
     widget_registry: Dict[str, Callable] = {}
@@ -25,16 +27,16 @@ def qtgui_from_click(cmd):
             return widget.container
         else:
             raise SyntaxError("No parameter name specified")
-    
+
     def create_widget(otype, *args, **kwargs):
         typedict = {
             click.types.BoolParamType: CheckBox,
             click.types.IntParamType: IntField,
             click.types.FloatParamType: RealField,
-            click.types.StringParamType: TextField,
+            click.types.StringParamType: PasswordField if hasattr(kwargs.get("o"), "hide_input") and kwargs["o"].hide_input else TextField,
             click.types.DateTime: DateTimeEdit,
             click.types.Tuple: TupleWidget,
-            click.types.Choice: CheckableComboBox if kwargs.get("o") is not None and kwargs["o"].multiple else ComboBox 
+            click.types.Choice: CheckableComboBox if hasattr(kwargs.get("o"), "multiple") and kwargs["o"].multiple else ComboBox 
         }
         for t,widgetclass in typedict.items():
             if isinstance(otype, t):
@@ -57,6 +59,26 @@ def qtgui_from_click(cmd):
             if isinstance(param, (click.core.Argument, click.core.Option)):
                 cmd_elements.addWidget(parameter_to_widget(param))
         return cmdbox
+    
+    def check_error(err: ClickQtError) -> bool:
+        if err != ClickQtError.NO_ERROR:
+            QMessageBox(QMessageBox.Information, "Error occured", str(err), QMessageBox.Ok).exec()
+            return True
+        return False
+    
+    def check_list(widget_value: List[Any]) -> Tuple[List[Any], ClickQtError]:
+        tupleList = []
+        for v, err in widget_value:
+            if err != ClickQtError.NO_ERROR:
+                return [], err
+            if isinstance(v, list): # and len(v) and isinstance(v[0], tuple):
+                t, err = check_list(v)
+                if err != ClickQtError.NO_ERROR:
+                    return [], err
+                tupleList.append(t)
+            else:
+                tupleList.append(v) 
+        return tupleList, ClickQtError.NO_ERROR
 
     app = QApplication([])
     app.setApplicationName("GUI for CLI")
@@ -89,11 +111,16 @@ def qtgui_from_click(cmd):
             for subcmd in cmd.commands.values():
                 args = []
                 for a in inspect.getfullargspec(subcmd.callback).args:
-                    widgetcb = widget_registry[a]
-                    if isinstance(widgetcb, list):
-                        args.append((a2() for a2 in widgetcb))
-                        continue
-                    args.append(widgetcb())
+                    widget_value, err = widget_registry[a]()
+                    if check_error(err):
+                        return
+                    elif isinstance(widget_value, list) and len(widget_value) and isinstance(widget_value[0], tuple):
+                        val, err = check_list(widget_value)
+                        if check_error(err):
+                            return
+                        args.append(val)
+                    else:
+                        args.append(widget_value)
                 subcmd.callback(*args)
                 
     run_button.clicked.connect(run)
