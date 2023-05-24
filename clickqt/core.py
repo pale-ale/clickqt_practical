@@ -48,13 +48,20 @@ def qtgui_from_click(cmd):
         return MultiValueWidget(*args, otype, onargs, **kwargs)
     
     
-    def parse_cmd_group(cmdgroup: click.Group) -> list[QGroupBox]:
-        groupwidget = QWidget()
-        group_elements = QVBoxLayout()
-        groupwidget.setLayout(group_elements)
-        for cmd in cmdgroup.commands.values():
-            group_elements.addWidget(parse_cmd(cmd))
-        return groupwidget
+    def parse_cmd_group(cmdgroup: click.Group) -> QTabWidget:
+        group_tab_widget = QTabWidget()
+        for group_name, group_cmd in cmdgroup.commands.items():
+            if isinstance(group_cmd, click.Group):
+                nested_group_tab_widget = parse_cmd_group(group_cmd)
+                group_tab_widget.addTab(nested_group_tab_widget, group_name)
+            else:
+                cmd_tab_widget = QWidget()
+                cmd_tab_layout = QVBoxLayout()
+                cmd_tab_widget.setLayout(cmd_tab_layout)
+                cmd_tab_layout.addWidget(parse_cmd(group_cmd))
+                group_tab_widget.addTab(cmd_tab_widget, group_name)
+        return group_tab_widget
+
     
     def parse_cmd(cmd: click.Command):
         cmdbox = QGroupBox(cmd.name)
@@ -67,15 +74,11 @@ def qtgui_from_click(cmd):
 
     app = QApplication([])
     app.setApplicationName("GUI for CLI")
-    tab_widget = QTabWidget()
+    main_tab_widget = QTabWidget()
     window = QWidget()
     layout = QVBoxLayout()
     window.setLayout(layout)
-    layout.addWidget(tab_widget)
-    standalone_group = QWidget()
-    standalone_group_layout = QVBoxLayout()
-    standalone_group.setLayout(standalone_group_layout)
-    tab_widget.addTab(standalone_group, "(No Group)")
+    layout.addWidget(main_tab_widget)
 
     app.setStyleSheet("""QToolTip { 
                            background-color: #182035; 
@@ -84,8 +87,11 @@ def qtgui_from_click(cmd):
                            }""")
     
     if isinstance(cmd, click.Group):
-        tab_widget.addTab(parse_cmd_group(cmd), cmd.name)
+        main_tab_widget.addTab(parse_cmd_group(cmd), "Main")
     else:
+        standalone_group = QWidget()
+        standalone_group_layout = QVBoxLayout()
+        standalone_group.setLayout(standalone_group_layout)
         standalone_group_layout.addWidget(parse_cmd(cmd))
         
     run_button = QPushButton("&Run")  # Shortcut Alt+R

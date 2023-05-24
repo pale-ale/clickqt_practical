@@ -53,6 +53,19 @@ def greet(userinfo):
 def position(pos):
     a, b = pos
     click.echo(f"{a}/{b}")
+    
+@click.group()
+def hello():
+    pass
+
+@hello.command()
+@click.option('-n', type=int)
+def hello_n(n):
+    for i in range(n):
+        click.echo(i)
+    
+utilgroup.add_command(hello)
+    
 
 gui = clickqt.qtgui_from_click(utilgroup)
 

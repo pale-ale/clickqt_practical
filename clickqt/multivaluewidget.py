@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QGroupBox, QHBoxLayout
+from PySide6.QtWidgets import QGroupBox, QVBoxLayout
 from clickqt.base_widget import BaseWidget
 import click
 from click import Parameter
@@ -12,7 +12,7 @@ class MultiValueWidget(BaseWidget):
     def __init__(self, options, otype, onargs, *args, **kwargs):
         super().__init__(options, *args, **kwargs)
         self.children = []
-        self.widget.setLayout(QHBoxLayout())
+        self.widget.setLayout(QVBoxLayout())
         
         typedict = {
             click.types.IntParamType: IntField,
