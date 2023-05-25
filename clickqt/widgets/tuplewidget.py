@@ -23,7 +23,6 @@ class TupleWidget(BaseWidget):
     
     @staticmethod
     def getTypesRecursive(o, recinfo):
-        print(recinfo)
         optiontype = o
         for i in recinfo:
             optiontype = optiontype[i]
