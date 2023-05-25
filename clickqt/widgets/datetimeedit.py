@@ -1,5 +1,8 @@
 from PySide6.QtWidgets import QDateTimeEdit
-from clickqt.base_widget import BaseWidget
+from PySide6.QtCore import QDateTime
+from clickqt.widgets.base_widget import BaseWidget
+from typing import Tuple
+from clickqt.core.error import ClickQtError
 
 
 class DateTimeEdit(BaseWidget):
@@ -11,5 +14,5 @@ class DateTimeEdit(BaseWidget):
     def setValue(self, value):
         raise NotImplementedError
 
-    def getValue(self):
-        return self.widget.dateTime()
+    def getValue(self) -> Tuple[QDateTime, ClickQtError]:
+        return self.widget.dateTime(), ClickQtError.NO_ERROR

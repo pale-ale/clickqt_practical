@@ -1,6 +1,7 @@
-from typing import Any
+from typing import Any, Tuple
 from abc import ABC, abstractmethod
 from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout
+from clickqt.core.error import ClickQtError
 
 class BaseWidget(ABC):
     # The type of this widget
@@ -10,7 +11,7 @@ class BaseWidget(ABC):
         self._options = options
         self.container = QWidget()
         self.layout = QHBoxLayout()
-        self.label = QLabel(text=f"{options.get('name', 'Unknown')}: ")
+        self.label = QLabel(text=f"{kwargs.get('label', '')}{options.get('name', 'Unknown')}: ")
         self.label.setToolTip(options.get("help", "No options available"))
         self.widget = self.createWidget(args, kwargs)
         self.layout.addWidget(self.label)
@@ -25,7 +26,7 @@ class BaseWidget(ABC):
         pass
 
     @abstractmethod
-    def getValue(self):
+    def getValue(self) -> Tuple[Any, ClickQtError]:
         pass
 
 
@@ -51,11 +52,11 @@ class NumericField(BaseWidget):
     def getMaximum(self) -> int|float:
         self.widget.maximum()
 
-    def getValue(self) -> int|float:
-        return self.widget.value()
+    def getValue(self) -> Tuple[int|float, ClickQtError]:
+        return self.widget.value(), ClickQtError.NO_ERROR
 
 
-class CheckBoxBase(BaseWidget):
+class ComboBoxBase(BaseWidget):
     def __init__(self, options, *args, **kwargs):
         super().__init__(options, *args, **kwargs)
 

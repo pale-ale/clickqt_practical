@@ -35,6 +35,7 @@ dependencies = [
 tests = [
     "pytest",
     "pytest-cov",
+    "pytest-qt",
 ]
 docs = [
     "m2r2",
