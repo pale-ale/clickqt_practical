@@ -93,6 +93,7 @@ def qtgui_from_click(cmd):
         standalone_group_layout = QVBoxLayout()
         standalone_group.setLayout(standalone_group_layout)
         standalone_group_layout.addWidget(parse_cmd(cmd))
+        main_tab_widget.addTab(standalone_group, "Main")
         
     run_button = QPushButton("&Run")  # Shortcut Alt+R
 
@@ -108,6 +109,8 @@ def qtgui_from_click(cmd):
                         continue
                     args.append(widgetcb())
                 subcmd.callback(*args)
+        else:        
+            cmd.callback(*tuple(widget_registry[a]() for a in inspect.getfullargspec(cmd.callback).args))
                 
     run_button.clicked.connect(run)
 

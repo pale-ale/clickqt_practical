@@ -65,7 +65,6 @@ def hello_n(n):
         click.echo(i)
     
 utilgroup.add_command(hello)
-    
 
 gui = clickqt.qtgui_from_click(utilgroup)
 
