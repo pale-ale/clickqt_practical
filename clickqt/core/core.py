@@ -75,7 +75,7 @@ def qtgui_from_click(cmd):
                 if hasattr(param, "is_flag") and param.is_flag and hasattr(param, "prompt") and param.prompt:
                     qm = QMessageBox(QMessageBox.Information, "Confirmation", str(param.prompt), QMessageBox.Yes|QMessageBox.No)
                     widget_registry[param.name] = lambda: (True, ClickQtError.NO_ERROR) if qm.exec() == QMessageBox.Yes else \
-                                                            (False, ClickQtError.ABORDED_ERROR)
+                                                            (False, ClickQtError.ABORTED_ERROR)
                 else:    
                     cmd_elements.addWidget(parameter_to_widget(param))
         return cmdbox
