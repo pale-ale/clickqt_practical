@@ -35,9 +35,9 @@ def utilgroup():
 @click.option('-r', '--range',
               type=click.FloatRange(max=20.23, clamp=True))
 @click.password_option()
-@click.confirmation_option(expose_value=True, prompt='Are you sure you want to run the application with these options?')
+@click.confirmation_option(expose_value=False, prompt='Are you sure you want to run the application with these options?')
 @click.argument('filename', type=click.Path(exists=True))
-def passwd(verbose, username, count, hash_type_single, hash_type_multiple, range, password, yes, filename):
+def passwd(verbose, username, count, hash_type_single, hash_type_multiple, range, password, filename):
     click.echo(f"\nverbose: '{verbose}'\n" +
                f"username: '{username}'\n" +
                f"count: '{count}'\n" +
@@ -45,8 +45,7 @@ def passwd(verbose, username, count, hash_type_single, hash_type_multiple, range
                f"hash_type_multiple: '{hash_type_multiple}'\n" +
                f"range: '{range}'\n" +
                f"password: '{password}'\n" +
-               f"yes: '{yes}'\n" +
-               f"filename: '{click.format_filename(filename)}'\n")
+               f"filename: '{filename}'\n")
 
 
 @utilgroup.command()
@@ -54,6 +53,24 @@ def passwd(verbose, username, count, hash_type_single, hash_type_multiple, range
 def greet(userinfo):
     (fname, lname), (no, date) = userinfo
     click.echo(f"Hello, {fname} {lname}! Int, Date: {no, date}.")
+    
+@utilgroup.command()
+@click.option('--pos', type=int, nargs=2)
+def position(pos):
+    a, b = pos
+    click.echo(f"{a}/{b}")
+    
+@click.group()
+def hello():
+    pass
+
+@hello.command()
+@click.option('-n', type=int)
+def hello_n(n):
+    for i in range(n):
+        click.echo(i)
+    
+utilgroup.add_command(hello)
 
 gui = clickqt.qtgui_from_click(utilgroup)
 
