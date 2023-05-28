@@ -1,8 +1,7 @@
-from PySide6.QtWidgets import QGroupBox, QVBoxLayout
-from clickqt.base_widget import BaseWidget
 import click
-from click import Parameter
-from  clickqt.widgets.numericfields import IntField, RealField
+from PySide6.QtWidgets import QGroupBox, QVBoxLayout
+from clickqt.widgets.base_widget import BaseWidget
+from clickqt.widgets.numericfields import IntField, RealField
 from clickqt.core.error import ClickQtError
 from clickqt.widgets.textfield import TextField
 from typing import Any, List, Tuple
