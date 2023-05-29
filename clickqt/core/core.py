@@ -1,7 +1,8 @@
 import click
 import inspect
 from clickqt.widgets.multivaluewidget import MultiValueWidget
-from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QGroupBox, QTabWidget, QMessageBox
+from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QTabWidget, QMessageBox, QPlainTextEdit
+from PySide6.QtGui import QTextCursor
 from clickqt.widgets.checkbox import CheckBox
 from clickqt.widgets.textfield import TextField
 from clickqt.widgets.passwordfield import PasswordField
@@ -13,6 +14,8 @@ from clickqt.widgets.pathfield import PathField
 from clickqt.widgets.filefield import FileFild
 from clickqt.core.error import ClickQtError
 from typing import Dict, Callable, List, Any, Tuple
+import sys
+from io import BytesIO, TextIOWrapper
 
 def qtgui_from_click(cmd):
     # Command-name to command-options and callables
@@ -175,8 +178,27 @@ def qtgui_from_click(cmd):
 
                 
     run_button.clicked.connect(run)
-
     layout.addWidget(run_button)
+
+    class Output(TextIOWrapper):
+        """
+            Redirects a stream (here: stdout) to a QPlainTextEdit   
+        """
+        def __init__(self, output: QPlainTextEdit):
+            super().__init__(BytesIO(), sys.stdout.encoding)
+            self.output = output
+
+        def write(self, message: bytes|str):
+            if message:
+                message = message.decode(sys.stdout.encoding) if isinstance(message, bytes) else message  
+                self.output.moveCursor(QTextCursor.End)
+                self.output.insertPlainText(message)
+
+    terminal_output = QPlainTextEdit()
+    terminal_output.setReadOnly(True)
+    terminal_output.setToolTip("Terminal output")
+    layout.addWidget(terminal_output)
+    sys.stdout = Output(terminal_output)
 
     def run_app():
         window.show()
