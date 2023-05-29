@@ -10,6 +10,7 @@ from clickqt.widgets.combobox import ComboBox, CheckableComboBox
 from clickqt.widgets.datetimeedit import DateTimeEdit
 from clickqt.widgets.tuplewidget import TupleWidget
 from clickqt.widgets.pathfield import PathField
+from clickqt.widgets.filefield import FileFild
 from clickqt.core.error import ClickQtError
 from typing import Dict, Callable, List, Any, Tuple
 
@@ -18,20 +19,20 @@ def qtgui_from_click(cmd):
     # Assuming, that every command has an unique name (TODO)
     widget_registry: Dict[str, Dict[str, Callable]] = {}
 
-    def parameter_to_widget(command_name: str, param: click.types.ParamType):
+    def parameter_to_widget(command: click.Command, param: click.types.ParamType) -> QWidget:
         if param.name:
             if param.nargs == 1 or isinstance(param.type, click.types.Tuple):
-                widget = create_widget(param.type, param.to_info_dict(), o=param, widgetsource=create_widget)
+                widget = create_widget(param.type, param.to_info_dict(), com=command, o=param, widgetsource=create_widget)
             else:
                 widget = create_widget_mult(param.type, param.nargs, param.to_info_dict())
 
             assert widget is not None, "Widget not initialized"
             assert widget.widget is not None, "Qt-Widget not initialized"
 
-            if widget_registry.get(command_name) is None:
-                widget_registry[command_name] = {}
+            if widget_registry.get(command.name) is None:
+                widget_registry[command.name] = {}
             
-            widget_registry[command_name][param.name] = lambda: widget.getValue()
+            widget_registry[command.name][param.name] = lambda: widget.getValue()
 
             return widget.container
         else:
@@ -46,7 +47,8 @@ def qtgui_from_click(cmd):
             click.types.DateTime: DateTimeEdit,
             click.types.Tuple: TupleWidget,
             click.types.Choice: CheckableComboBox if hasattr(kwargs.get("o"), "multiple") and kwargs["o"].multiple else ComboBox,
-            click.types.Path: PathField
+            click.types.Path: PathField,
+            click.types.File: FileFild
         }
         for t,widgetclass in typedict.items():
             if isinstance(otype, t):
@@ -85,8 +87,8 @@ def qtgui_from_click(cmd):
                         widget_registry[cmd.name] = {}
                     widget_registry[cmd.name][param.name] = lambda: (True, ClickQtError.NO_ERROR) if qm.exec() == QMessageBox.Yes else \
                                                             (False, ClickQtError.ABORTED_ERROR)
-                else:    
-                    cmd_elements.addWidget(parameter_to_widget(cmd.name, param))
+                else:  
+                    cmd_elements.addWidget(parameter_to_widget(cmd, param))
         return cmdbox
     
     def check_error(err: ClickQtError) -> bool:
@@ -135,15 +137,17 @@ def qtgui_from_click(cmd):
         
     run_button = QPushButton("&Run")  # Shortcut Alt+R
 
-    def current_command(tab_widget: QTabWidget, group: click.Group) -> click.Command:
+    def current_command(tab_widget: QTabWidget, group: click.Group|click.Command) -> click.Command:
         """
             Returns the command of the selected tab
         """
-        command = group.get_command(ctx=None, cmd_name=tab_widget.tabText(tab_widget.currentIndex()))
-        if isinstance(tab_widget.currentWidget(), QTabWidget):
-            return command.get_command(ctx=None, cmd_name=current_command(tab_widget.currentWidget(), command).name)
-        
-        return command
+        if isinstance(group, click.Group):
+            command = group.get_command(ctx=None, cmd_name=tab_widget.tabText(tab_widget.currentIndex()))
+            if isinstance(tab_widget.currentWidget(), QTabWidget):
+                return command.get_command(ctx=None, cmd_name=current_command(tab_widget.currentWidget(), command).name)
+            return command
+        else:
+            return group # =command
 
     def run():
         selected_command = current_command(main_tab_widget.currentWidget(), cmd) 

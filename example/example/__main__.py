@@ -37,7 +37,9 @@ def utilgroup():
 @click.password_option()
 @click.confirmation_option(expose_value=False, prompt='Are you sure you want to run the application with these options?')
 @click.argument('filename', type=click.Path(exists=True))
-def passwd(verbose, username, count, hash_type_single, hash_type_multiple, range, password, filename):
+@click.argument('input', type=click.File('rb'))
+@click.argument('output', type=click.File('wb'))
+def passwd(verbose, username, count, hash_type_single, hash_type_multiple, range, password, filename, input, output):
     click.echo(f"\nverbose: '{verbose}'\n" +
                f"username: '{username}'\n" +
                f"count: '{count}'\n" +
@@ -46,6 +48,13 @@ def passwd(verbose, username, count, hash_type_single, hash_type_multiple, range
                f"range: '{range}'\n" +
                f"password: '{password}'\n" +
                f"filename: '{filename}'\n")
+
+    while True:
+        chunk = input.read(1024)
+        if not chunk:
+            break
+        output.write(chunk)
+    print("") # Flush
 
 
 @utilgroup.command()
