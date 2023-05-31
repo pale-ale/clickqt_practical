@@ -11,10 +11,10 @@ class TextField(BaseWidget):
 
         self.setValue(options.get("default")() if callable(options.get("default")) \
                 else options.get("default") or "")
-
+        
     def setValue(self, value: str):
         self.widget.setText(value)
 
     def getValue(self) -> Tuple[str, ClickQtError]:
-        return self.widget.text(), ClickQtError.NO_ERROR
+        return self.widget.text(), ClickQtError()
    

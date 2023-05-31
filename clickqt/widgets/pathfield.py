@@ -11,7 +11,8 @@ class PathField(FileFild):
         super().__init__(options, *args, **kwargs)
 
         def onValueChanged():
-            if options.get("type").get("exists") and self.widget.text() and not QFile.exists(self.widget.text()):
+            if options.get("type") and options["type"].get("exists") and self.widget.text() \
+                and (self.is_pseudo() or not QFile.exists(self.widget.text())):
                 self.widget.setStyleSheet("border: 1px solid red")
             else: # Reset the border color
                 self.widget.setStyleSheet("")
@@ -20,6 +21,7 @@ class PathField(FileFild):
 
 
     def getValue(self) -> Tuple[str, ClickQtError]:
-        return self.widget.text(), ClickQtError.PATH_NOT_EXIST_ERROR if self._options.get("type").get("exists") and not QFile.exists(self.widget.text()) \
-                                    else ClickQtError.NO_ERROR
+        return self.widget.text(), ClickQtError(ClickQtError.ErrorType.PATH_NOT_EXIST_ERROR, self.widget_name) \
+            if self._options.get("type") and self._options["type"].get("exists") and (self.is_pseudo() or not QFile.exists(self.widget.text())) \
+                else ClickQtError()
    

@@ -35,4 +35,4 @@ class TupleWidget(BaseWidget):
             c.setValue(value[i])
 
     def getValue(self) -> Tuple[List[Any], ClickQtError]:
-        return ([c.getValue() for c in self.children], ClickQtError.NO_ERROR)
+        return ([c.getValue() for c in self.children], ClickQtError())

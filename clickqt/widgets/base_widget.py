@@ -9,9 +9,10 @@ class BaseWidget(ABC):
 
     def __init__(self, options, *args, **kwargs):
         self._options = options
+        self.widget_name = options.get('name', 'Unknown')
         self.container = QWidget()
         self.layout = QHBoxLayout()
-        self.label = QLabel(text=f"{kwargs.get('label', '')}{options.get('name', 'Unknown')}: ")
+        self.label = QLabel(text=f"{kwargs.get('label', '')}{self.widget_name}: ")
         self.label.setToolTip(options.get("help", "No options available"))
         self.widget = self.createWidget(args, kwargs)
         self.layout.addWidget(self.label)
@@ -53,7 +54,7 @@ class NumericField(BaseWidget):
         self.widget.maximum()
 
     def getValue(self) -> Tuple[int|float, ClickQtError]:
-        return self.widget.value(), ClickQtError.NO_ERROR
+        return self.widget.value(), ClickQtError()
 
 
 class ComboBoxBase(BaseWidget):

@@ -49,8 +49,8 @@ class PasswordField(TextField):
 
     def getValue(self) -> Tuple[str, ClickQtError]:
         if(hasattr(self, "confirmationField")):
-            return self.widget.text(), ClickQtError.CONFIRMATION_INPUT_NOT_EQUAL_ERROR \
-                if self.widget.text() != self.confirmationField.widget.text() else ClickQtError.NO_ERROR
+            return self.widget.text(), ClickQtError(ClickQtError.ErrorType.CONFIRMATION_INPUT_NOT_EQUAL_ERROR, self.widget_name) \
+                if self.widget.text() != self.confirmationField.widget.text() else ClickQtError()
         else:
-            return self.widget.text(), ClickQtError.NO_ERROR
+            return self.widget.text(), ClickQtError()
    

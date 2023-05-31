@@ -6,6 +6,7 @@ from clickqt.core.error import ClickQtError
 from click import Context
 import sys
 from io import StringIO, BytesIO
+import re
 
 class FileFild(TextField):
     widget_type = QLineEdit
@@ -19,13 +20,13 @@ class FileFild(TextField):
         self.click_object = kwargs.get("o").type
         self.click_command = kwargs.get("com")
 
-        if options.get("type") and options["type"].get("mode") and "r" in options["type"]["mode"]:
+        if options.get("type") and options["type"].get("mode"):
             def onValueChanged():
-                if self.widget.text() and self.widget.text() != "-" and not QFile.exists(self.widget.text()):
+                if self.widget.text() and self.widget.text() != "-" and \
+                    (self.is_pseudo() or ("r" in options["type"]["mode"] and not QFile.exists(self.widget.text()))):
                     self.widget.setStyleSheet("border: 1px solid red")
                 else: # Reset the border color
                     self.widget.setStyleSheet("")
-
             self.widget.textChanged.connect(onValueChanged)
 
     def browse(self):
@@ -37,19 +38,24 @@ class FileFild(TextField):
             if filenames and len(filenames):
                 self.setValue(filenames[0])
 
+    def is_pseudo(self) -> bool:
+        return re.match(r"^(\.*/*)*$", self.widget.text())
+
     def getValue(self) -> Tuple[Any, ClickQtError]:
         if "r" in self._options["type"]["mode"]:
             if self.widget.text() == "-":
                 old_stdin = sys.stdin
                 user_input, _ = QInputDialog().getMultiLineText(self.widget, 'Stdin Input', self.label.text())
                 sys.stdin = BytesIO(user_input.encode(sys.stdin.encoding)) if "b" in self._options["type"]["mode"] else StringIO(user_input)
-                ret_val = (self.click_object.convert(value=self.widget.text(), param=None, ctx=Context(self.click_command)), ClickQtError.NO_ERROR)
+                ret_val = (self.click_object.convert(value=self.widget.text(), param=None, ctx=Context(self.click_command)), ClickQtError())
                 sys.stdin = old_stdin
                 return ret_val
-            elif self.widget.text() and QFile.exists(self.widget.text()):
-                return (self.click_object.convert(value=self.widget.text(), param=None, ctx=Context(self.click_command)), ClickQtError.NO_ERROR)
+            elif self.widget.text() and not self.is_pseudo() and QFile.exists(self.widget.text()):
+                return (self.click_object.convert(value=self.widget.text(), param=None, ctx=Context(self.click_command)), ClickQtError())
             else:
-                return (None, ClickQtError.PATH_NOT_EXIST_ERROR)
+                return (None, ClickQtError(ClickQtError.ErrorType.FILE_NOT_EXIST_ERROR, self.widget_name))
+        elif self.is_pseudo():
+            return (None, ClickQtError(ClickQtError.ErrorType.INVALID_FILENAME_ERROR, self.widget_name))
         else:
-            return (self.click_object.convert(value=self.widget.text(), param=None, ctx=Context(self.click_command)), ClickQtError.NO_ERROR)
+            return (self.click_object.convert(value=self.widget.text(), param=None, ctx=Context(self.click_command)), ClickQtError())
    
