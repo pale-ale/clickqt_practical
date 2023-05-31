@@ -15,4 +15,4 @@ class DateTimeEdit(BaseWidget):
         raise NotImplementedError
 
     def getValue(self) -> Tuple[QDateTime, ClickQtError]:
-        return self.widget.dateTime(), ClickQtError.NO_ERROR
+        return self.widget.dateTime(), ClickQtError()

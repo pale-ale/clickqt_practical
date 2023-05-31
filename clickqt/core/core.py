@@ -88,32 +88,32 @@ def qtgui_from_click(cmd):
                     qm = QMessageBox(QMessageBox.Information, "Confirmation", str(param.prompt), QMessageBox.Yes|QMessageBox.No)
                     if widget_registry.get(cmd.name) is None:
                         widget_registry[cmd.name] = {}
-                    widget_registry[cmd.name][param.name] = lambda: (True, ClickQtError.NO_ERROR) if qm.exec() == QMessageBox.Yes else \
-                                                            (False, ClickQtError.ABORTED_ERROR)
+                    widget_registry[cmd.name][param.name] = lambda: (True, ClickQtError()) if qm.exec() == QMessageBox.Yes else \
+                                                            (False, ClickQtError(ClickQtError.ErrorType.ABORTED_ERROR))
                 else:  
                     cmd_elements.addWidget(parameter_to_widget(cmd, param))
         return cmdbox
     
     def check_error(err: ClickQtError) -> bool:
-        if err != ClickQtError.NO_ERROR:
-            if err != ClickQtError.ABORTED_ERROR:
-                print(str(err), file=sys.stderr)
+        if err.type != ClickQtError.ErrorType.NO_ERROR:
+            if err.type != ClickQtError.ErrorType.ABORTED_ERROR:
+                print(err.message(), file=sys.stderr)
             return True
         return False
     
     def check_list(widget_value: List[Any]) -> Tuple[List[Any], ClickQtError]:
         tupleList = []
         for v, err in widget_value:
-            if err != ClickQtError.NO_ERROR:
+            if err.type != ClickQtError.ErrorType.NO_ERROR:
                 return [], err
             if isinstance(v, list): # and len(v) and isinstance(v[0], tuple):
                 t, err = check_list(v)
-                if err != ClickQtError.NO_ERROR:
+                if err.type != ClickQtError.ErrorType.NO_ERROR:
                     return [], err
                 tupleList.append(t)
             else:
                 tupleList.append(v) 
-        return tupleList, ClickQtError.NO_ERROR
+        return tupleList, ClickQtError()
 
     app = QApplication([])
     app.setApplicationName("GUI for CLI")
