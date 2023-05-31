@@ -18,6 +18,7 @@ class TupleWidget(BaseWidget):
             bw = widgetsource(t, options, *args, o=o, widgetsource=widgetsource, recinfo=recinfo, **kwargs)
             recinfo.pop()
             bw.layout.removeWidget(bw.label)
+            bw.label.deleteLater()
             self.widget.layout().addWidget(bw.container)
             self.children.append(bw)
     
