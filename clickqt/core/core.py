@@ -1,7 +1,8 @@
 import click
 import inspect
 from clickqt.widgets.multivaluewidget import MultiValueWidget
-from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QGroupBox, QTabWidget, QMessageBox
+from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QTabWidget, QMessageBox, QPlainTextEdit
+from PySide6.QtGui import QTextCursor
 from clickqt.widgets.checkbox import CheckBox
 from clickqt.widgets.textfield import TextField
 from clickqt.widgets.passwordfield import PasswordField
@@ -9,23 +10,32 @@ from clickqt.widgets.numericfields import IntField, RealField
 from clickqt.widgets.combobox import ComboBox, CheckableComboBox
 from clickqt.widgets.datetimeedit import DateTimeEdit
 from clickqt.widgets.tuplewidget import TupleWidget
+from clickqt.widgets.pathfield import PathField
+from clickqt.widgets.filefield import FileFild
 from clickqt.core.error import ClickQtError
 from typing import Dict, Callable, List, Any, Tuple
+import sys
+from io import BytesIO, TextIOWrapper
 
 def qtgui_from_click(cmd):
-    widget_registry: Dict[str, Callable] = {}
+    # Command-name to command-options and callables
+    # Assuming, that every command has an unique name (TODO)
+    widget_registry: Dict[str, Dict[str, Callable]] = {}
 
-    def parameter_to_widget(o):
-        if o.name:
-            if o.nargs == 1 or isinstance(o.type, click.types.Tuple):
-                widget = create_widget(o.type, o.to_info_dict(), o=o, widgetsource=create_widget)
+    def parameter_to_widget(command: click.Command, param: click.types.ParamType) -> QWidget:
+        if param.name:
+            if param.nargs == 1 or isinstance(param.type, click.types.Tuple):
+                widget = create_widget(param.type, param.to_info_dict(), com=command, o=param, widgetsource=create_widget)
             else:
-                widget = create_widget_mult(o.type, o.nargs, o.to_info_dict())
+                widget = create_widget_mult(param.type, param.nargs, param.to_info_dict())
 
             assert widget is not None, "Widget not initialized"
             assert widget.widget is not None, "Qt-Widget not initialized"
+
+            if widget_registry.get(command.name) is None:
+                widget_registry[command.name] = {}
             
-            widget_registry[o.name] = lambda: widget.getValue()
+            widget_registry[command.name][param.name] = lambda: widget.getValue()
 
             return widget.container
         else:
@@ -39,7 +49,9 @@ def qtgui_from_click(cmd):
             click.types.StringParamType: PasswordField if hasattr(kwargs.get("o"), "hide_input") and kwargs["o"].hide_input else TextField,
             click.types.DateTime: DateTimeEdit,
             click.types.Tuple: TupleWidget,
-            click.types.Choice: CheckableComboBox if hasattr(kwargs.get("o"), "multiple") and kwargs["o"].multiple else ComboBox 
+            click.types.Choice: CheckableComboBox if hasattr(kwargs.get("o"), "multiple") and kwargs["o"].multiple else ComboBox,
+            click.types.Path: PathField,
+            click.types.File: FileFild
         }
         for t,widgetclass in typedict.items():
             if isinstance(otype, t):
@@ -66,7 +78,7 @@ def qtgui_from_click(cmd):
 
     
     def parse_cmd(cmd: click.Command):
-        cmdbox = QGroupBox(cmd.name)
+        cmdbox = QWidget()
         cmd_elements = QVBoxLayout()
         cmdbox.setLayout(cmd_elements)
         for param in cmd.params:
@@ -74,10 +86,12 @@ def qtgui_from_click(cmd):
                 # Yes-Parameter
                 if hasattr(param, "is_flag") and param.is_flag and hasattr(param, "prompt") and param.prompt:
                     qm = QMessageBox(QMessageBox.Information, "Confirmation", str(param.prompt), QMessageBox.Yes|QMessageBox.No)
-                    widget_registry[param.name] = lambda: (True, ClickQtError.NO_ERROR) if qm.exec() == QMessageBox.Yes else \
+                    if widget_registry.get(cmd.name) is None:
+                        widget_registry[cmd.name] = {}
+                    widget_registry[cmd.name][param.name] = lambda: (True, ClickQtError.NO_ERROR) if qm.exec() == QMessageBox.Yes else \
                                                             (False, ClickQtError.ABORTED_ERROR)
-                else:    
-                    cmd_elements.addWidget(parameter_to_widget(param))
+                else:  
+                    cmd_elements.addWidget(parameter_to_widget(cmd, param))
         return cmdbox
     
     def check_error(err: ClickQtError) -> bool:
@@ -116,7 +130,7 @@ def qtgui_from_click(cmd):
                            }""")
     
     if isinstance(cmd, click.Group):
-        main_tab_widget.addTab(parse_cmd_group(cmd), "Main")
+        main_tab_widget.addTab(parse_cmd_group(cmd), cmd.name)
     else:
         standalone_group = QWidget()
         standalone_group_layout = QVBoxLayout()
@@ -126,29 +140,65 @@ def qtgui_from_click(cmd):
         
     run_button = QPushButton("&Run")  # Shortcut Alt+R
 
+    def current_command(tab_widget: QTabWidget, group: click.Group|click.Command) -> click.Command:
+        """
+            Returns the command of the selected tab
+        """
+        if isinstance(group, click.Group):
+            command = group.get_command(ctx=None, cmd_name=tab_widget.tabText(tab_widget.currentIndex()))
+            if isinstance(tab_widget.currentWidget(), QTabWidget):
+                return command.get_command(ctx=None, cmd_name=current_command(tab_widget.currentWidget(), command).name)
+            return command
+        else:
+            return group # =command
+
     def run():
-        if isinstance(cmd, click.Group):
-            # TODO: keep both
-            for subcmd in cmd.commands.values():
-                args = []
-                for a in inspect.getfullargspec(subcmd.callback).args:
-                    widget_value, err = widget_registry[a]()   
-                    if check_error(err):
-                        return
-                    elif isinstance(widget_value, list) and len(widget_value) and isinstance(widget_value[0], tuple):
-                        val, err = check_list(widget_value)
-                        if check_error(err):
-                            return
-                        args.append(val)
-                    else:
-                        args.append(widget_value)
-                subcmd.callback(*args)
-        else:        
-            cmd.callback(*tuple(widget_registry[a]() for a in inspect.getfullargspec(cmd.callback).args))
+        selected_command = current_command(main_tab_widget.currentWidget(), cmd) 
+
+        args = []
+        for option in inspect.getfullargspec(selected_command.callback).args:
+            widget_value, err = widget_registry[selected_command.name][option]()   
+            if check_error(err):
+                return
+            elif isinstance(widget_value, list) and len(widget_value) and isinstance(widget_value[0], tuple):
+                val, err = check_list(widget_value)
+                if check_error(err):
+                    return
+                args.append(val)
+            else:
+                args.append(widget_value)
+
+        # Options with argument expose_value=False
+        for unused_option in set(widget_registry[selected_command.name].keys()).difference(inspect.getfullargspec(selected_command.callback).args):
+            _, err = widget_registry[selected_command.name][unused_option]()   
+            if check_error(err):
+                return   
+        
+        selected_command.callback(*args)
+
                 
     run_button.clicked.connect(run)
-
     layout.addWidget(run_button)
+
+    class Output(TextIOWrapper):
+        """
+            Redirects a stream (here: stdout) to a QPlainTextEdit   
+        """
+        def __init__(self, output: QPlainTextEdit):
+            super().__init__(BytesIO(), sys.stdout.encoding)
+            self.output = output
+
+        def write(self, message: bytes|str):
+            if message:
+                message = message.decode(sys.stdout.encoding) if isinstance(message, bytes) else message  
+                self.output.moveCursor(QTextCursor.End)
+                self.output.insertPlainText(message)
+
+    terminal_output = QPlainTextEdit()
+    terminal_output.setReadOnly(True)
+    terminal_output.setToolTip("Terminal output")
+    layout.addWidget(terminal_output)
+    sys.stdout = Output(terminal_output)
 
     def run_app():
         window.show()
