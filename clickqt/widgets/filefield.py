@@ -41,8 +41,8 @@ class FileFild(TextField):
         if "r" in self._options["type"]["mode"]:
             if self.widget.text() == "-":
                 old_stdin = sys.stdin
-                user_input, _ = QInputDialog().getMultiLineText(self.widget, 'Input', self.label.text())
-                sys.stdin = BytesIO(user_input.encode()) if "b" in self._options["type"]["mode"] else StringIO(user_input)
+                user_input, _ = QInputDialog().getMultiLineText(self.widget, 'Stdin Input', self.label.text())
+                sys.stdin = BytesIO(user_input.encode(sys.stdin.encoding)) if "b" in self._options["type"]["mode"] else StringIO(user_input)
                 ret_val = (self.click_object.convert(value=self.widget.text(), param=None, ctx=Context(self.click_command)), ClickQtError.NO_ERROR)
                 sys.stdin = old_stdin
                 return ret_val

@@ -24,7 +24,6 @@ class MultiValueWidget(BaseWidget):
             for t, widgetclass in typedict.items():
                 if isinstance(otype, t):
                     bw = widgetclass(options)
-                    bw.layout.removeWidget(bw.label)
                     self.widget.layout().addWidget(bw.container)
                     self.children.append(bw)
         

@@ -40,21 +40,21 @@ def utilgroup():
 @click.argument('input', type=click.File('rb'))
 @click.argument('output', type=click.File('wb'))
 def passwd(verbose, username, count, hash_type_single, hash_type_multiple, range, password, filename, input, output):
-    click.echo(f"\nverbose: '{verbose}'\n" +
+    click.echo(f"verbose: '{verbose}'\n" +
                f"username: '{username}'\n" +
                f"count: '{count}'\n" +
                f"hash_type_single: '{hash_type_single}'\n" +
                f"hash_type_multiple: '{hash_type_multiple}'\n" +
                f"range: '{range}'\n" +
                f"password: '{password}'\n" +
-               f"filename: '{filename}'\n")
-
+               f"filename: '{filename}'")
+    click.echo("input: ", nl=False)
     while True:
         chunk = input.read(1024)
         if not chunk:
             break
         output.write(chunk)
-    print("") # Flush
+    click.echo() # New line
 
 
 @utilgroup.command()
