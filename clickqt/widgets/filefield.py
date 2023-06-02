@@ -34,15 +34,17 @@ class FileFild(PathField):
     def getValue(self) -> Tuple[Any, ClickQtError]:
         if "r" in self.options["type"]["mode"]:
             if self.widget.text() == "-":
-                old_stdin = sys.stdin
-                user_input, ok = QInputDialog.getMultiLineText(self.widget, 'Stdin Input', self.label.text())
-                if not ok:
-                    return (None, ClickQtError(ClickQtError.ErrorType.ABORTED_ERROR))
-                
-                sys.stdin = BytesIO(user_input.encode(sys.stdin.encoding)) if "b" in self.options["type"]["mode"] else StringIO(user_input)
-                ret_val = (self.click_object.convert(value=self.widget.text(), param=None, ctx=Context(self.click_command)), ClickQtError())
-                sys.stdin = old_stdin
-                return ret_val
+                def ret():
+                    old_stdin = sys.stdin
+                    user_input, ok = QInputDialog.getMultiLineText(self.widget, 'Stdin Input', self.label.text())
+                    if not ok:
+                        return (None, ClickQtError(ClickQtError.ErrorType.ABORTED_ERROR))
+                    
+                    sys.stdin = BytesIO(user_input.encode(sys.stdin.encoding)) if "b" in self.options["type"]["mode"] else StringIO(user_input)
+                    ret_val = (self.click_object.convert(value=self.widget.text(), param=None, ctx=Context(self.click_command)), ClickQtError())
+                    sys.stdin = old_stdin
+                    return ret_val
+                return (ret, ClickQtError())
             elif self.isValid():
                 return (self.click_object.convert(value=self.widget.text(), param=None, ctx=Context(self.click_command)), ClickQtError())
             else:

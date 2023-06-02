@@ -85,11 +85,13 @@ def qtgui_from_click(cmd):
             if isinstance(param, (click.core.Argument, click.core.Option)):
                 # Yes-Parameter
                 if hasattr(param, "is_flag") and param.is_flag and hasattr(param, "prompt") and param.prompt:
-                    qm = QMessageBox(QMessageBox.Information, "Confirmation", str(param.prompt), QMessageBox.Yes|QMessageBox.No)
+                    prompt = str(param.prompt)
+                    ret = lambda: (True, ClickQtError()) if QMessageBox(QMessageBox.Information, "Confirmation", prompt, \
+                                                                        QMessageBox.Yes|QMessageBox.No).exec() == QMessageBox.Yes \
+                                                        else (False, ClickQtError(ClickQtError.ErrorType.ABORTED_ERROR))  
                     if widget_registry.get(cmd.name) is None:
                         widget_registry[cmd.name] = {}
-                    widget_registry[cmd.name][param.name] = lambda: (True, ClickQtError()) if qm.exec() == QMessageBox.Yes else \
-                                                            (False, ClickQtError(ClickQtError.ErrorType.ABORTED_ERROR))
+                    widget_registry[cmd.name][param.name] = lambda: (ret, ClickQtError())
                 else:  
                     cmd_elements.addWidget(parameter_to_widget(cmd, param))
         return cmdbox
@@ -156,23 +158,45 @@ def qtgui_from_click(cmd):
         selected_command = current_command(main_tab_widget.currentWidget(), cmd) 
 
         args = []
+        has_error = False
+        # Check all values for errors
         for option in inspect.getfullargspec(selected_command.callback).args:
             widget_value, err = widget_registry[selected_command.name][option]()   
             if check_error(err):
-                return
+                has_error = True
             elif isinstance(widget_value, list) and len(widget_value) and isinstance(widget_value[0], tuple):
                 val, err = check_list(widget_value)
                 if check_error(err):
-                    return
+                    has_error = True
                 args.append(val)
             else:
                 args.append(widget_value)
 
+        if has_error: 
+            return
+
+        # Replace the callables with their values and check for errors
+        for i in range(len(args)):
+            if callable(args[i]):
+                args[i], err = args[i]()
+                if check_error(err):
+                    has_error = True
+
+        if has_error:
+            return
+
         # Options with argument expose_value=False
         for unused_option in set(widget_registry[selected_command.name].keys()).difference(inspect.getfullargspec(selected_command.callback).args):
-            _, err = widget_registry[selected_command.name][unused_option]()   
+            widget_value, err = widget_registry[selected_command.name][unused_option]()
             if check_error(err):
-                return   
+                has_error = True 
+            if callable(widget_value):
+                _, err = widget_value()  
+                if check_error(err):
+                    has_error = True  
+             
+        if has_error:
+            return 
         
         selected_command.callback(*args)
 
