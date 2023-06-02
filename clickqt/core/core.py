@@ -16,6 +16,7 @@ from clickqt.core.error import ClickQtError
 from typing import Dict, Callable, List, Any, Tuple
 import sys
 from io import BytesIO, TextIOWrapper
+from clickqt.core.output import Output
 
 def qtgui_from_click(cmd):
     # Command-name to command-options and callables
@@ -151,6 +152,10 @@ def qtgui_from_click(cmd):
             return command
         else:
             return group # =command
+        
+    def function_call_formatter(cmd):
+        message = f"{cmd}: {widget_registry[cmd.name]}"
+        return message
 
     def run():
         selected_command = current_command(main_tab_widget.currentWidget(), cmd) 
@@ -173,26 +178,12 @@ def qtgui_from_click(cmd):
             _, err = widget_registry[selected_command.name][unused_option]()   
             if check_error(err):
                 return   
-        
+        print(f"{function_call_formatter(selected_command)}\n")
         selected_command.callback(*args)
 
                 
     run_button.clicked.connect(run)
     layout.addWidget(run_button)
-
-    class Output(TextIOWrapper):
-        """
-            Redirects a stream (here: stdout) to a QPlainTextEdit   
-        """
-        def __init__(self, output: QPlainTextEdit):
-            super().__init__(BytesIO(), sys.stdout.encoding)
-            self.output = output
-
-        def write(self, message: bytes|str):
-            if message:
-                message = message.decode(sys.stdout.encoding) if isinstance(message, bytes) else message  
-                self.output.moveCursor(QTextCursor.End)
-                self.output.insertPlainText(message)
 
     terminal_output = QPlainTextEdit()
     terminal_output.setReadOnly(True)
