@@ -10,7 +10,7 @@ from clickqt.widgets.numericfields import IntField, RealField
 from clickqt.widgets.combobox import ComboBox, CheckableComboBox
 from clickqt.widgets.datetimeedit import DateTimeEdit
 from clickqt.widgets.tuplewidget import TupleWidget
-from clickqt.widgets.pathfield import PathField
+from clickqt.widgets.filepathfield import FilePathField
 from clickqt.widgets.filefield import FileFild
 from clickqt.core.error import ClickQtError
 from clickqt.core.output import Output
@@ -50,7 +50,7 @@ def qtgui_from_click(cmd):
             click.types.DateTime: DateTimeEdit,
             click.types.Tuple: TupleWidget,
             click.types.Choice: CheckableComboBox if hasattr(kwargs.get("o"), "multiple") and kwargs["o"].multiple else ComboBox,
-            click.types.Path: PathField,
+            click.types.Path: FilePathField,
             click.types.File: FileFild
         }
         for t,widgetclass in typedict.items():
