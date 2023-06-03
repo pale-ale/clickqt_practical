@@ -11,7 +11,15 @@ class ComboBox(ComboBoxBase):
         self.widget.addItems(items)
 
     def getValue(self) -> Tuple[str, ClickQtError]:
-        return self.widget.currentText(), ClickQtError()
+        value, err = self.callback_validate()
+        if err.type != ClickQtError.ErrorType.NO_ERROR:
+            self.handleValid(False)
+            return (value, err)
+        
+        return (self.getWidgetValue(), ClickQtError())
+    
+    def getWidgetValue(self) -> str:
+        return self.widget.currentText()
    
 class CheckableComboBox(ComboBoxBase):
     widget_type = QCheckableComboBox
@@ -20,4 +28,12 @@ class CheckableComboBox(ComboBoxBase):
         self.widget.addItems(items)
 
     def getValue(self) -> Tuple[List[str], ClickQtError]:
-        return self.widget.getData(), ClickQtError()
+        value, err = self.callback_validate()
+        if err.type != ClickQtError.ErrorType.NO_ERROR:
+            self.handleValid(False)
+            return (value, err)
+        
+        return (self.getWidgetValue(), ClickQtError())
+    
+    def getWidgetValue(self) -> List[str]:
+        return self.widget.getData()

@@ -4,6 +4,7 @@ from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QPushButton, QFileDi
 from PySide6.QtCore import QDir
 from clickqt.core.error import ClickQtError
 from clickqt.widgets.core.QPathDialog import QPathDialog
+from clickqt.core.callbackvalidator import CallbackValidator
 from enum import IntFlag
 
 class BaseWidget(ABC):
@@ -21,17 +22,53 @@ class BaseWidget(ABC):
         self.layout.addWidget(self.label)
         self.layout.addWidget(self.widget)
         self.container.setLayout(self.layout)
+        self.callback_validator: CallbackValidator = None
 
+        assert self.widget is not None, "Widget not initialized"
+        
+        if kwargs["o"].callback:
+            self.callback_validator = CallbackValidator(kwargs["com"], kwargs["o"], self)
+            self.widget.installEventFilter(self.callback_validator)
+    
     def createWidget(self, *args, **kwargs):
         return self.widget_type()
 
     @abstractmethod
     def setValue(self, value):
+        """
+            Sets the value of the widget
+        """
         pass
 
     @abstractmethod
     def getValue(self) -> Tuple[Any, ClickQtError]:
+        """
+            Validates the value of the widget and returns the result\n
+            Valid -> (widget_value, ClickQtError.ErrorType.NO_ERROR)\n
+            Invalid -> (None or zero initialized type, Any ClickQtError error)
+        """
         pass
+
+    @abstractmethod
+    def getWidgetValue(self) -> Any:
+        """
+            Returns the value of the widget without any checks
+        """
+        pass
+
+    def handleValid(self, valid: bool):
+        if not valid:
+            self.widget.setStyleSheet("border: 1px solid red")
+        else:
+            self.widget.setStyleSheet("")
+
+    def callback_validate(self) -> Tuple[Any, ClickQtError]:
+        if self.callback_validator:
+            value, err = self.callback_validator.validate()
+            if err.type != ClickQtError.ErrorType.NO_ERROR:
+                return (value, err)
+            
+        return (None, ClickQtError())
 
 
 class NumericField(BaseWidget):
@@ -57,8 +94,15 @@ class NumericField(BaseWidget):
         self.widget.maximum()
 
     def getValue(self) -> Tuple[int|float, ClickQtError]:
-        return self.widget.value(), ClickQtError()
-
+        value, err = self.callback_validate()
+        if err.type != ClickQtError.ErrorType.NO_ERROR:
+            self.handleValid(False)
+            return (value, err)
+        
+        return (self.getWidgetValue(), ClickQtError())
+    
+    def getWidgetValue(self) -> int|float:
+        return self.widget.value()
 
 class ComboBoxBase(BaseWidget):
     def __init__(self, options, *args, **kwargs):

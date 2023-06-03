@@ -16,5 +16,13 @@ class TextField(BaseWidget):
         self.widget.setText(value)
 
     def getValue(self) -> Tuple[str, ClickQtError]:
-        return self.widget.text(), ClickQtError()
+        value, err = self.callback_validate()
+        if err.type != ClickQtError.ErrorType.NO_ERROR:
+            self.handleValid(False)
+            return (value, err)
+        
+        return self.getWidgetValue(), ClickQtError()
+    
+    def getWidgetValue(self) -> str:
+        return self.widget.text()
    

@@ -34,7 +34,7 @@ class PasswordField(TextField):
             self.container.setLayout(self.vLayout)
 
             def onValueChanged():
-                if self.widget.text() != self.confirmationField.widget.text():
+                if self.getWidgetValue() != self.confirmationField.getWidgetValue():
                     self.confirmationField.widget.setStyleSheet("border: 1px solid red")
                     self.widget.setStyleSheet("border: 1px solid red")
                 else: # Reset the border color
@@ -48,9 +48,17 @@ class PasswordField(TextField):
         self.widget.setText(value)
 
     def getValue(self) -> Tuple[str, ClickQtError]:
+        value, err = self.callback_validate()
+        if err.type != ClickQtError.ErrorType.NO_ERROR:
+            self.handleValid(False)
+            return (value, err)
+        
         if(hasattr(self, "confirmationField")):
-            return self.widget.text(), ClickQtError(ClickQtError.ErrorType.CONFIRMATION_INPUT_NOT_EQUAL_ERROR, self.widget_name) \
-                if self.widget.text() != self.confirmationField.widget.text() else ClickQtError()
+            return self.getWidgetValue(), ClickQtError(ClickQtError.ErrorType.CONFIRMATION_INPUT_NOT_EQUAL_ERROR, self.widget_name) \
+                if self.getWidgetValue() != self.confirmationField.getWidgetValue() else ClickQtError()
         else:
-            return self.widget.text(), ClickQtError()
+            return self.getWidgetValue(), ClickQtError()
+        
+    def getWidgetValue(self) -> str:
+        return self.widget.text()
    

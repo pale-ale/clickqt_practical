@@ -16,5 +16,13 @@ class CheckBox(BaseWidget):
         self.widget.setChecked(value)
 
     def getValue(self) -> Tuple[bool, ClickQtError]:
-        return self.widget.isChecked(), ClickQtError()
+        value, err = self.callback_validate()
+        if err.type != ClickQtError.ErrorType.NO_ERROR:
+            self.handleValid(False)
+            return (value, err)
+        
+        return (self.getWidgetValue(), ClickQtError())
+    
+    def getWidgetValue(self) -> bool:
+        return self.widget.isChecked()
     

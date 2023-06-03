@@ -22,16 +22,21 @@ class FileFild(PathField):
     def isValid(self) -> bool:
         if self.widget.text() != "-" and \
             (self.is_pseudo() or ("r" in self.options["type"]["mode"] and not QFile.exists(self.widget.text()))):
-            self.widget.setStyleSheet("border: 1px solid red")
+            self.handleValid(False)
             return False
         else: # Reset the border color
-            self.widget.setStyleSheet("")
+            self.handleValid(True)
             return True
         
     def is_pseudo(self) -> bool:
         return re.match(r"^(\.*/*)*$", self.widget.text())   
 
     def getValue(self) -> Tuple[Any, ClickQtError]:
+        value, err = self.callback_validate()
+        if err.type != ClickQtError.ErrorType.NO_ERROR:
+            self.handleValid(False)
+            return (value, err)
+
         if "r" in self.options["type"]["mode"]:
             if self.widget.text() == "-":
                 def ret():
@@ -54,3 +59,5 @@ class FileFild(PathField):
         else:
             return (self.click_object.convert(value=self.widget.text(), param=None, ctx=Context(self.click_command)), ClickQtError())
    
+    def getWidgetValue(self) -> str:
+        return self.widget.text()

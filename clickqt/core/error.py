@@ -8,6 +8,7 @@ class ClickQtError():
         PATH_NOT_EXIST_ERROR = 3
         FILE_NOT_EXIST_ERROR = 4
         INVALID_FILENAME_ERROR = 5
+        CALLBACK_VALIDATION_ERROR = 6
 
     def __init__(self, type: ErrorType=ErrorType.NO_ERROR, trigger: str=""):
          self.type = type
@@ -21,5 +22,6 @@ class ClickQtError():
             case ClickQtError.ErrorType.PATH_NOT_EXIST_ERROR: return f"Path ({self.trigger}) does not exist"
             case ClickQtError.ErrorType.FILE_NOT_EXIST_ERROR: return f"File ({self.trigger}) does not exist"
             case ClickQtError.ErrorType.INVALID_FILENAME_ERROR: return f"Invalid filename ({self.trigger})"
+            case ClickQtError.ErrorType.CALLBACK_VALIDATION_ERROR: return f"Callback validation error: {self.trigger}"
        
         return "Unknown"

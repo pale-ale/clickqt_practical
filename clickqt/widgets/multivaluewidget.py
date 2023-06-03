@@ -23,7 +23,7 @@ class MultiValueWidget(BaseWidget):
         for i in range(onargs):
             for t, widgetclass in typedict.items():
                 if isinstance(otype, t):
-                    bw = widgetclass(options)
+                    bw = widgetclass(options, *args, **kwargs)
                     self.widget.layout().addWidget(bw.container)
                     self.children.append(bw)
         
@@ -33,4 +33,12 @@ class MultiValueWidget(BaseWidget):
             c.setValue(value[i])
 
     def getValue(self) -> Tuple[List[Any], ClickQtError]:
-        return ([c.getValue() for c in self.children], ClickQtError())
+        value, err = self.callback_validate()
+        if err.type != ClickQtError.ErrorType.NO_ERROR:
+            self.handleValid(False)
+            return (value, err)
+        
+        return (self.getWidgetValue(), ClickQtError())
+    
+    def getWidgetValue(self) -> List[Any]:
+        return [c.getValue() for c in self.children]

@@ -25,12 +25,9 @@ def qtgui_from_click(cmd):
     def parameter_to_widget(command: click.Command, param: click.types.ParamType) -> QWidget:
         if param.name:
             if param.nargs == 1 or isinstance(param.type, click.types.Tuple):
-                widget = create_widget(param.type, param.to_info_dict(), com=command, o=param, widgetsource=create_widget)
+                widget = create_widget(param.type, param.to_info_dict(), widgetsource=create_widget, com=command, o=param)
             else:
-                widget = create_widget_mult(param.type, param.nargs, param.to_info_dict())
-
-            assert widget is not None, "Widget not initialized"
-            assert widget.widget is not None, "Qt-Widget not initialized"
+                widget = create_widget_mult(param.type, param.nargs, param.to_info_dict(), com=command, o=param)
 
             if widget_registry.get(command.name) is None:
                 widget_registry[command.name] = {}
@@ -138,7 +135,7 @@ def qtgui_from_click(cmd):
         standalone_group_layout = QVBoxLayout()
         standalone_group.setLayout(standalone_group_layout)
         standalone_group_layout.addWidget(parse_cmd(cmd))
-        main_tab_widget.addTab(standalone_group, "Main")
+        main_tab_widget.addTab(standalone_group, cmd.name if hasattr(cmd, "name") else "Main")
         
     run_button = QPushButton("&Run")  # Shortcut Alt+R
 

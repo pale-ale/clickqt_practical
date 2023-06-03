@@ -17,16 +17,24 @@ class FilePathField(PathField):
             raise ValueError(f"Neither 'file_okay' nor 'dir_okay' in argument '{self.widget_name}' is set")
     
     def isValid(self) -> bool:
-        if self.options["type"]["exists"] and not QFile.exists(self.widget.text()):
-            self.widget.setStyleSheet("border: 1px solid red")
+        if self.options["type"]["exists"] and not QFile.exists(self.getWidgetValue()):
+            self.handleValid(False)
             return False
         else: # Reset the border color
-            self.widget.setStyleSheet("")
+            self.handleValid(True)
             return True
 
     def getValue(self) -> Tuple[str, ClickQtError]:
+        value, err = self.callback_validate()
+        if err.type != ClickQtError.ErrorType.NO_ERROR:
+            self.handleValid(False)
+            return (value, err)
+        
         if not self.isValid():
             return ("", ClickQtError(ClickQtError.ErrorType.PATH_NOT_EXIST_ERROR, self.widget_name))
         else:
-            return (self.widget.text(), ClickQtError())
+            return (self.getWidgetValue(), ClickQtError())
+        
+    def getWidgetValue(self) -> str:
+        return self.widget.text()
    
