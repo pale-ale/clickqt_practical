@@ -55,28 +55,28 @@ def validate_spatial_reference(ctx, param, crs):
     "--dataset",
     type=click.Path(exists=True, dir_okay=False),
     required=True,
-    #callback=locate_lidar_dataset,
+    callback=locate_lidar_dataset,
     help="The LAS/LAZ data file to work on.",
 )
 @click.option(
     "--dataset-crs",
     type=str,
     required=True,
-    #callback=validate_spatial_reference,
+    callback=validate_spatial_reference,
     help="The CRS of the data",
 )
 @click.option(
     "--segmentation",
     type=click.Path(exists=True, dir_okay=False),
     required=True,
-    #callback=validate_segmentation,
+    callback=validate_segmentation,
     help="The GeoJSON file that describes the segmentation of the dataset. This is expected to be generated either by the Jupyter UI or otherwise provide the necessary information about what filter pipelines to apply.",
 )
 @click.option(
     "--segmentation-crs",
     type=str,
     required=True,
-    #callback=validate_spatial_reference,
+    callback=validate_spatial_reference,
     help="The CRS used in the segmentation",
 )
 @click.option(
