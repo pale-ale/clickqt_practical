@@ -12,6 +12,7 @@ from clickqt.widgets.datetimeedit import DateTimeEdit
 from clickqt.widgets.tuplewidget import TupleWidget
 from clickqt.widgets.pathfield import PathField
 from clickqt.widgets.filefield import FileFild
+from clickqt.widgets.nvaluewidget import NValueWidget
 from clickqt.core.error import ClickQtError
 from clickqt.core.output import Output
 from typing import Dict, Callable, List, Any, Tuple
@@ -49,10 +50,19 @@ def qtgui_from_click(cmd):
             click.types.StringParamType: PasswordField if hasattr(kwargs.get("o"), "hide_input") and kwargs["o"].hide_input else TextField,
             click.types.DateTime: DateTimeEdit,
             click.types.Tuple: TupleWidget,
-            click.types.Choice: CheckableComboBox if hasattr(kwargs.get("o"), "multiple") and kwargs["o"].multiple else ComboBox,
+            click.types.Choice: ComboBox,
             click.types.Path: PathField,
-            click.types.File: FileFild
+            click.types.File: FileFild,
         }
+        
+        def get_multiarg_version(otype):
+            if isinstance(otype, click.types.Choice):
+                return CheckableComboBox
+            return NValueWidget
+        
+        if hasattr(kwargs.get("o"), "multiple") and kwargs["o"].multiple:
+            return get_multiarg_version(otype)(*args, **kwargs)
+
         for t,widgetclass in typedict.items():
             if isinstance(otype, t):
                 return widgetclass(*args, **kwargs)
@@ -60,7 +70,6 @@ def qtgui_from_click(cmd):
           
     def create_widget_mult(otype, onargs, *args, **kwargs):
         return MultiValueWidget(*args, otype, onargs, **kwargs)
-    
     
     def parse_cmd_group(cmdgroup: click.Group) -> QTabWidget:
         group_tab_widget = QTabWidget()
@@ -184,8 +193,8 @@ def qtgui_from_click(cmd):
     terminal_output.setReadOnly(True)
     terminal_output.setToolTip("Terminal output")
     layout.addWidget(terminal_output)
-    sys.stdout = Output(terminal_output)
-    sys.stderr = Output(terminal_output, QColor("red"))
+    # sys.stdout = Output(terminal_output)
+    # sys.stderr = Output(terminal_output, QColor("red"))
 
     def run_app():
         window.show()
