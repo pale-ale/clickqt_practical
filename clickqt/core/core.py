@@ -28,10 +28,7 @@ def qtgui_from_click(cmd):
                 widget = create_widget(param.type, param.to_info_dict(), widgetsource=create_widget, com=command, o=param)
             else:
                 widget = create_widget_mult(param.type, param.nargs, param.to_info_dict(), com=command, o=param)
-
-            if widget_registry.get(command.name) is None:
-                widget_registry[command.name] = {}
-            
+                
             widget_registry[command.name][param.name] = lambda: widget.getValue()
 
             return widget.container
@@ -78,6 +75,12 @@ def qtgui_from_click(cmd):
         cmdbox = QWidget()
         cmd_elements = QVBoxLayout()
         cmdbox.setLayout(cmd_elements)
+
+        if widget_registry.get(cmd.name) is None:
+            widget_registry[cmd.name] = {}
+        else:
+            raise RuntimeError("Every command has to have an unique name")    
+
         for param in cmd.params:
             if isinstance(param, (click.core.Argument, click.core.Option)):
                 # Yes-Parameter
@@ -86,8 +89,6 @@ def qtgui_from_click(cmd):
                     ret = lambda: (True, ClickQtError()) if QMessageBox(QMessageBox.Information, "Confirmation", prompt, \
                                                                         QMessageBox.Yes|QMessageBox.No).exec() == QMessageBox.Yes \
                                                         else (False, ClickQtError(ClickQtError.ErrorType.ABORTED_ERROR))  
-                    if widget_registry.get(cmd.name) is None:
-                        widget_registry[cmd.name] = {}
                     widget_registry[cmd.name][param.name] = lambda: (ret, ClickQtError())
                 else:  
                     cmd_elements.addWidget(parameter_to_widget(cmd, param))
