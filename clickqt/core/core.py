@@ -13,7 +13,7 @@ from clickqt.widgets.tuplewidget import TupleWidget
 from clickqt.widgets.filepathfield import FilePathField
 from clickqt.widgets.filefield import FileFild
 from clickqt.core.error import ClickQtError
-from clickqt.core.output import Output
+from clickqt.core.output import OutputStream, TerminalOutput
 from typing import Dict, Callable, List, Any, Tuple
 import sys
 
@@ -204,12 +204,12 @@ def qtgui_from_click(cmd):
     run_button.clicked.connect(run)
     layout.addWidget(run_button)
 
-    terminal_output = QPlainTextEdit()
+    terminal_output = TerminalOutput()
     terminal_output.setReadOnly(True)
     terminal_output.setToolTip("Terminal output")
     layout.addWidget(terminal_output)
-    sys.stdout = Output(terminal_output)
-    sys.stderr = Output(terminal_output, QColor("red"))
+    sys.stdout = OutputStream(terminal_output)
+    sys.stderr = OutputStream(terminal_output, QColor("red"))
 
     def run_app():
         window.show()
