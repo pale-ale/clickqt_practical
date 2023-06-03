@@ -17,7 +17,7 @@ class CallbackValidator(QWidget):
         if event.type() == QEvent.Type.FocusOut:
             value, err = self.validate()
             if value is not None and err.type != ClickQtError.ErrorType.CALLBACK_VALIDATION_ERROR:
-                #TODO: Check if values has correct type
+                #TODO: Check if value has correct type
                 self.widget.setValue(value)
             self.widget.handleValid(err.type == ClickQtError.ErrorType.NO_ERROR)
 
