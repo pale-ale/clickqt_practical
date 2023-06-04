@@ -18,18 +18,18 @@ from typing import Dict, Callable, List, Any, Tuple
 import sys
 
 def qtgui_from_click(cmd):
-    # Command-name to command-options and callables
+    # Command-name to command-options and callables + expose value
     # Assuming, that every command has an unique name (TODO)
-    widget_registry: Dict[str, Dict[str, Callable]] = {}
+    widget_registry: Dict[str, Dict[str, Tuple[Callable, bool]]] = {}
 
-    def parameter_to_widget(command: click.Command, param: click.types.ParamType) -> QWidget:
+    def parameter_to_widget(command: click.Command, param: click.core.Parameter) -> QWidget:
         if param.name:
             if param.nargs == 1 or isinstance(param.type, click.types.Tuple):
                 widget = create_widget(param.type, param.to_info_dict(), widgetsource=create_widget, com=command, o=param)
             else:
                 widget = create_widget_mult(param.type, param.nargs, param.to_info_dict(), com=command, o=param)
                 
-            widget_registry[command.name][param.name] = lambda: widget.getValue()
+            widget_registry[command.name][param.name] = (lambda: widget.getValue(), param.expose_value)
 
             return widget.container
         else:
@@ -82,14 +82,14 @@ def qtgui_from_click(cmd):
             raise RuntimeError("Every command has to have an unique name")    
 
         for param in cmd.params:
-            if isinstance(param, (click.core.Argument, click.core.Option)):
+            if isinstance(param, click.core.Parameter):
                 # Yes-Parameter
                 if hasattr(param, "is_flag") and param.is_flag and hasattr(param, "prompt") and param.prompt:
                     prompt = str(param.prompt)
                     ret = lambda: (True, ClickQtError()) if QMessageBox(QMessageBox.Information, "Confirmation", prompt, \
                                                                         QMessageBox.Yes|QMessageBox.No).exec() == QMessageBox.Yes \
                                                         else (False, ClickQtError(ClickQtError.ErrorType.ABORTED_ERROR))  
-                    widget_registry[cmd.name][param.name] = lambda: (ret, ClickQtError())
+                    widget_registry[cmd.name][param.name] = (lambda: (ret, ClickQtError()), param.expose_value)
                 else:  
                     cmd_elements.addWidget(parameter_to_widget(cmd, param))
         return cmdbox
@@ -155,37 +155,60 @@ def qtgui_from_click(cmd):
     def run():
         selected_command = current_command(main_tab_widget.currentWidget(), cmd) 
 
-        args = []
+        args: List|Dict[str, Any] = None
         has_error = False
+        unused_options: List[Callable] = [] # parameters with expose_value==False
+
+        if inspect.getfullargspec(selected_command.callback).varkw:
+            args = {}
+        else:
+            args = []
+
+        def append(option_name: str, value: Any):
+            if isinstance(args, list):
+                args.append(value)
+            else:
+                args[option_name] = value
+
         # Check all values for errors
-        for option in inspect.getfullargspec(selected_command.callback).args:
-            widget_value, err = widget_registry[selected_command.name][option]()   
-            if check_error(err):
-                has_error = True
-            elif isinstance(widget_value, list) and len(widget_value) and isinstance(widget_value[0], tuple):
-                val, err = check_list(widget_value)
+        for option_name, (value_callback, expose) in widget_registry[selected_command.name].items():
+            if expose:
+                widget_value, err = value_callback()   
                 if check_error(err):
                     has_error = True
-                args.append(val)
-            else:
-                args.append(widget_value)
+                elif isinstance(widget_value, list) and len(widget_value) and isinstance(widget_value[0], tuple):
+                    val, err = check_list(widget_value)
+                    if check_error(err):
+                        has_error = True
+                    append(option_name, val)
+                else:
+                    append(option_name, widget_value)
+            else: # Verify it when all options are valid
+                unused_options.append(value_callback)
 
         if has_error: 
             return
 
         # Replace the callables with their values and check for errors
-        for i in range(len(args)):
-            if callable(args[i]):
-                args[i], err = args[i]()
-                if check_error(err):
-                    has_error = True
+        if isinstance(args, list):
+            for i in range(len(args)):
+                if callable(args[i]):
+                    args[i], err = args[i]()
+                    if check_error(err):
+                        has_error = True
+        else:
+            for option_name, value in args.items():
+                if callable(value):
+                    args[option_name], err = value()
+                    if check_error(err):
+                        has_error = True
 
         if has_error:
             return
 
-        # Options with argument expose_value=False
-        for unused_option in set(widget_registry[selected_command.name].keys()).difference(inspect.getfullargspec(selected_command.callback).args):
-            widget_value, err = widget_registry[selected_command.name][unused_option]()
+        # Parameters with expose_value==False
+        for value_callback in unused_options:
+            widget_value, err = value_callback()
             if check_error(err):
                 has_error = True 
             if callable(widget_value):
@@ -194,9 +217,12 @@ def qtgui_from_click(cmd):
                     has_error = True  
              
         if has_error:
-            return 
+            return
         
-        selected_command.callback(*args)
+        if isinstance(args, list):
+            selected_command.callback(*args)
+        else:
+            selected_command.callback(**args)
 
                 
     run_button.clicked.connect(run)
