@@ -2,9 +2,8 @@ import click
 from PySide6.QtWidgets import QGroupBox, QVBoxLayout
 from clickqt.widgets.base_widget import BaseWidget
 from clickqt.widgets.numericfields import IntField, RealField
-from clickqt.core.error import ClickQtError
 from clickqt.widgets.textfield import TextField
-from typing import Any, List, Tuple
+from typing import Any, List
 
 class MultiValueWidget(BaseWidget):
     widget_type = QGroupBox
@@ -31,14 +30,6 @@ class MultiValueWidget(BaseWidget):
         assert len(value) == len(self.children)
         for i,c in enumerate(self.children):
             c.setValue(value[i])
-
-    def getValue(self) -> Tuple[List[Any], ClickQtError]:
-        value, err = self.callback_validate()
-        if err.type != ClickQtError.ErrorType.NO_ERROR:
-            self.handleValid(False)
-            return (value, err)
-        
-        return (self.getWidgetValue(), ClickQtError())
     
     def getWidgetValue(self) -> List[Any]:
         return [c.getValue() for c in self.children]

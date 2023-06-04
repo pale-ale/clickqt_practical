@@ -1,8 +1,6 @@
 from PySide6.QtWidgets import QGroupBox, QHBoxLayout
 from clickqt.widgets.base_widget import BaseWidget
-from click import Parameter
-from typing import Callable, Any, List, Tuple
-from clickqt.core.error import ClickQtError
+from typing import Callable, Any
 
 class TupleWidget(BaseWidget):
     widget_type = QGroupBox
@@ -34,14 +32,6 @@ class TupleWidget(BaseWidget):
         assert len(value) == len(self.children)
         for i,c in enumerate(self.children):
             c.setValue(value[i])
-
-    def getValue(self) -> Tuple[List[Any], ClickQtError]:
-        value, err = self.callback_validate()
-        if err.type != ClickQtError.ErrorType.NO_ERROR:
-            self.handleValid(False)
-            return (value, err)
-        
-        return (self.getWidgetValue(), ClickQtError())
     
     def getWidgetValue(self) -> str:
         return [c.getValue() for c in self.children]

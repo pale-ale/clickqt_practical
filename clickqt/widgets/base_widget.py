@@ -6,6 +6,7 @@ from clickqt.core.error import ClickQtError
 from clickqt.widgets.core.QPathDialog import QPathDialog
 from clickqt.core.callbackvalidator import CallbackValidator
 from enum import IntFlag
+from click import Context, Parameter
 
 class BaseWidget(ABC):
     # The type of this widget
@@ -13,6 +14,8 @@ class BaseWidget(ABC):
 
     def __init__(self, options, *args, **kwargs):
         self.options = options
+        self.click_object: Parameter = kwargs.get("o")
+        self.click_command = kwargs.get("com")
         self.widget_name = options.get('name', 'Unknown')
         self.container = QWidget()
         self.layout = QHBoxLayout()
@@ -25,9 +28,11 @@ class BaseWidget(ABC):
         self.callback_validator: CallbackValidator = None
 
         assert self.widget is not None, "Widget not initialized"
+        assert self.click_object is not None, "Click object not provided"
+        assert self.click_command is not None, "Click command not provided"
         
-        if kwargs["o"].callback:
-            self.callback_validator = CallbackValidator(kwargs["com"], kwargs["o"], self)
+        if self.click_object.callback:
+            self.callback_validator = CallbackValidator(self)
             self.widget.installEventFilter(self.callback_validator)
     
     def createWidget(self, *args, **kwargs):
@@ -40,14 +45,37 @@ class BaseWidget(ABC):
         """
         pass
 
-    @abstractmethod
     def getValue(self) -> Tuple[Any, ClickQtError]:
         """
             Validates the value of the widget and returns the result\n
-            Valid -> (widget_value, ClickQtError.ErrorType.NO_ERROR)\n
-            Invalid -> (None or zero initialized type, Any ClickQtError error)
+            Valid -> (widget value or the value of a callback, ClickQtError.ErrorType.NO_ERROR)\n
+            Invalid -> (None, CClickQtError.ErrorType.CONVERTION_ERROR or ClickQtError.ErrorType.CALLBACK_VALIDATION_ERROR)
         """
-        pass
+        value: Any = None
+
+        try: # Try to convert the provided value into the corresponding click object type
+            if hasattr(self.click_object, "multiple") and self.click_object.multiple:
+                value = []
+                #TODO
+                #assert not isinstance(self.getWidgetValue(), str), "There is a bug"
+                for v in self.getWidgetValue():
+                    value.append(self.click_object.type.convert(value=v, param=None, ctx=Context(self.click_command))) 
+            else:
+                value = self.click_object.type.convert(value=self.getWidgetValue(), param=None, ctx=Context(self.click_command))
+        except AssertionError as e:
+            raise 
+        except Exception as e:
+            self.handleValid(False)
+            return (None, ClickQtError(ClickQtError.ErrorType.CONVERTION_ERROR, self.widget_name, e))
+            
+        try: # Consider callbacks 
+            value = self.click_object.process_value(Context(self.click_command), value)
+        except Exception as e:
+            self.handleValid(False)
+            return (None, ClickQtError(ClickQtError.ErrorType.CALLBACK_VALIDATION_ERROR, self.widget_name, e))
+
+        self.handleValid(True)
+        return (value, ClickQtError())
 
     @abstractmethod
     def getWidgetValue(self) -> Any:
@@ -61,14 +89,6 @@ class BaseWidget(ABC):
             self.widget.setStyleSheet("border: 1px solid red")
         else:
             self.widget.setStyleSheet("")
-
-    def callback_validate(self) -> Tuple[Any, ClickQtError]:
-        if self.callback_validator:
-            value, err = self.callback_validator.validate()
-            if err.type != ClickQtError.ErrorType.NO_ERROR:
-                return (value, err)
-            
-        return (None, ClickQtError())
 
 
 class NumericField(BaseWidget):
@@ -92,14 +112,6 @@ class NumericField(BaseWidget):
 
     def getMaximum(self) -> int|float:
         self.widget.maximum()
-
-    def getValue(self) -> Tuple[int|float, ClickQtError]:
-        value, err = self.callback_validate()
-        if err.type != ClickQtError.ErrorType.NO_ERROR:
-            self.handleValid(False)
-            return (value, err)
-        
-        return (self.getWidgetValue(), ClickQtError())
     
     def getWidgetValue(self) -> int|float:
         return self.widget.value()

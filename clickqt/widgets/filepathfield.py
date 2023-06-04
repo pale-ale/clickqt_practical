@@ -1,8 +1,6 @@
 from PySide6.QtWidgets import QLineEdit
 from PySide6.QtCore import QFile
 from clickqt.widgets.base_widget import PathField
-from typing import Tuple
-from clickqt.core.error import ClickQtError
 
 class FilePathField(PathField):
     widget_type = QLineEdit
@@ -23,17 +21,6 @@ class FilePathField(PathField):
         else: # Reset the border color
             self.handleValid(True)
             return True
-
-    def getValue(self) -> Tuple[str, ClickQtError]:
-        value, err = self.callback_validate()
-        if err.type != ClickQtError.ErrorType.NO_ERROR:
-            self.handleValid(False)
-            return (value, err)
-        
-        if not self.isValid():
-            return ("", ClickQtError(ClickQtError.ErrorType.PATH_NOT_EXIST_ERROR, self.widget_name))
-        else:
-            return (self.getWidgetValue(), ClickQtError())
         
     def getWidgetValue(self) -> str:
         return self.widget.text()

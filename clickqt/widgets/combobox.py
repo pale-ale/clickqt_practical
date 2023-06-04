@@ -1,22 +1,15 @@
-from typing import List, Tuple
+from typing import List, Any
 from PySide6.QtWidgets import QComboBox
 from clickqt.widgets.base_widget import ComboBoxBase
 from clickqt.widgets.core.QCheckableCombobox import QCheckableComboBox
 from clickqt.core.error import ClickQtError
+from click import Context, Choice
 
 class ComboBox(ComboBoxBase):
     widget_type = QComboBox
 
     def addItems(self, items: List[str]):
         self.widget.addItems(items)
-
-    def getValue(self) -> Tuple[str, ClickQtError]:
-        value, err = self.callback_validate()
-        if err.type != ClickQtError.ErrorType.NO_ERROR:
-            self.handleValid(False)
-            return (value, err)
-        
-        return (self.getWidgetValue(), ClickQtError())
     
     def getWidgetValue(self) -> str:
         return self.widget.currentText()
@@ -27,13 +20,20 @@ class CheckableComboBox(ComboBoxBase):
     def addItems(self, items: List[str]):
         self.widget.addItems(items)
 
-    def getValue(self) -> Tuple[List[str], ClickQtError]:
-        value, err = self.callback_validate()
-        if err.type != ClickQtError.ErrorType.NO_ERROR:
-            self.handleValid(False)
-            return (value, err)
-        
-        return (self.getWidgetValue(), ClickQtError())
-    
+    def getValue(self):
+        values = []
+
+        for v in self.getWidgetValue():
+            try: # Try to convert the provided value into the corresponding click object type 
+                values.append(self.click_object.type.convert(value=v, param=None, ctx=Context(self.click_command)))
+            except Exception as e:
+                return (None, ClickQtError(ClickQtError.ErrorType.CONVERTION_ERROR, self.widget_name, e))
+      
+        try: # Try to convert the provided value the corresponding click object type 
+            return (self.click_object.process_value(Context(self.click_command), values), ClickQtError())
+        except Exception as e:
+            return (None, ClickQtError(ClickQtError.ErrorType.CALLBACK_VALIDATION_ERROR, self.widget_name, e))
+
+
     def getWidgetValue(self) -> List[str]:
         return self.widget.getData()

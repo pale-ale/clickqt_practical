@@ -22,42 +22,44 @@ class PasswordField(TextField):
 
         self.show_hide_action.toggled.connect(showPassword)
 
-        if hasattr(kwargs.get("o"), "confirmation_prompt") and kwargs["o"].confirmation_prompt:
+        if hasattr(self.click_object, "confirmation_prompt") and self.click_object.confirmation_prompt:
             kwargs["o"].confirmation_prompt = False  # Stop recursion
             kwargs["label"] = "Confirmation "
-            self.confirmationField = PasswordField(options, *args, **kwargs)
+            self.confirmation_field = PasswordField(options, *args, **kwargs)
             temp = self.container
             self.container = QWidget()
             self.vLayout = QVBoxLayout()
             self.vLayout.addWidget(temp)
-            self.vLayout.addWidget(self.confirmationField.container)
+            self.vLayout.addWidget(self.confirmation_field.container)
             self.container.setLayout(self.vLayout)
-
-            def onValueChanged():
-                if self.getWidgetValue() != self.confirmationField.getWidgetValue():
-                    self.confirmationField.widget.setStyleSheet("border: 1px solid red")
-                    self.widget.setStyleSheet("border: 1px solid red")
-                else: # Reset the border color
-                    self.confirmationField.widget.setStyleSheet("")
-                    self.widget.setStyleSheet("")
-
-            self.confirmationField.widget.textChanged.connect(onValueChanged)
-            self.widget.textChanged.connect(onValueChanged)
+            self.confirmation_field.widget.textChanged.connect(lambda: self.handleValid(self.getWidgetValue() == self.confirmation_field.getWidgetValue()))
+            self.widget.textChanged.connect(lambda: self.handleValid(self.getWidgetValue() == self.confirmation_field.getWidgetValue()))
 
     def setValue(self, value: str):
         self.widget.setText(value)
 
+    def handleValid(self, valid: bool):
+        super().handleValid(valid)
+
+        if hasattr(self, "confirmation_field"):
+            self.confirmation_field.handleValid(valid)           
+
     def getValue(self) -> Tuple[str, ClickQtError]:
-        value, err = self.callback_validate()
-        if err.type != ClickQtError.ErrorType.NO_ERROR:
-            self.handleValid(False)
-            return (value, err)
-        
-        if(hasattr(self, "confirmationField")):
-            return self.getWidgetValue(), ClickQtError(ClickQtError.ErrorType.CONFIRMATION_INPUT_NOT_EQUAL_ERROR, self.widget_name) \
-                if self.getWidgetValue() != self.confirmationField.getWidgetValue() else ClickQtError()
+        if(hasattr(self, "confirmation_field")):
+            val1, err1 = super().getValue()
+            val2, err2 = self.confirmation_field.getValue()
+
+            if err1.type != ClickQtError.ErrorType.NO_ERROR or err2.type != ClickQtError.ErrorType.NO_ERROR:
+                return (None, err1 if err1.type != ClickQtError.ErrorType.NO_ERROR else err2)
+
+            if val1 != val2:
+                self.handleValid(False) # Update textfield border because super().getValue() doesn't do it here correctly
+                return (None, ClickQtError(ClickQtError.ErrorType.CONFIRMATION_INPUT_NOT_EQUAL_ERROR, self.widget_name))
+            else:
+                self.handleValid(True)
+                return (val1, ClickQtError())  
         else:
-            return self.getWidgetValue(), ClickQtError()
+            return super().getValue()
         
     def getWidgetValue(self) -> str:
         return self.widget.text()
