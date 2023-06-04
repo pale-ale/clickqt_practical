@@ -84,4 +84,4 @@ utilgroup.add_command(hello)
 gui = clickqt.qtgui_from_click(utilgroup)
 
 if __name__ == "__main__":
-    gui()
+    utilgroup()

@@ -14,8 +14,7 @@ class CallbackValidator(QWidget):
             value, err = self.widget.getValue()
             if value is not None and err.type == ClickQtError.ErrorType.NO_ERROR:
                 #TODO: Check if value has correct type
-                #self.widget.setValue(value)
-                pass
+                self.widget.setValue(value)
 
             self.widget.handleValid(err.type == ClickQtError.ErrorType.NO_ERROR)
 
