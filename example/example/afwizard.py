@@ -10,7 +10,7 @@ def locate_lidar_dataset(ctx, param, path):
     # Validate that the file has the las or laz extension
     _, ext = os.path.splitext(path)
     if ext.lower() in (".las", ".laz"):
-        return path
+        return 12.2
     else:
         raise click.BadParameter(f"Lidar datasets must be .las or .laz (not: {path})")
 
@@ -55,6 +55,7 @@ def validate_spatial_reference(ctx, param, crs):
     "--dataset",
     type=click.Path(exists=True, dir_okay=False),
     required=True,
+    default="example/test.las",
     callback=locate_lidar_dataset,
     help="The LAS/LAZ data file to work on.",
 )
@@ -69,6 +70,7 @@ def validate_spatial_reference(ctx, param, crs):
     "--segmentation",
     type=click.Path(exists=True, dir_okay=False),
     required=True,
+    default="example/test.geojson",
     callback=validate_segmentation,
     help="The GeoJSON file that describes the segmentation of the dataset. This is expected to be generated either by the Jupyter UI or otherwise provide the necessary information about what filter pipelines to apply.",
 )
@@ -126,6 +128,7 @@ def validate_spatial_reference(ctx, param, crs):
 )
 def main(**args):
     print("main executed")
+    print(args.pop("dataset"))
 
 gui = clickqt.qtgui_from_click(main)
     
