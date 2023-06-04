@@ -1,9 +1,9 @@
-from typing import List, Any
+from typing import List
 from PySide6.QtWidgets import QComboBox
 from clickqt.widgets.base_widget import ComboBoxBase
 from clickqt.widgets.core.QCheckableCombobox import QCheckableComboBox
 from clickqt.core.error import ClickQtError
-from click import Context, Choice
+from click import Context
 
 class ComboBox(ComboBoxBase):
     widget_type = QComboBox

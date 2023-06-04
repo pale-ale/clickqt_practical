@@ -3,7 +3,6 @@ from clickqt.widgets.base_widget import PathField
 from typing import Tuple, Any
 from PySide6.QtCore import QFile
 from clickqt.core.error import ClickQtError
-from click import Context, Parameter, Path
 import sys
 from io import StringIO, BytesIO
 import re
