@@ -30,6 +30,8 @@ class FileFild(PathField):
 
     def getValue(self) -> Tuple[Any, ClickQtError]:
         if "r" in self.options["type"]["mode"] and self.widget.text() == "-":
+            self.handleValid(True)
+
             def ret():
                 old_stdin = sys.stdin
                 user_input, ok = QInputDialog.getMultiLineText(self.widget, 'Stdin Input', self.label.text())
