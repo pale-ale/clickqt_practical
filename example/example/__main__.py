@@ -78,6 +78,13 @@ def hello():
 def hello_n(n):
     for i in range(n):
         click.echo(i)
+
+@hello.command()
+@click.option('-ns', type=(int, str), multiple=True)
+def hello_ns(ns):
+    for i,s in ns:
+        for _ in range(i):
+            click.echo(f"{s}{i}")
     
 utilgroup.add_command(hello)
 
