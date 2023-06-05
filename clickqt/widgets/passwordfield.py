@@ -32,8 +32,6 @@ class PasswordField(TextField):
             self.vLayout.addWidget(temp)
             self.vLayout.addWidget(self.confirmation_field.container)
             self.container.setLayout(self.vLayout)
-            self.confirmation_field.widget.textChanged.connect(lambda: self.handleValid(self.getWidgetValue() == self.confirmation_field.getWidgetValue()))
-            self.widget.textChanged.connect(lambda: self.handleValid(self.getWidgetValue() == self.confirmation_field.getWidgetValue()))
 
     def setValue(self, value: str):
         self.widget.setText(value)

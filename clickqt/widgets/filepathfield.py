@@ -13,14 +13,6 @@ class FilePathField(PathField):
 
         if self.file_type == PathField.FileType.Unknown:
             raise ValueError(f"Neither 'file_okay' nor 'dir_okay' in argument '{self.widget_name}' is set")
-    
-    def isValid(self) -> bool:
-        if self.options["type"]["exists"] and not QFile.exists(self.getWidgetValue()):
-            self.handleValid(False)
-            return False
-        else: # Reset the border color
-            self.handleValid(True)
-            return True
         
     def getWidgetValue(self) -> str:
         return self.widget.text()

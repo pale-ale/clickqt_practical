@@ -148,12 +148,6 @@ class PathField(BaseWidget):
         self.browse_btn.clicked.connect(self.browse)
         self.layout.addWidget(self.browse_btn)
 
-        self.widget.textChanged.connect(self.isValid)
-
-    @abstractmethod
-    def isValid(self) -> bool:
-        pass
-
     def setValue(self, value: str):
         self.widget.setText(value)
 
