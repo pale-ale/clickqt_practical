@@ -81,7 +81,7 @@ def hello_n(n):
 
 @hello.command()
 @click.option('-ns', type=(int, str), multiple=True)
-def hello_n(ns):
+def hello_ns(ns):
     for i,s in ns:
         for _ in range(i):
             click.echo(f"{s}{i}")

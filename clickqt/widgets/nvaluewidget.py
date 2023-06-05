@@ -29,10 +29,15 @@ class NValueWidget(BaseWidget):
     
     def add_empty_pair(self):
         self.o.multiple = False # nargs cannot be nested, so it is safe to turn this off for children
-        clickqtwidget = self.widgetsource(self.optiontype, self.options, *self.optargs, o=self.o, widgetsource=self.widgetsource, **self.optkwargs)
+        clickqtwidget:BaseWidget = self.widgetsource(self.optiontype, self.options, *self.optargs, o=self.o, widgetsource=self.widgetsource, **self.optkwargs)
+        clickqtwidget.label.deleteLater()
         removebtn = QPushButton("-", clickqtwidget.widget)
+        listentry = QWidget()
+        listentry.setLayout(QVBoxLayout())
+        listentry.layout().addWidget(removebtn)
+        listentry.layout().addWidget(clickqtwidget.container)
         removebtn.clicked.connect(lambda: self.remove_button_pair(removebtn))
-        self.vbox.layout().addWidget(clickqtwidget.widget)
+        self.vbox.layout().addWidget(listentry)
         self.buttondict[removebtn] = clickqtwidget
         self.widget.setWidget(self.vbox)
     
