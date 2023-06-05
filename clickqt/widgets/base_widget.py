@@ -6,7 +6,7 @@ from clickqt.core.error import ClickQtError
 from clickqt.widgets.core.QPathDialog import QPathDialog
 from clickqt.core.callbackvalidator import CallbackValidator
 from enum import IntFlag
-from click import Context, Parameter
+from click import Context, Parameter, Tuple as click_type_tuple
 
 class BaseWidget(ABC):
     # The type of this widget
@@ -30,7 +30,7 @@ class BaseWidget(ABC):
         assert self.widget is not None, "Widget not initialized"
         assert self.click_object is not None, "Click object not provided"
         assert self.click_command is not None, "Click command not provided"
-        
+
         if self.click_object.callback:
             self.callback_validator = CallbackValidator(self)
             self.widget.installEventFilter(self.callback_validator)
@@ -54,16 +54,14 @@ class BaseWidget(ABC):
         value: Any = None
 
         try: # Try to convert the provided value into the corresponding click object type
-            if hasattr(self.click_object, "multiple") and self.click_object.multiple:
+            # if statement is obtained by creating the corresponding truth table
+            if self.click_object.multiple or \
+            (not isinstance(self.click_object.type, click_type_tuple) and self.click_object.nargs != 1):
                 value = []
-                #TODO
-                #assert not isinstance(self.getWidgetValue(), str), "There is a bug"
                 for v in self.getWidgetValue():
                     value.append(self.click_object.type.convert(value=v, param=None, ctx=Context(self.click_command))) 
             else:
                 value = self.click_object.type.convert(value=self.getWidgetValue(), param=None, ctx=Context(self.click_command))
-        except AssertionError as e:
-            raise 
         except Exception as e:
             self.handleValid(False)
             return (None, ClickQtError(ClickQtError.ErrorType.CONVERTION_ERROR, self.widget_name, e))

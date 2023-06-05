@@ -12,5 +12,7 @@ class DateTimeEdit(BaseWidget):
     def setValue(self, value: QDateTime):
         self.widget.setDateTime(value)
     
-    def getWidgetValue(self) -> QDateTime:
-        return self.widget.dateTime()
+    def getWidgetValue(self) -> str:
+         # click.DateTime wants a str in form of '%Y-%m-%d', '%Y-%m-%dT%H:%M:%S'or '%Y-%m-%d %H:%M:%S'
+         # See https://click.palletsprojects.com/en/8.1.x/api/#click.DateTime
+        return self.widget.dateTime().toString("yyyy-MM-dd hh:mm:ss")

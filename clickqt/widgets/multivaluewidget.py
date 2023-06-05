@@ -23,6 +23,8 @@ class MultiValueWidget(BaseWidget):
             for t, widgetclass in typedict.items():
                 if isinstance(otype, t):
                     bw = widgetclass(options, *args, **kwargs)
+                    bw.layout.removeWidget(bw.label)
+                    bw.label.deleteLater()
                     self.widget.layout().addWidget(bw.container)
                     self.children.append(bw)
         
@@ -32,4 +34,4 @@ class MultiValueWidget(BaseWidget):
             c.setValue(value[i])
     
     def getWidgetValue(self) -> List[Any]:
-        return [c.getValue() for c in self.children]
+        return [c.getWidgetValue() for c in self.children]

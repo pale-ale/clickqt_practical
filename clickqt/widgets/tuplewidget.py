@@ -10,9 +10,8 @@ class TupleWidget(BaseWidget):
         self.children = []
         recinfo = recinfo if recinfo else []
         self.widget.setLayout(QHBoxLayout())
-        o = kwargs["o"]
 
-        for i,t in enumerate(TupleWidget.getTypesRecursive(o.type.types, recinfo)):
+        for i,t in enumerate(TupleWidget.getTypesRecursive(self.click_object.type.types, recinfo)):
             recinfo.append(i)
             bw = widgetsource(t, options, widgetsource=widgetsource, recinfo=recinfo, *args, **kwargs)
             recinfo.pop()
@@ -34,4 +33,4 @@ class TupleWidget(BaseWidget):
             c.setValue(value[i])
     
     def getWidgetValue(self) -> str:
-        return [c.getValue() for c in self.children]
+        return [c.getWidgetValue() for c in self.children]
