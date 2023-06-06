@@ -8,8 +8,8 @@ from typing import Any, List
 class MultiValueWidget(BaseWidget):
     widget_type = QGroupBox
     
-    def __init__(self, options, otype, onargs, *args, **kwargs):
-        super().__init__(options, *args, **kwargs)
+    def __init__(self, options, otype, onargs, parent: BaseWidget = None, *args, **kwargs):
+        super().__init__(options, parent, *args, **kwargs)
         self.children = []
         self.widget.setLayout(QVBoxLayout())
         
@@ -22,7 +22,7 @@ class MultiValueWidget(BaseWidget):
         for i in range(onargs):
             for t, widgetclass in typedict.items():
                 if isinstance(otype, t):
-                    bw = widgetclass(options, *args, **kwargs)
+                    bw = widgetclass(options, parent=self, *args, **kwargs)
                     bw.layout.removeWidget(bw.label)
                     bw.label.deleteLater()
                     self.widget.layout().addWidget(bw.container)

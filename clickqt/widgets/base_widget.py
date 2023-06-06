@@ -4,7 +4,7 @@ from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QPushButton, QFileDi
 from PySide6.QtCore import QDir
 from clickqt.core.error import ClickQtError
 from clickqt.widgets.core.QPathDialog import QPathDialog
-from clickqt.core.callbackvalidator import CallbackValidator
+from clickqt.core.focusoutvalidator import FocusOutValidator
 from enum import IntFlag
 from click import Context, Parameter, Tuple as click_type_tuple
 
@@ -12,8 +12,9 @@ class BaseWidget(ABC):
     # The type of this widget
     widget_type: Any
 
-    def __init__(self, options, *args, **kwargs):
+    def __init__(self, options, parent=None, *args, **kwargs):
         self.options = options
+        self.parent_widget = parent
         self.click_object: Parameter = kwargs.get("o")
         self.click_command = kwargs.get("com")
         self.widget_name = options.get('name', 'Unknown')
@@ -25,15 +26,13 @@ class BaseWidget(ABC):
         self.layout.addWidget(self.label)
         self.layout.addWidget(self.widget)
         self.container.setLayout(self.layout)
-        self.callback_validator: CallbackValidator = None
 
         assert self.widget is not None, "Widget not initialized"
         assert self.click_object is not None, "Click object not provided"
         assert self.click_command is not None, "Click command not provided"
 
-        if self.click_object.callback:
-            self.callback_validator = CallbackValidator(self)
-            self.widget.installEventFilter(self.callback_validator)
+        self.focus_out_validator = FocusOutValidator(self)
+        self.widget.installEventFilter(self.focus_out_validator)
     
     def createWidget(self, *args, **kwargs):
         return self.widget_type()
@@ -51,6 +50,9 @@ class BaseWidget(ABC):
             Valid -> (widget value or the value of a callback, ClickQtError.ErrorType.NO_ERROR)\n
             Invalid -> (None, CClickQtError.ErrorType.CONVERTION_ERROR or ClickQtError.ErrorType.CALLBACK_VALIDATION_ERROR)
         """
+        if self.parent_widget is not None:
+            return self.parent_widget.getValue()
+
         value: Any = None
 
         try: # Try to convert the provided value into the corresponding click object type

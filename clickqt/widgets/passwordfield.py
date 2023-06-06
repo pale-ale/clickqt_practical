@@ -3,6 +3,8 @@ from PySide6.QtGui import QIcon, QAction
 from clickqt.widgets.textfield import TextField
 from typing import Tuple
 from clickqt.core.error import ClickQtError
+import click
+click.types.StringParamType
 
 class PasswordField(TextField):
     widget_type = QLineEdit
@@ -23,9 +25,10 @@ class PasswordField(TextField):
         self.show_hide_action.toggled.connect(showPassword)
 
         if hasattr(self.click_object, "confirmation_prompt") and self.click_object.confirmation_prompt:
-            kwargs["o"].confirmation_prompt = False  # Stop recursion
+            self.click_object.confirmation_prompt = False  # Stop recursion
             kwargs["label"] = "Confirmation "
             self.confirmation_field = PasswordField(options, *args, **kwargs)
+            self.confirmation_field.confirmation_field = self
             temp = self.container
             self.container = QWidget()
             self.vLayout = QVBoxLayout()
@@ -40,12 +43,12 @@ class PasswordField(TextField):
         super().handleValid(valid)
 
         if hasattr(self, "confirmation_field"):
-            self.confirmation_field.handleValid(valid)           
+            super(TextField, self.confirmation_field).handleValid(valid)      
 
     def getValue(self) -> Tuple[str, ClickQtError]:
-        if(hasattr(self, "confirmation_field")):
+        if hasattr(self, "confirmation_field"):
             val1, err1 = super().getValue()
-            val2, err2 = self.confirmation_field.getValue()
+            val2, err2 = super(TextField, self.confirmation_field).getValue()
 
             if err1.type != ClickQtError.ErrorType.NO_ERROR or err2.type != ClickQtError.ErrorType.NO_ERROR:
                 return (None, err1 if err1.type != ClickQtError.ErrorType.NO_ERROR else err2)

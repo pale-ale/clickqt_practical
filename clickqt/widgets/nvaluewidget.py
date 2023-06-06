@@ -9,8 +9,8 @@ from typing import Any, Callable
 class NValueWidget(BaseWidget):
     widget_type = QScrollArea
     
-    def __init__(self, options, widgetsource:Callable[[Any], BaseWidget], *args, **kwargs):
-        super().__init__(options, *args, **kwargs)
+    def __init__(self, options, widgetsource:Callable[[Any], BaseWidget], parent: BaseWidget = None, *args, **kwargs):
+        super().__init__(options, parent, *args, **kwargs)
         self.widget.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy(0x2))
         self.options = options
         self.optargs = args
@@ -28,7 +28,7 @@ class NValueWidget(BaseWidget):
     
     def add_empty_pair(self):
         self.click_object.multiple = False # nargs cannot be nested, so it is safe to turn this off for children
-        clickqtwidget:BaseWidget = self.widgetsource(self.optiontype, self.options, *self.optargs, widgetsource=self.widgetsource, **self.optkwargs)
+        clickqtwidget:BaseWidget = self.widgetsource(self.optiontype, self.options, *self.optargs, widgetsource=self.widgetsource, parent=self, **self.optkwargs)
         self.click_object.multiple = True # click needs this for a correct conversion
         clickqtwidget.label.deleteLater()
         removebtn = QPushButton("-", clickqtwidget.widget)

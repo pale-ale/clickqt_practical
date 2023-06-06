@@ -5,15 +5,15 @@ from typing import Callable, Any
 class TupleWidget(BaseWidget):
     widget_type = QGroupBox
 
-    def __init__(self, options, widgetsource:Callable[[Any], BaseWidget]=None, recinfo:list=None, *args, **kwargs):
-        super().__init__(options, *args, **kwargs)
+    def __init__(self, options, widgetsource:Callable[[Any], BaseWidget], parent: BaseWidget = None, recinfo:list=None, *args, **kwargs):
+        super().__init__(options, parent, *args, **kwargs)
         self.children = []
         recinfo = recinfo if recinfo else []
         self.widget.setLayout(QHBoxLayout())
 
         for i,t in enumerate(TupleWidget.getTypesRecursive(self.click_object.type.types, recinfo)):
             recinfo.append(i)
-            bw = widgetsource(t, options, widgetsource=widgetsource, recinfo=recinfo, *args, **kwargs)
+            bw = widgetsource(t, options, widgetsource=widgetsource, parent=self, recinfo=recinfo, *args, **kwargs)
             recinfo.pop()
             bw.layout.removeWidget(bw.label)
             bw.label.deleteLater()
