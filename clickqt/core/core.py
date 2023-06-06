@@ -154,7 +154,7 @@ def qtgui_from_click(cmd):
             return group # =command
         
     def function_call_formatter(cmd):
-        message = f"{cmd}: {widget_registry[cmd.name]}"
+        message = f"{cmd}: {cmd.params}"
         return message
 
     def run():
