@@ -3,8 +3,6 @@ from PySide6.QtGui import QIcon, QAction
 from clickqt.widgets.textfield import TextField
 from typing import Tuple
 from clickqt.core.error import ClickQtError
-import click
-click.types.StringParamType
 
 class PasswordField(TextField):
     widget_type = QLineEdit
