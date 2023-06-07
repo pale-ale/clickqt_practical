@@ -32,6 +32,10 @@ class MultiValueWidget(BaseWidget):
         assert len(value) == len(self.children)
         for i,c in enumerate(self.children):
             c.setValue(value[i])
+
+    def handleValid(self, valid: bool):
+        for c in self.children:
+            BaseWidget.handleValid(c, valid)
     
     def getWidgetValue(self) -> List[Any]:
         return [c.getWidgetValue() for c in self.children]

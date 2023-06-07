@@ -48,6 +48,10 @@ class NValueWidget(BaseWidget):
             cqtwidget.widget.deleteLater()
             btntoremove.deleteLater()
 
+    def handleValid(self, valid: bool):
+        for c in self.buttondict.values():
+            BaseWidget.handleValid(c, valid)
+
     def setValue(self, value):
         assert len(value) == len(self.children)
         for i,c in enumerate(self.children):
