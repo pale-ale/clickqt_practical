@@ -163,7 +163,13 @@ def qtgui_from_click(cmd):
             return group # =command
         
     def get_params(cmd):
-        return [k for k, v in widget_registry[cmd.name].items()]
+        params = [k for k, v in widget_registry[cmd.name].items()]
+        for i, param in enumerate(params):
+            params[i] = "--" + param
+        return params
+
+    def get_command_help(cmd):
+        return widget_registry[cmd.name]
                 
     def function_call_formatter(cmd):
         params = get_params(cmd)
@@ -238,7 +244,7 @@ def qtgui_from_click(cmd):
             return
         
         if isinstance(args, list):
-            print(f"Current Command: {function_call_formatter(selected_command)}")
+            print(f"Current Command: {function_call_formatter(selected_command)}: {get_command_help(selected_command)}")
             selected_command.callback(*args)
         else:
             print(f"Current Command: {function_call_formatter(selected_command)}")
