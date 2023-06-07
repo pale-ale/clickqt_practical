@@ -33,18 +33,19 @@ class NValueWidget(BaseWidget):
         clickqtwidget.layout.removeWidget(clickqtwidget.label)
         clickqtwidget.label.deleteLater()
         removebtn = QPushButton("-", clickqtwidget.widget)
-        listentry = QWidget()
-        listentry.setLayout(QVBoxLayout())
-        listentry.layout().addWidget(removebtn)
-        listentry.layout().addWidget(clickqtwidget.container)
+        clickqtwidget.layout.addWidget(removebtn)
         removebtn.clicked.connect(lambda: self.remove_button_pair(removebtn))
-        self.vbox.layout().addWidget(listentry)
-        self.buttondict[removebtn] = listentry
+        self.vbox.layout().addWidget(clickqtwidget.container)
+        self.buttondict[removebtn] = clickqtwidget
         self.widget.setWidget(self.vbox)
     
     def remove_button_pair(self, btntoremove):
         if btntoremove in self.buttondict:
-            self.buttondict.pop(btntoremove).deleteLater()
+            cqtwidget = self.buttondict.pop(btntoremove)
+            self.vbox.layout().removeWidget(cqtwidget.container)
+            cqtwidget.layout.removeWidget(cqtwidget.widget)
+            cqtwidget.container.deleteLater()
+            btntoremove.deleteLater()
             QScrollArea.updateGeometry(self.widget)
 
     def handleValid(self, valid: bool):
