@@ -10,17 +10,17 @@ def test_intfield(qtbot:qtbot.QtBot):
     ifield = IntField(option.to_info_dict())
 
     val, err = ifield.getValue()
-    assert val == 1 and err == ClickQtError.ErrorType.NO_ERROR
+    assert val == 1 and err.type == ClickQtError.ErrorType.NO_ERROR
     keystrokes(ifield.widget, qtbot, "23")
     val, err = ifield.getValue()
-    assert val == 231 and err == ClickQtError.ErrorType.NO_ERROR
+    assert val == 231 and err.type == ClickQtError.ErrorType.NO_ERROR
     qtbot.keyClick(ifield.widget, QtCore.Qt.Key.Key_Backspace)
     qtbot.keyClick(ifield.widget, QtCore.Qt.Key.Key_Backspace)
     val, err = ifield.getValue()
-    assert val == 1 and err == ClickQtError.ErrorType.NO_ERROR
+    assert val == 1 and err.type == ClickQtError.ErrorType.NO_ERROR
     qtbot.keyClick(ifield.widget, QtCore.Qt.Key.Key_Minus)
     val, err = ifield.getValue()
-    assert val == -1 and err == ClickQtError.ErrorType.NO_ERROR
+    assert val == -1 and err.type == ClickQtError.ErrorType.NO_ERROR
     qtbot.keyClick(ifield.widget, QtCore.Qt.Key.Key_Period)
     val, err = ifield.getValue()
-    assert val == -1 and err == ClickQtError.ErrorType.NO_ERROR
+    assert val == -1 and err.type == ClickQtError.ErrorType.NO_ERROR
