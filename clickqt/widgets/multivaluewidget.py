@@ -25,10 +25,8 @@ class MultiValueWidget(BaseWidget):
                 if isinstance(otype, t):
                     bw = widgetclass(options, parent=self, *args, **kwargs)
                     bw.layout.removeWidget(bw.label)
-                    bw.layout.removeWidget(bw.widget)
                     bw.label.deleteLater()
-                    bw.container.deleteLater()
-                    self.widget.layout().addWidget(bw.widget)
+                    self.widget.layout().addWidget(bw.container)
                     self.children.append(bw)
         
     def setValue(self, value):

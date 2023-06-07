@@ -4,7 +4,7 @@ from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QPushButton, QFileDi
 from PySide6.QtCore import QDir
 from clickqt.core.error import ClickQtError
 from clickqt.widgets.core.QPathDialog import QPathDialog
-from clickqt.core.focusoutvalidator import FocusOutValidator
+import clickqt.core
 from enum import IntFlag
 from click import Context, Parameter, Tuple as click_type_tuple
 
@@ -31,7 +31,7 @@ class BaseWidget(ABC):
         assert self.click_object is not None, "Click object not provided"
         assert self.click_command is not None, "Click command not provided"
 
-        self.focus_out_validator = FocusOutValidator(self)
+        self.focus_out_validator = clickqt.core.FocusOutValidator(self)
         self.widget.installEventFilter(self.focus_out_validator)
     
     def createWidget(self, *args, **kwargs):
@@ -50,7 +50,7 @@ class BaseWidget(ABC):
             Valid -> (widget value or the value of a callback, ClickQtError.ErrorType.NO_ERROR)\n
             Invalid -> (None, CClickQtError.ErrorType.CONVERTION_ERROR or ClickQtError.ErrorType.CALLBACK_VALIDATION_ERROR)
         """
-        if self.parent_widget is not None:
+        if self.parent_widget is not None: # Needed to validate a TupleWidget/MultiValueWidget correctly (when a child widget goes out of focus)
             return self.parent_widget.getValue()
 
         value: Any = None
@@ -69,13 +69,12 @@ class BaseWidget(ABC):
             return (None, ClickQtError(ClickQtError.ErrorType.CONVERTION_ERROR, self.widget_name, e))
             
         try: # Consider callbacks 
-            value = self.click_object.process_value(Context(self.click_command), value)
+            ret_val = (self.click_object.process_value(Context(self.click_command), value), ClickQtError())
+            self.handleValid(True)
+            return ret_val
         except Exception as e:
             self.handleValid(False)
             return (None, ClickQtError(ClickQtError.ErrorType.CALLBACK_VALIDATION_ERROR, self.widget_name, e))
-
-        self.handleValid(True)
-        return (value, ClickQtError())
 
     @abstractmethod
     def getWidgetValue(self) -> Any:
@@ -160,6 +159,7 @@ class PathField(BaseWidget):
         if self.file_type & PathField.FileType.File and self.file_type & PathField.FileType.Directory:
             dialog = QPathDialog(None, self.options["type"]["exists"])
             if dialog.exec():
+                self.handleValid(True)
                 self.setValue(dialog.selectedPath().replace(QDir.currentPath(), "").replace("/", QDir.separator()).removeprefix(QDir.separator()))
         else:
             dialog = QFileDialog()
@@ -183,5 +183,6 @@ class PathField(BaseWidget):
             if dialog.exec():
                 filenames = dialog.selectedFiles()
                 if filenames and len(filenames):
+                    self.handleValid(True)
                     self.setValue(filenames[0].replace(QDir.currentPath(), "").replace("/", QDir.separator()).removeprefix(QDir.separator())) 
     

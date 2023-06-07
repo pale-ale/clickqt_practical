@@ -1,11 +1,10 @@
-import click
 from PySide6.QtWidgets import QVBoxLayout, QScrollArea, QPushButton, QWidget
 from PySide6.QtCore import Qt
 from clickqt.widgets.base_widget import BaseWidget
 from clickqt.widgets.tuplewidget import TupleWidget
+from typing import Any, Callable, Tuple, List
 from clickqt.core.error import ClickQtError
-from click import Parameter
-from typing import Any, Callable
+from click import Context
 
 class NValueWidget(BaseWidget):
     widget_type = QScrollArea
@@ -32,14 +31,12 @@ class NValueWidget(BaseWidget):
         clickqtwidget:BaseWidget = self.widgetsource(self.optiontype, self.options, *self.optargs, widgetsource=self.widgetsource, parent=self, **self.optkwargs)
         self.click_object.multiple = True # click needs this for a correct conversion
         clickqtwidget.layout.removeWidget(clickqtwidget.label)
-        clickqtwidget.layout.removeWidget(clickqtwidget.widget)
         clickqtwidget.label.deleteLater()
-        clickqtwidget.container.deleteLater()
         removebtn = QPushButton("-", clickqtwidget.widget)
         listentry = QWidget()
         listentry.setLayout(QVBoxLayout())
         listentry.layout().addWidget(removebtn)
-        listentry.layout().addWidget(clickqtwidget.widget)
+        listentry.layout().addWidget(clickqtwidget.container)
         removebtn.clicked.connect(lambda: self.remove_button_pair(removebtn))
         self.vbox.layout().addWidget(listentry)
         self.buttondict[removebtn] = clickqtwidget
@@ -49,7 +46,7 @@ class NValueWidget(BaseWidget):
         if btntoremove in self.buttondict:
             cqtwidget = self.buttondict[btntoremove]
             self.buttondict.pop(btntoremove)
-            cqtwidget.widget.deleteLater()
+            cqtwidget.container.deleteLater()
             btntoremove.deleteLater()
 
     def handleValid(self, valid: bool):
@@ -58,6 +55,29 @@ class NValueWidget(BaseWidget):
                 BaseWidget.handleValid(c, valid)
             else:
                 c.handleValid(valid) # Recursive
+
+    def getValue(self) -> Tuple[Any, ClickQtError]:
+        values = []
+        err_messages: List[str] = []
+        for child in self.buttondict.values():
+            try: # Try to convert the provided value into the corresponding click object type
+                values.append(self.click_object.type.convert(value=child.getWidgetValue(), param=None, ctx=Context(self.click_command))) 
+                child.handleValid(True)
+            except Exception as e:
+                child.handleValid(False)
+                err_messages.append(str(e))
+            
+        if len(err_messages): # Join all error messages and return them
+            messages = ", ".join(err_messages) 
+            return (None, ClickQtError(ClickQtError.ErrorType.CONVERTION_ERROR, self.widget_name, messages if len(err_messages) == 1 else messages.join(["[", "]"])))
+            
+        try: # Consider callbacks
+            ret_val = (self.click_object.process_value(Context(self.click_command), values), ClickQtError())
+            self.handleValid(True)
+            return ret_val
+        except Exception as e:
+            self.handleValid(False)
+            return (None, ClickQtError(ClickQtError.ErrorType.CALLBACK_VALIDATION_ERROR, self.widget_name, e))
 
     def setValue(self, value):
         raise NotImplementedError()

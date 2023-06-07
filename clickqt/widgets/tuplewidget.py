@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QGroupBox, QHBoxLayout
 from clickqt.widgets.base_widget import BaseWidget
-from typing import Callable, Any
+from typing import Callable, Any, List
 
 class TupleWidget(BaseWidget):
     widget_type = QGroupBox
@@ -16,10 +16,8 @@ class TupleWidget(BaseWidget):
             bw = widgetsource(t, options, widgetsource=widgetsource, parent=self, recinfo=recinfo, *args, **kwargs)
             recinfo.pop()
             bw.layout.removeWidget(bw.label)
-            bw.layout.removeWidget(bw.widget)
             bw.label.deleteLater()
-            bw.container.deleteLater()
-            self.widget.layout().addWidget(bw.widget)
+            self.widget.layout().addWidget(bw.container)
             self.children.append(bw)
     
     @staticmethod
@@ -41,5 +39,5 @@ class TupleWidget(BaseWidget):
             else:
                 c.handleValid(valid) # Recursive
     
-    def getWidgetValue(self) -> str:
+    def getWidgetValue(self) -> List[Any]:
         return [c.getWidgetValue() for c in self.children]
