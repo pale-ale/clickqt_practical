@@ -38,15 +38,13 @@ class NValueWidget(BaseWidget):
         listentry.layout().addWidget(clickqtwidget.container)
         removebtn.clicked.connect(lambda: self.remove_button_pair(removebtn))
         self.vbox.layout().addWidget(listentry)
-        self.buttondict[removebtn] = clickqtwidget
+        self.buttondict[removebtn] = listentry
         self.widget.setWidget(self.vbox)
     
     def remove_button_pair(self, btntoremove):
         if btntoremove in self.buttondict:
-            cqtwidget = self.buttondict[btntoremove]
-            self.buttondict.pop(btntoremove)
-            cqtwidget.widget.deleteLater()
-            btntoremove.deleteLater()
+            self.buttondict.pop(btntoremove).deleteLater()
+            QScrollArea.updateGeometry(self.widget)
 
     def setValue(self, value):
         assert len(value) == len(self.children)
