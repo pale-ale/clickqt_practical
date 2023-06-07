@@ -17,6 +17,7 @@ from clickqt.core.error import ClickQtError
 from clickqt.core.output import OutputStream, TerminalOutput
 from typing import Dict, Callable, List, Any, Tuple
 import sys
+from clickqt.core.output import TerminalOutput
 
 def qtgui_from_click(cmd):
     # Command-name to command-options and callables + expose value
@@ -160,14 +161,17 @@ def qtgui_from_click(cmd):
             return command
         else:
             return group # =command
+                
+    def function_call_formatter(cmd):
+        message = f"{cmd.name}: {widget_registry[cmd.name]}"
+        return message
 
     def run():
         selected_command = current_command(main_tab_widget.currentWidget(), cmd) 
-
         args: List|Dict[str, Any] = None
         has_error = False
         unused_options: List[Callable] = [] # parameters with expose_value==False
-
+        
         if inspect.getfullargspec(selected_command.callback).varkw:
             args = {}
         else:
@@ -219,23 +223,26 @@ def qtgui_from_click(cmd):
         for value_callback in unused_options:
             widget_value, err = value_callback()
             if check_error(err):
-                has_error = True 
-            if callable(widget_value):
-                _, err = widget_value()  
-                if check_error(err):
-                    has_error = True  
+                has_error = True
+        if callable(widget_value):
+            _, err = widget_value()  
+            if check_error(err):
+                has_error = True  
              
         if has_error:
             return
         
         if isinstance(args, list):
+            print(f"Current Command: {function_call_formatter(selected_command)}")
             selected_command.callback(*args)
         else:
+            print(f"Current Command: {function_call_formatter(selected_command)}\n")
             selected_command.callback(**args)
 
                 
     run_button.clicked.connect(run)
     layout.addWidget(run_button)
+    
 
     terminal_output = TerminalOutput()
     terminal_output.setReadOnly(True)
