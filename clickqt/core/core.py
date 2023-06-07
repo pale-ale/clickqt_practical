@@ -161,18 +161,17 @@ def qtgui_from_click(cmd):
             return command
         else:
             return group # =command
-        
+                
     def function_call_formatter(cmd):
         message = f"{cmd}: {cmd.params}"
         return message
 
     def run():
         selected_command = current_command(main_tab_widget.currentWidget(), cmd) 
-
         args: List|Dict[str, Any] = None
         has_error = False
         unused_options: List[Callable] = [] # parameters with expose_value==False
-        print(selected_command)
+        
         if inspect.getfullargspec(selected_command.callback).varkw:
             args = {}
         else:
@@ -234,7 +233,7 @@ def qtgui_from_click(cmd):
             return
         
         if isinstance(args, list):
-            print(f"{function_call_formatter(selected_command)}\n")
+            print(f"Current Command: {selected_command}")
             selected_command.callback(*args)
         else:
             print(f"{function_call_formatter(selected_command)}\n")
@@ -243,7 +242,7 @@ def qtgui_from_click(cmd):
                 
     run_button.clicked.connect(run)
     layout.addWidget(run_button)
-
+    
 
     terminal_output = TerminalOutput()
     terminal_output.setReadOnly(True)
