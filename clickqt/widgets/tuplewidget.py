@@ -1,21 +1,19 @@
 from PySide6.QtWidgets import QGroupBox, QHBoxLayout
 from clickqt.widgets.base_widget import BaseWidget
-from click import Parameter
-from typing import Callable, Any, List, Tuple
-from clickqt.core.error import ClickQtError
+from typing import Callable, Any
 
 class TupleWidget(BaseWidget):
     widget_type = QGroupBox
 
-    def __init__(self, options, *args, o:Parameter=None, widgetsource:Callable[[Any], BaseWidget]=None, recinfo:list=None, **kwargs):
-        super().__init__(options, *args, **kwargs)
+    def __init__(self, options, widgetsource:Callable[[Any], BaseWidget], parent: BaseWidget = None, recinfo:list=None, *args, **kwargs):
+        super().__init__(options, parent, *args, **kwargs)
         self.children = []
         recinfo = recinfo if recinfo else []
         self.widget.setLayout(QHBoxLayout())
 
-        for i,t in enumerate(TupleWidget.getTypesRecursive(o.type.types, recinfo)):
+        for i,t in enumerate(TupleWidget.getTypesRecursive(self.click_object.type.types, recinfo)):
             recinfo.append(i)
-            bw = widgetsource(t, options, *args, o=o, widgetsource=widgetsource, recinfo=recinfo, **kwargs)
+            bw = widgetsource(t, options, widgetsource=widgetsource, parent=self, recinfo=recinfo, *args, **kwargs)
             recinfo.pop()
             bw.layout.removeWidget(bw.label)
             bw.label.deleteLater()
@@ -33,6 +31,6 @@ class TupleWidget(BaseWidget):
         assert len(value) == len(self.children)
         for i,c in enumerate(self.children):
             c.setValue(value[i])
-
-    def getValue(self) -> Tuple[List[Any], ClickQtError]:
-        return ([c.getValue() for c in self.children], ClickQtError.NO_ERROR)
+    
+    def getWidgetValue(self) -> str:
+        return [c.getWidgetValue() for c in self.children]

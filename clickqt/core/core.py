@@ -2,7 +2,7 @@ import click
 import inspect
 from clickqt.widgets.multivaluewidget import MultiValueWidget
 from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QTabWidget, QMessageBox, QPlainTextEdit
-from PySide6.QtGui import QTextCursor
+from PySide6.QtGui import QColor
 from clickqt.widgets.checkbox import CheckBox
 from clickqt.widgets.textfield import TextField
 from clickqt.widgets.passwordfield import PasswordField
@@ -10,33 +10,28 @@ from clickqt.widgets.numericfields import IntField, RealField
 from clickqt.widgets.combobox import ComboBox, CheckableComboBox
 from clickqt.widgets.datetimeedit import DateTimeEdit
 from clickqt.widgets.tuplewidget import TupleWidget
-from clickqt.widgets.pathfield import PathField
+from clickqt.widgets.filepathfield import FilePathField
 from clickqt.widgets.filefield import FileFild
+from clickqt.widgets.nvaluewidget import NValueWidget
 from clickqt.core.error import ClickQtError
+from clickqt.core.output import OutputStream, TerminalOutput
 from typing import Dict, Callable, List, Any, Tuple
 import sys
-from io import BytesIO, TextIOWrapper
-from clickqt.core.output import Output
+from clickqt.core.output import TerminalOutput
 
 def qtgui_from_click(cmd):
-    # Command-name to command-options and callables
+    # Command-name to command-options and callables + expose value
     # Assuming, that every command has an unique name (TODO)
-    widget_registry: Dict[str, Dict[str, Callable]] = {}
+    widget_registry: Dict[str, Dict[str, Tuple[Callable, bool]]] = {}
 
-    def parameter_to_widget(command: click.Command, param: click.types.ParamType) -> QWidget:
+    def parameter_to_widget(command: click.Command, param: click.core.Parameter) -> QWidget:
         if param.name:
             if param.nargs == 1 or isinstance(param.type, click.types.Tuple):
-                widget = create_widget(param.type, param.to_info_dict(), com=command, o=param, widgetsource=create_widget)
+                widget = create_widget(param.type, param.to_info_dict(), widgetsource=create_widget, com=command, o=param)
             else:
-                widget = create_widget_mult(param.type, param.nargs, param.to_info_dict())
-
-            assert widget is not None, "Widget not initialized"
-            assert widget.widget is not None, "Qt-Widget not initialized"
-
-            if widget_registry.get(command.name) is None:
-                widget_registry[command.name] = {}
-            
-            widget_registry[command.name][param.name] = lambda: widget.getValue()
+                widget = create_widget_mult(param.type, param.nargs, param.to_info_dict(), com=command, o=param)
+                
+            widget_registry[command.name][param.name] = (lambda: widget.getValue(), param.expose_value)
 
             return widget.container
         else:
@@ -50,10 +45,19 @@ def qtgui_from_click(cmd):
             click.types.StringParamType: PasswordField if hasattr(kwargs.get("o"), "hide_input") and kwargs["o"].hide_input else TextField,
             click.types.DateTime: DateTimeEdit,
             click.types.Tuple: TupleWidget,
-            click.types.Choice: CheckableComboBox if hasattr(kwargs.get("o"), "multiple") and kwargs["o"].multiple else ComboBox,
-            click.types.Path: PathField,
-            click.types.File: FileFild
+            click.types.Choice: ComboBox,
+            click.types.Path: FilePathField,
+            click.types.File: FileFild,
         }
+        
+        def get_multiarg_version(otype):
+            if isinstance(otype, click.types.Choice):
+                return CheckableComboBox
+            return NValueWidget
+        
+        if hasattr(kwargs.get("o"), "multiple") and kwargs["o"].multiple:
+            return get_multiarg_version(otype)(*args, **kwargs)
+
         for t,widgetclass in typedict.items():
             if isinstance(otype, t):
                 return widgetclass(*args, **kwargs)
@@ -61,7 +65,6 @@ def qtgui_from_click(cmd):
           
     def create_widget_mult(otype, onargs, *args, **kwargs):
         return MultiValueWidget(*args, otype, onargs, **kwargs)
-    
     
     def parse_cmd_group(cmdgroup: click.Group) -> QTabWidget:
         group_tab_widget = QTabWidget()
@@ -82,39 +85,45 @@ def qtgui_from_click(cmd):
         cmdbox = QWidget()
         cmd_elements = QVBoxLayout()
         cmdbox.setLayout(cmd_elements)
+
+        if widget_registry.get(cmd.name) is None:
+            widget_registry[cmd.name] = {}
+        else:
+            raise RuntimeError("Every command has to have an unique name")    
+
         for param in cmd.params:
-            if isinstance(param, (click.core.Argument, click.core.Option)):
+            if isinstance(param, click.core.Parameter):
                 # Yes-Parameter
                 if hasattr(param, "is_flag") and param.is_flag and hasattr(param, "prompt") and param.prompt:
-                    qm = QMessageBox(QMessageBox.Information, "Confirmation", str(param.prompt), QMessageBox.Yes|QMessageBox.No)
-                    if widget_registry.get(cmd.name) is None:
-                        widget_registry[cmd.name] = {}
-                    widget_registry[cmd.name][param.name] = lambda: (True, ClickQtError.NO_ERROR) if qm.exec() == QMessageBox.Yes else \
-                                                            (False, ClickQtError.ABORTED_ERROR)
+                    prompt = str(param.prompt)
+                    ret = lambda: (True, ClickQtError()) if QMessageBox(QMessageBox.Information, "Confirmation", prompt, \
+                                                                        QMessageBox.Yes|QMessageBox.No).exec() == QMessageBox.Yes \
+                                                        else (False, ClickQtError(ClickQtError.ErrorType.ABORTED_ERROR))  
+                    widget_registry[cmd.name][param.name] = (lambda: (ret, ClickQtError()), param.expose_value)
                 else:  
                     cmd_elements.addWidget(parameter_to_widget(cmd, param))
         return cmdbox
     
     def check_error(err: ClickQtError) -> bool:
-        if err != ClickQtError.NO_ERROR:
-            if err != ClickQtError.ABORTED_ERROR:
-                QMessageBox(QMessageBox.Information, "Error", str(err), QMessageBox.Ok).exec()
+        if err.type != ClickQtError.ErrorType.NO_ERROR:
+            if err.type != ClickQtError.ErrorType.ABORTED_ERROR:
+                print(err.message(), file=sys.stderr)
             return True
         return False
     
     def check_list(widget_value: List[Any]) -> Tuple[List[Any], ClickQtError]:
         tupleList = []
         for v, err in widget_value:
-            if err != ClickQtError.NO_ERROR:
+            if err.type != ClickQtError.ErrorType.NO_ERROR:
                 return [], err
             if isinstance(v, list): # and len(v) and isinstance(v[0], tuple):
                 t, err = check_list(v)
-                if err != ClickQtError.NO_ERROR:
+                if err.type != ClickQtError.ErrorType.NO_ERROR:
                     return [], err
                 tupleList.append(t)
             else:
                 tupleList.append(v) 
-        return tupleList, ClickQtError.NO_ERROR
+        return tupleList, ClickQtError()
 
     app = QApplication([])
     app.setApplicationName("GUI for CLI")
@@ -137,7 +146,7 @@ def qtgui_from_click(cmd):
         standalone_group_layout = QVBoxLayout()
         standalone_group.setLayout(standalone_group_layout)
         standalone_group_layout.addWidget(parse_cmd(cmd))
-        main_tab_widget.addTab(standalone_group, "Main")
+        main_tab_widget.addTab(standalone_group, cmd.name if hasattr(cmd, "name") else "Main")
         
     run_button = QPushButton("&Run")  # Shortcut Alt+R
 
@@ -160,36 +169,88 @@ def qtgui_from_click(cmd):
     def run():
         selected_command = current_command(main_tab_widget.currentWidget(), cmd) 
 
-        args = []
-        for option in inspect.getfullargspec(selected_command.callback).args:
-            widget_value, err = widget_registry[selected_command.name][option]()   
-            if check_error(err):
-                return
-            elif isinstance(widget_value, list) and len(widget_value) and isinstance(widget_value[0], tuple):
-                val, err = check_list(widget_value)
-                if check_error(err):
-                    return
-                args.append(val)
-            else:
-                args.append(widget_value)
+        args: List|Dict[str, Any] = None
+        has_error = False
+        unused_options: List[Callable] = [] # parameters with expose_value==False
 
-        # Options with argument expose_value=False
-        for unused_option in set(widget_registry[selected_command.name].keys()).difference(inspect.getfullargspec(selected_command.callback).args):
-            _, err = widget_registry[selected_command.name][unused_option]()   
+        if inspect.getfullargspec(selected_command.callback).varkw:
+            args = {}
+        else:
+            args = []
+
+        def append(option_name: str, value: Any):
+            if isinstance(args, list):
+                args.append(value)
+            else:
+                args[option_name] = value
+
+        # Check all values for errors
+        for option_name, (value_callback, expose) in widget_registry[selected_command.name].items():
+            if expose:
+                widget_value, err = value_callback()   
+                if check_error(err):
+                    has_error = True
+                elif isinstance(widget_value, list) and len(widget_value) and isinstance(widget_value[0], tuple):
+                    val, err = check_list(widget_value)
+                    if check_error(err):
+                        has_error = True
+                    append(option_name, val)
+                else:
+                    append(option_name, widget_value)
+            else: # Verify it when all options are valid
+                unused_options.append(value_callback)
+
+        if has_error: 
+            return
+
+        # Replace the callables with their values and check for errors
+        if isinstance(args, list):
+            for i in range(len(args)):
+                if callable(args[i]):
+                    args[i], err = args[i]()
+                    if check_error(err):
+                        has_error = True
+        else:
+            for option_name, value in args.items():
+                if callable(value):
+                    args[option_name], err = value()
+                    if check_error(err):
+                        has_error = True
+
+        if has_error:
+            return
+
+        # Parameters with expose_value==False
+        for value_callback in unused_options:
+            widget_value, err = value_callback()
             if check_error(err):
-                return   
+                has_error = True
         print(f"{function_call_formatter(selected_command)}\n")
-        selected_command.callback(*args)
+        selected_command.callback(*args) 
+        if callable(widget_value):
+            _, err = widget_value()  
+            if check_error(err):
+                has_error = True  
+             
+        if has_error:
+            return
+        
+        if isinstance(args, list):
+            selected_command.callback(*args)
+        else:
+            selected_command.callback(**args)
 
                 
     run_button.clicked.connect(run)
     layout.addWidget(run_button)
 
-    terminal_output = QPlainTextEdit()
+
+    terminal_output = TerminalOutput()
     terminal_output.setReadOnly(True)
     terminal_output.setToolTip("Terminal output")
     layout.addWidget(terminal_output)
-    sys.stdout = Output(terminal_output)
+    sys.stdout = OutputStream(terminal_output)
+    sys.stderr = OutputStream(terminal_output, QColor("red"))
 
     def run_app():
         window.show()
