@@ -161,10 +161,15 @@ def qtgui_from_click(cmd):
             return command
         else:
             return group # =command
+        
+    def get_params(cmd):
+        return [k for k, v in widget_registry[cmd.name].items()]
                 
     def function_call_formatter(cmd):
-        message = f"{cmd.name}: {widget_registry[cmd.name]}"
-        return message
+        params = get_params(cmd)
+        message = f"{cmd.name} \n"
+        parameter_message =  f"Current Command parameters: \n" + "\n".join(params)
+        return message + parameter_message
 
     def run():
         selected_command = current_command(main_tab_widget.currentWidget(), cmd) 
@@ -174,7 +179,7 @@ def qtgui_from_click(cmd):
         
         if inspect.getfullargspec(selected_command.callback).varkw:
             args = {}
-        else:
+        else:   
             args = []
 
         def append(option_name: str, value: Any):
@@ -236,7 +241,7 @@ def qtgui_from_click(cmd):
             print(f"Current Command: {function_call_formatter(selected_command)}")
             selected_command.callback(*args)
         else:
-            print(f"Current Command: {function_call_formatter(selected_command)}\n")
+            print(f"Current Command: {function_call_formatter(selected_command)}")
             selected_command.callback(**args)
 
                 
