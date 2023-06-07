@@ -172,7 +172,7 @@ def qtgui_from_click(cmd):
         args: List|Dict[str, Any] = None
         has_error = False
         unused_options: List[Callable] = [] # parameters with expose_value==False
-
+        print(selected_command)
         if inspect.getfullargspec(selected_command.callback).varkw:
             args = {}
         else:
@@ -225,8 +225,6 @@ def qtgui_from_click(cmd):
             widget_value, err = value_callback()
             if check_error(err):
                 has_error = True
-        print(f"{function_call_formatter(selected_command)}\n")
-        selected_command.callback(*args) 
         if callable(widget_value):
             _, err = widget_value()  
             if check_error(err):
@@ -236,8 +234,10 @@ def qtgui_from_click(cmd):
             return
         
         if isinstance(args, list):
+            print(f"{function_call_formatter(selected_command)}\n")
             selected_command.callback(*args)
         else:
+            print(f"{function_call_formatter(selected_command)}\n")
             selected_command.callback(**args)
 
                 
