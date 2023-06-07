@@ -3,6 +3,7 @@ from PySide6.QtWidgets import QGroupBox, QVBoxLayout
 from clickqt.widgets.base_widget import BaseWidget
 from clickqt.widgets.numericfields import IntField, RealField
 from clickqt.widgets.textfield import TextField
+from clickqt.widgets.tuplewidget import TupleWidget
 from typing import Any, List
 
 class MultiValueWidget(BaseWidget):
@@ -24,8 +25,10 @@ class MultiValueWidget(BaseWidget):
                 if isinstance(otype, t):
                     bw = widgetclass(options, parent=self, *args, **kwargs)
                     bw.layout.removeWidget(bw.label)
+                    bw.layout.removeWidget(bw.widget)
                     bw.label.deleteLater()
-                    self.widget.layout().addWidget(bw.container)
+                    bw.container.deleteLater()
+                    self.widget.layout().addWidget(bw.widget)
                     self.children.append(bw)
         
     def setValue(self, value):
@@ -35,7 +38,10 @@ class MultiValueWidget(BaseWidget):
 
     def handleValid(self, valid: bool):
         for c in self.children:
-            BaseWidget.handleValid(c, valid)
+            if not isinstance(c, TupleWidget):
+                BaseWidget.handleValid(c, valid)
+            else:
+                c.handleValid(valid) # Recursive
     
     def getWidgetValue(self) -> List[Any]:
         return [c.getWidgetValue() for c in self.children]

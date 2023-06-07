@@ -16,8 +16,10 @@ class TupleWidget(BaseWidget):
             bw = widgetsource(t, options, widgetsource=widgetsource, parent=self, recinfo=recinfo, *args, **kwargs)
             recinfo.pop()
             bw.layout.removeWidget(bw.label)
+            bw.layout.removeWidget(bw.widget)
             bw.label.deleteLater()
-            self.widget.layout().addWidget(bw.container)
+            bw.container.deleteLater()
+            self.widget.layout().addWidget(bw.widget)
             self.children.append(bw)
     
     @staticmethod
@@ -34,7 +36,10 @@ class TupleWidget(BaseWidget):
 
     def handleValid(self, valid: bool):
         for c in self.children:
-            BaseWidget.handleValid(c, valid)
+            if not isinstance(c, TupleWidget):
+                BaseWidget.handleValid(c, valid)
+            else:
+                c.handleValid(valid) # Recursive
     
     def getWidgetValue(self) -> str:
         return [c.getWidgetValue() for c in self.children]
