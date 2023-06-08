@@ -1,15 +1,14 @@
 from PySide6.QtWidgets import QLineEdit
 from clickqt.widgets.base_widget import BaseWidget
+from click import Parameter
 
 class TextField(BaseWidget):
     widget_type = QLineEdit
 
-    def __init__(self, options, *args, **kwargs):
-        super().__init__(options, *args, **kwargs)
+    def __init__(self, param:Parameter, *args, **kwargs):
+        super().__init__(param, *args, **kwargs)
+        self.setValue(BaseWidget.getParamDefault(param, ""))
 
-        self.setValue(options.get("default")() if callable(options.get("default")) \
-                else options.get("default") or "")
-        
     def setValue(self, value: str):
         self.widget.setText(value)
     

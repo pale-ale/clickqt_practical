@@ -23,20 +23,16 @@ def qtgui_from_click(cmd):
     # Assuming, that every command has an unique name (TODO)
     widget_registry: Dict[str, Dict[str, Tuple[Callable, bool]]] = {}
 
-    def parameter_to_widget(command: click.Command, param: click.core.Parameter) -> QWidget:
+    def parameter_to_widget(command: click.Command, param: click.Parameter) -> QWidget:
         if param.name:
-            if param.nargs == 1 or isinstance(param.type, click.types.Tuple):
-                widget = create_widget(param.type, param.to_info_dict(), widgetsource=create_widget, com=command, o=param)
-            else:
-                widget = create_widget_mult(param.type, param.nargs, param.to_info_dict(), com=command, o=param)
-                
+            widget = create_widget(param.type, param, widgetsource=create_widget, com=command, o=param)                
             widget_registry[command.name][param.name] = (lambda: widget.getValue(), param.expose_value)
 
             return widget.container
         else:
             raise SyntaxError("No parameter name specified")
 
-    def create_widget(otype, *args, **kwargs):
+    def create_widget(otype:click.ParamType, param:click.Parameter, *args, **kwargs):
         typedict = {
             click.types.BoolParamType: CheckBox,
             click.types.IntParamType: IntField,
@@ -48,23 +44,23 @@ def qtgui_from_click(cmd):
             click.types.Path: FilePathField,
             click.types.File: FileFild,
         }
-        
-        def get_multiarg_version(otype):
+
+        def get_multiarg_version(otype:click.ParamType):
             if isinstance(otype, click.types.Choice):
                 return CheckableComboBox
             return NValueWidget
         
-        if hasattr(kwargs.get("o"), "multiple") and kwargs["o"].multiple:
-            return get_multiarg_version(otype)(*args, **kwargs)
+        if param.multiple:
+            return get_multiarg_version(otype)(param, *args, **kwargs)
+        if param.nargs > 1:
+            if isinstance(otype, click.types.Tuple):
+                return TupleWidget(param, *args, **kwargs)
+            return MultiValueWidget(param, *args, **kwargs)
 
         for t,widgetclass in typedict.items():
             if isinstance(otype, t):
-                return widgetclass(*args, **kwargs)
+                return widgetclass(param, *args, **kwargs)
         raise NotImplementedError(otype)    
-          
-    def create_widget_mult(otype, onargs, *args, **kwargs):
-        return MultiValueWidget(*args, otype, onargs, **kwargs)
-    
     def parse_cmd_group(cmdgroup: click.Group) -> QTabWidget:
         group_tab_widget = QTabWidget()
         for group_name, group_cmd in cmdgroup.commands.items():

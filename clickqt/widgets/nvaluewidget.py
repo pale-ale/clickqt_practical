@@ -15,7 +15,6 @@ class NValueWidget(BaseWidget):
         self.options = options
         self.optargs = args
         self.optkwargs = kwargs
-        self.optiontype = self.click_object.type
         self.widgetsource = widgetsource
         self.vbox = QWidget()
         self.vbox.setLayout(QVBoxLayout())
@@ -27,9 +26,9 @@ class NValueWidget(BaseWidget):
         self.buttondict:dict[QPushButton, BaseWidget] = dict()
     
     def add_empty_pair(self):
-        self.click_object.multiple = False # nargs cannot be nested, so it is safe to turn this off for children
-        clickqtwidget:BaseWidget = self.widgetsource(self.optiontype, self.options, *self.optargs, widgetsource=self.widgetsource, parent=self, **self.optkwargs)
-        self.click_object.multiple = True # click needs this for a correct conversion
+        self.param.multiple = False # nargs cannot be nested, so it is safe to turn this off for children
+        clickqtwidget:BaseWidget = self.widgetsource(self.param.type, self.options, *self.optargs, widgetsource=self.widgetsource, parent=self, **self.optkwargs)
+        self.param.multiple = True # click needs this for a correct conversion
         clickqtwidget.layout.removeWidget(clickqtwidget.label)
         clickqtwidget.label.deleteLater()
         removebtn = QPushButton("-", clickqtwidget.widget)
@@ -60,7 +59,7 @@ class NValueWidget(BaseWidget):
         err_messages: List[str] = []
         for child in self.buttondict.values():
             try: # Try to convert the provided value into the corresponding click object type
-                values.append(self.click_object.type.convert(value=child.getWidgetValue(), param=None, ctx=Context(self.click_command))) 
+                values.append(self.param.type.convert(value=child.getWidgetValue(), param=None, ctx=Context(self.click_command))) 
                 child.handleValid(True)
             except Exception as e:
                 child.handleValid(False)
@@ -71,7 +70,7 @@ class NValueWidget(BaseWidget):
             return (None, ClickQtError(ClickQtError.ErrorType.CONVERTION_ERROR, self.widget_name, messages if len(err_messages) == 1 else messages.join(["[", "]"])))
             
         try: # Consider callbacks
-            ret_val = (self.click_object.process_value(Context(self.click_command), values), ClickQtError())
+            ret_val = (self.param.process_value(Context(self.click_command), values), ClickQtError())
             self.handleValid(True)
             return ret_val
         except Exception as e:

@@ -4,14 +4,15 @@ from clickqt.widgets.base_widget import BaseWidget
 from clickqt.widgets.numericfields import IntField, RealField
 from clickqt.widgets.textfield import TextField
 from clickqt.widgets.tuplewidget import TupleWidget
+from click import Parameter
 from typing import Any, List
 
 class MultiValueWidget(BaseWidget):
     widget_type = QGroupBox
     
-    def __init__(self, options, otype, onargs, parent: BaseWidget = None, *args, **kwargs):
-        super().__init__(options, parent, *args, **kwargs)
-        self.children = []
+    def __init__(self, param:Parameter, *args, **kwargs):
+        super().__init__(param, *args, **kwargs)
+        self.children:list[BaseWidget] = []
         self.widget.setLayout(QVBoxLayout())
         
         typedict = {
@@ -19,11 +20,14 @@ class MultiValueWidget(BaseWidget):
             click.types.FloatParamType: RealField,
             click.types.StringParamType: TextField,
         }
+
+        if param.nargs < 2:
+            raise TypeError(f"param.nargs should be >= 2 when creating a MultiValueWIdget but is {param.nargs}.")
         
-        for i in range(onargs):
+        for i in range(param.nargs):
             for t, widgetclass in typedict.items():
-                if isinstance(otype, t):
-                    bw = widgetclass(options, parent=self, *args, **kwargs)
+                if isinstance(param.type, t):
+                    bw:BaseWidget = widgetclass(param, parent=self, *args, **kwargs)
                     bw.layout.removeWidget(bw.label)
                     bw.label.deleteLater()
                     self.widget.layout().addWidget(bw.container)

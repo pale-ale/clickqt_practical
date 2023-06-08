@@ -1,4 +1,4 @@
-from typing import Any, Tuple
+from typing import Any
 from abc import ABC, abstractmethod
 from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QPushButton, QFileDialog
 from PySide6.QtCore import QDir
@@ -6,35 +6,36 @@ from clickqt.core.error import ClickQtError
 from clickqt.widgets.core.QPathDialog import QPathDialog
 import clickqt.core
 from enum import IntFlag
-from click import Context, Parameter, Tuple as click_type_tuple
+from click import Context, Parameter, Choice, Option, Tuple as click_type_tuple
 
 class BaseWidget(ABC):
     # The type of this widget
     widget_type: Any
 
-    def __init__(self, options, parent=None, *args, **kwargs):
-        self.options = options
+    def __init__(self, param:Parameter, *args, parent:"BaseWidget|None"=None, **kwargs):
+        assert isinstance(param, Parameter)
         self.parent_widget = parent
-        self.click_object: Parameter = kwargs.get("o")
+        self.param = param
         self.click_command = kwargs.get("com")
-        self.widget_name = options.get('name', 'Unknown')
+        self.widget_name = param.name
         self.container = QWidget()
         self.layout = QHBoxLayout()
         self.label = QLabel(text=f"{kwargs.get('label', '')}{self.widget_name}: ")
-        self.label.setToolTip(options.get("help", "No options available"))
+        if isinstance(param, Option):
+            self.label.setToolTip(param.help)
         self.widget = self.createWidget(args, kwargs)
         self.layout.addWidget(self.label)
         self.layout.addWidget(self.widget)
         self.container.setLayout(self.layout)
 
         assert self.widget is not None, "Widget not initialized"
-        assert self.click_object is not None, "Click object not provided"
+        assert self.param is not None, "Click param object not provided"
         assert self.click_command is not None, "Click command not provided"
 
         self.focus_out_validator = clickqt.core.FocusOutValidator(self)
         self.widget.installEventFilter(self.focus_out_validator)
     
-    def createWidget(self, *args, **kwargs):
+    def createWidget(self, *args, **kwargs) -> QWidget:
         return self.widget_type()
 
     @abstractmethod
@@ -44,7 +45,7 @@ class BaseWidget(ABC):
         """
         pass
 
-    def getValue(self) -> Tuple[Any, ClickQtError]:
+    def getValue(self) -> tuple[Any, ClickQtError]:
         """
             Validates the value of the widget and returns the result\n
             Valid -> (widget value or the value of a callback, ClickQtError.ErrorType.NO_ERROR)\n
@@ -57,19 +58,19 @@ class BaseWidget(ABC):
 
         try: # Try to convert the provided value into the corresponding click object type
             # if statement is obtained by creating the corresponding truth table
-            if self.click_object.multiple or \
-            (not isinstance(self.click_object.type, click_type_tuple) and self.click_object.nargs != 1):
+            if self.param.multiple or \
+            (not isinstance(self.param.type, click_type_tuple) and self.param.nargs != 1):
                 value = []
                 for v in self.getWidgetValue():
-                    value.append(self.click_object.type.convert(value=v, param=None, ctx=Context(self.click_command))) 
+                    value.append(self.param.type.convert(value=v, param=None, ctx=Context(self.click_command))) 
             else:
-                value = self.click_object.type.convert(value=self.getWidgetValue(), param=None, ctx=Context(self.click_command))
+                value = self.param.type.convert(value=self.getWidgetValue(), param=None, ctx=Context(self.click_command))
         except Exception as e:
             self.handleValid(False)
             return (None, ClickQtError(ClickQtError.ErrorType.CONVERTION_ERROR, self.widget_name, e))
             
         try: # Consider callbacks 
-            ret_val = (self.click_object.process_value(Context(self.click_command), value), ClickQtError())
+            ret_val = (self.param.process_value(Context(self.click_command), value), ClickQtError())
             self.handleValid(True)
             return ret_val
         except Exception as e:
@@ -88,14 +89,20 @@ class BaseWidget(ABC):
             self.widget.setStyleSheet("border: 1px solid red")
         else:
             self.widget.setStyleSheet("")
+    
+    @staticmethod
+    def getParamDefault(param:Parameter, alternative=None):
+        if param.default is None:
+            return alternative
+        if callable(param.default):
+            return param.default()
+        return param.default
 
 
 class NumericField(BaseWidget):
-    def __init__(self, options, *args, **kwargs):
-        super().__init__(options, *args, **kwargs)
-
-        self.setValue(options.get("default")() if callable(options.get("default")) \
-                else options.get("default") or 0)
+    def __init__(self, param:Parameter, *args, **kwargs):
+        super().__init__(param, *args, **kwargs)
+        self.setValue(BaseWidget.getParamDefault(param, 0))
 
     def setValue(self, value: int|float):
         self.widget.setValue(value)
@@ -116,11 +123,12 @@ class NumericField(BaseWidget):
         return self.widget.value()
 
 class ComboBoxBase(BaseWidget):
-    def __init__(self, options, *args, **kwargs):
-        super().__init__(options, *args, **kwargs)
+    def __init__(self, param:Parameter, *args, **kwargs):
+        if not isinstance(param.type, Choice):
+            raise TypeError(f"'param' must be of type 'Choice'.")
+        super().__init__(param, *args, **kwargs)
+        self.addItems(param.type.choices)
 
-        self.addItems(options.get("type").get("choices"))
-        
     def setValue(self, value: str):
         self.widget.setCurrentText(value)
 
@@ -135,11 +143,11 @@ class PathField(BaseWidget):
         File = 1
         Directory = 2
 
-    def __init__(self, options, *args, **kwargs):
-        super().__init__(options, *args, **kwargs)
+    def __init__(self, param:Parameter, *args, **kwargs):
+        super().__init__(param, *args, **kwargs)
 
-        self.setValue(options.get("default")() if callable(options.get("default")) \
-                else options.get("default") or "")
+        if isinstance(param, Option):
+            self.setValue(BaseWidget.getParamDefault(param, ""))
         
         self.file_type = PathField.FileType.Unknown
 
