@@ -1,8 +1,6 @@
 from PySide6.QtWidgets import QDateTimeEdit
 from PySide6.QtCore import QDateTime
 from clickqt.widgets.base_widget import BaseWidget
-from typing import Tuple
-from clickqt.core.error import ClickQtError
 
 
 class DateTimeEdit(BaseWidget):
@@ -11,8 +9,10 @@ class DateTimeEdit(BaseWidget):
     def __init__(self, options, *args, **kwargs):
         super().__init__(options, *args, **kwargs)
 
-    def setValue(self, value):
-        raise NotImplementedError
-
-    def getValue(self) -> Tuple[QDateTime, ClickQtError]:
-        return self.widget.dateTime(), ClickQtError()
+    def setValue(self, value: QDateTime):
+        self.widget.setDateTime(value)
+    
+    def getWidgetValue(self) -> str:
+         # click.DateTime wants a str in form of '%Y-%m-%d', '%Y-%m-%dT%H:%M:%S'or '%Y-%m-%d %H:%M:%S'
+         # See https://click.palletsprojects.com/en/8.1.x/api/#click.DateTime
+        return self.widget.dateTime().toString("yyyy-MM-dd hh:mm:ss")
