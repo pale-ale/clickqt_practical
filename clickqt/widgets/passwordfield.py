@@ -1,8 +1,6 @@
-from PySide6.QtWidgets import QLineEdit, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QLineEdit
 from PySide6.QtGui import QIcon, QAction
 from clickqt.widgets.textfield import TextField
-from typing import Tuple
-from clickqt.core.error import ClickQtError
 
 class PasswordField(TextField):
     widget_type = QLineEdit
