@@ -2,7 +2,7 @@ from PySide6.QtWidgets import QGroupBox, QHBoxLayout
 from clickqt.core.error import ClickQtError
 from clickqt.widgets.base_widget import BaseWidget
 from typing import Callable, Any
-from click import Parameter, Tuple as ClickTuple
+from click import Context, Parameter, Tuple as ClickTuple
 
 class TupleWidget(BaseWidget):
     widget_type = QGroupBox
@@ -57,9 +57,16 @@ class TupleWidget(BaseWidget):
         if self.parent_widget:
             return self.parent_widget.getValue()
 
-        val = None
+        value = None
         try:
-            val = self.param.type.convert(self.getWidgetValue(), None, None)
-            return (val, ClickQtError(ClickQtError.ErrorType.NO_ERROR))
+            value = self.param.type.convert(self.getWidgetValue(), None, None)
         except Exception as e:
             return (None, ClickQtError(ClickQtError.ErrorType.CONVERSION_ERROR, self.widget_name, e))
+        
+        try: # Consider callbacks 
+            ret_val = (self.param.process_value(Context(self.click_command), value), ClickQtError())
+            self.handleValid(True)
+            return ret_val
+        except Exception as e:
+            self.handleValid(False)
+            return (None, ClickQtError(ClickQtError.ErrorType.CALLBACK_VALIDATION_ERROR, self.widget_name, e))
