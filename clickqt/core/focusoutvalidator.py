@@ -47,7 +47,7 @@ class FocusOutValidator(QWidget):
             return (ret_val, ClickQtError())
         except Exception as e:
             self.widget.handleValid(False)
-            return (None, ClickQtError(ClickQtError.ErrorType.CONVERTION_ERROR, self.widget.widget_name, e))
+            return (None, ClickQtError(ClickQtError.ErrorType.CONVERSION_ERROR, self.widget.widget_name, e))
 
        
     

@@ -1,4 +1,5 @@
 from PySide6.QtWidgets import QGroupBox, QHBoxLayout
+from clickqt.core.error import ClickQtError
 from clickqt.widgets.base_widget import BaseWidget
 from typing import Callable, Any
 from click import Parameter, Tuple as ClickTuple
@@ -7,11 +8,11 @@ class TupleWidget(BaseWidget):
     widget_type = QGroupBox
 
     def __init__(self, param:Parameter, widgetsource:Callable[[Any], BaseWidget], *args, parent: BaseWidget=None, recinfo:list=None, **kwargs):
-        if not isinstance(self.param.type, ClickTuple):
+        if not isinstance(param.type, ClickTuple):
             raise TypeError
-        if not self.param.type.is_composite:
+        if not param.type.is_composite:
             raise TypeError
-        if not isinstance(self.param.type.types, list):
+        if not isinstance(param.type.types, list):
             raise TypeError
         
         super().__init__(param, parent, *args, **kwargs)
@@ -22,8 +23,8 @@ class TupleWidget(BaseWidget):
 
         for i,t in enumerate(TupleWidget.getTypesRecursive(self.param.type.types, recinfo)):
             recinfo.append(i)
-            param.nargs = 0
-            bw = widgetsource(t, param, *args, widgetsource=widgetsource, parent=self, recinfo=recinfo, **kwargs)
+            self.param.nargs = 0
+            bw = widgetsource(t, self.param, *args, widgetsource=widgetsource, parent=self, recinfo=recinfo, **kwargs)
             recinfo.pop()
             bw.layout.removeWidget(bw.label)
             bw.label.deleteLater()
@@ -51,3 +52,14 @@ class TupleWidget(BaseWidget):
     
     def getWidgetValue(self) -> list[Any]:
         return [c.getWidgetValue() for c in self.children]
+
+    def getValue(self) -> tuple[Any, ClickQtError]:
+        if self.parent_widget:
+            return self.parent_widget.getValue()
+
+        val = None
+        try:
+            val = self.param.type.convert(self.getWidgetValue(), None, None)
+            return (val, ClickQtError(ClickQtError.ErrorType.NO_ERROR))
+        except Exception as e:
+            return (None, ClickQtError(ClickQtError.ErrorType.CONVERSION_ERROR, self.widget_name, e))

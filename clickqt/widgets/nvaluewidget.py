@@ -67,7 +67,7 @@ class NValueWidget(BaseWidget):
             
         if len(err_messages): # Join all error messages and return them
             messages = ", ".join(err_messages) 
-            return (None, ClickQtError(ClickQtError.ErrorType.CONVERTION_ERROR, self.widget_name, messages if len(err_messages) == 1 else messages.join(["[", "]"])))
+            return (None, ClickQtError(ClickQtError.ErrorType.CONVERSION_ERROR, self.widget_name, messages if len(err_messages) == 1 else messages.join(["[", "]"])))
             
         try: # Consider callbacks
             ret_val = (self.param.process_value(Context(self.click_command), values), ClickQtError())

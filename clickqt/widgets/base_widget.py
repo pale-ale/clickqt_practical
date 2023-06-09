@@ -67,7 +67,7 @@ class BaseWidget(ABC):
                 value = self.param.type.convert(value=self.getWidgetValue(), param=None, ctx=Context(self.click_command))
         except Exception as e:
             self.handleValid(False)
-            return (None, ClickQtError(ClickQtError.ErrorType.CONVERTION_ERROR, self.widget_name, e))
+            return (None, ClickQtError(ClickQtError.ErrorType.CONVERSION_ERROR, self.widget_name, e))
             
         try: # Consider callbacks 
             ret_val = (self.param.process_value(Context(self.click_command), value), ClickQtError())
