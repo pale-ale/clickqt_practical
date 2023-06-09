@@ -13,6 +13,7 @@ from clickqt.widgets.tuplewidget import TupleWidget
 from clickqt.widgets.filepathfield import FilePathField
 from clickqt.widgets.filefield import FileFild
 from clickqt.widgets.nvaluewidget import NValueWidget
+from clickqt.widgets.confirmationwidget import ConfirmationWidget
 from clickqt.core.error import ClickQtError
 from clickqt.core.output import OutputStream, TerminalOutput
 from typing import Dict, Callable, List, Any, Tuple
@@ -25,7 +26,9 @@ def qtgui_from_click(cmd):
 
     def parameter_to_widget(command: click.Command, param: click.core.Parameter) -> QWidget:
         if param.name:
-            if param.nargs == 1 or isinstance(param.type, click.types.Tuple):
+            if hasattr(param, "confirmation_prompt") and param.confirmation_prompt:
+                widget = ConfirmationWidget(param.to_info_dict(), create_widget, com=command, o=param)
+            elif param.nargs == 1 or isinstance(param.type, click.types.Tuple):
                 widget = create_widget(param.type, param.to_info_dict(), widgetsource=create_widget, com=command, o=param)
             else:
                 widget = create_widget_mult(param.type, param.nargs, param.to_info_dict(), com=command, o=param)

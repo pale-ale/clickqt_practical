@@ -50,9 +50,6 @@ class BaseWidget(ABC):
             Valid -> (widget value or the value of a callback, ClickQtError.ErrorType.NO_ERROR)\n
             Invalid -> (None, CClickQtError.ErrorType.CONVERTION_ERROR or ClickQtError.ErrorType.CALLBACK_VALIDATION_ERROR)
         """
-        if self.parent_widget is not None: # Needed to validate a TupleWidget/MultiValueWidget correctly (when a child widget goes out of focus)
-            return self.parent_widget.getValue()
-
         value: Any = None
 
         try: # Try to convert the provided value into the corresponding click object type
