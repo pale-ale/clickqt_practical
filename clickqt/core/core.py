@@ -147,7 +147,7 @@ def qtgui_from_click(cmd):
         standalone_group_layout = QVBoxLayout()
         standalone_group.setLayout(standalone_group_layout)
         standalone_group_layout.addWidget(parse_cmd(cmd, cmd.name))
-        main_tab_widget.addTab(standalone_group, cmd.name if hasattr(cmd, "name") else "Main")
+        main_tab_widget.addTab(standalone_group, cmd.name)
         
     run_button = QPushButton("&Run")  # Shortcut Alt+R
 
