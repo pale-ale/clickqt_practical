@@ -60,7 +60,7 @@ class NValueWidget(BaseWidget):
         err_messages: List[str] = []
         for child in self.buttondict.values():
             try: # Try to convert the provided value into the corresponding click object type
-                values.append(self.click_object.type.convert(value=child.getWidgetValue(), param=None, ctx=Context(self.click_command))) 
+                values.append(self.click_object.type.convert(value=child.getWidgetValue(), param=self.click_object, ctx=Context(self.click_command))) 
                 child.handleValid(True)
             except Exception as e:
                 child.handleValid(False)

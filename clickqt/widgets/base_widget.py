@@ -58,9 +58,9 @@ class BaseWidget(ABC):
             (not isinstance(self.click_object.type, click_type_tuple) and self.click_object.nargs != 1):
                 value = []
                 for v in self.getWidgetValue():
-                    value.append(self.click_object.type.convert(value=v, param=None, ctx=Context(self.click_command))) 
+                    value.append(self.click_object.type.convert(value=v, param=self.click_object, ctx=Context(self.click_command))) 
             else:
-                value = self.click_object.type.convert(value=self.getWidgetValue(), param=None, ctx=Context(self.click_command))
+                value = self.click_object.type.convert(value=self.getWidgetValue(), param=self.click_object, ctx=Context(self.click_command))
         except Exception as e:
             self.handleValid(False)
             return (None, ClickQtError(ClickQtError.ErrorType.CONVERTION_ERROR, self.widget_name, e))
