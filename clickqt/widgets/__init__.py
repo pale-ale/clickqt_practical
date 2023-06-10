@@ -5,3 +5,4 @@ from .datetimeedit import DateTimeEdit
 from .numericfields import IntField, RealField
 from .textfield import TextField
 from .tuplewidget import TupleWidget
+from .nvaluewidget import NValueWidget

@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QGroupBox, QHBoxLayout
 from clickqt.widgets.base_widget import BaseWidget
-from typing import Callable, Any
+from typing import Callable, Any, List
 
 class TupleWidget(BaseWidget):
     widget_type = QGroupBox
@@ -31,6 +31,13 @@ class TupleWidget(BaseWidget):
         assert len(value) == len(self.children)
         for i,c in enumerate(self.children):
             c.setValue(value[i])
+
+    def handleValid(self, valid: bool):
+        for c in self.children:
+            if not isinstance(c, TupleWidget):
+                BaseWidget.handleValid(c, valid)
+            else:
+                c.handleValid(valid) # Recursive
     
-    def getWidgetValue(self) -> str:
+    def getWidgetValue(self) -> List[Any]:
         return [c.getWidgetValue() for c in self.children]
