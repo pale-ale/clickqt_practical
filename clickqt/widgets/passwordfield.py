@@ -22,8 +22,8 @@ class PasswordField(TextField):
 
         self.show_hide_action.toggled.connect(showPassword)
 
-        if hasattr(self.click_object, "confirmation_prompt") and self.click_object.confirmation_prompt:
-            self.click_object.confirmation_prompt = False  # Stop recursion
+        if hasattr(self.param, "confirmation_prompt") and self.param.confirmation_prompt:
+            self.param.confirmation_prompt = False  # Stop recursion
             kwargs["label"] = "Confirmation "
             self.confirmation_field = PasswordField(options, *args, **kwargs)
             self.confirmation_field.confirmation_field = self
