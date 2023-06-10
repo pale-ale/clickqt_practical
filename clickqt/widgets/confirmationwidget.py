@@ -12,9 +12,9 @@ class ConfirmationWidget(BaseWidget):
         assert hasattr(self.click_object, "confirmation_prompt") and self.click_object.confirmation_prompt
         
         self.click_object.confirmation_prompt = False  # Stop recursion
-        self.field = widgetsource(self.click_object.type, options, parent=self, *args, **kwargs)
+        self.field: BaseWidget = widgetsource(self.click_object.type, options, parent=self, *args, **kwargs)
         kwargs["label"] = "Confirmation "
-        self.confirmation_field = widgetsource(self.click_object.type, options, parent=self, *args, **kwargs)
+        self.confirmation_field: BaseWidget = widgetsource(self.click_object.type, options, parent=self, *args, **kwargs)
         self.widget.setLayout(QVBoxLayout())
         self.layout.removeWidget(self.label)
         self.layout.removeWidget(self.widget)
@@ -24,9 +24,10 @@ class ConfirmationWidget(BaseWidget):
         self.widget.layout().addWidget(self.field.container)
         self.widget.layout().addWidget(self.confirmation_field.container)
 
-    def setValue(self, value: Any):
-        self.field.setText(value)
-        self.confirmation_field.setText(value)
+    def setValue(self, value: tuple|list):
+        assert len(value) == 2
+        self.field.setValue(value[0])
+        self.confirmation_field.setValue(value[1])
 
     def handleValid(self, valid: bool):
         self.field.handleValid(valid)
