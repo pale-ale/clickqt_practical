@@ -22,6 +22,7 @@ def qtgui_from_click(cmd):
     # Command-name to command-options and callables + expose value
     # Assuming, that every command has an unique name (TODO)
     widget_registry: Dict[str, Dict[str, Tuple[Callable, bool]]] = {}
+    command_registry: Dict[str, Dict[str, Tuple[int, Callable]]] = {}
 
     def parameter_to_widget(command: click.Command, param: click.core.Parameter) -> QWidget:
         if param.name:
@@ -31,6 +32,7 @@ def qtgui_from_click(cmd):
                 widget = create_widget_mult(param.type, param.nargs, param.to_info_dict(), com=command, o=param)
                 
             widget_registry[command.name][param.name] = (lambda: widget.getValue(), param.expose_value)
+            command_registry[command.name][param.name] = (param.nargs, type(param.type).__name__)
 
             return widget.container
         else:
@@ -87,6 +89,8 @@ def qtgui_from_click(cmd):
 
         if widget_registry.get(cmd.name) is None:
             widget_registry[cmd.name] = {}
+        if command_registry.get(cmd.name) is None:
+            command_registry[cmd.name] = {}
         else:
             raise RuntimeError("Every command has to have an unique name")    
 
@@ -161,6 +165,25 @@ def qtgui_from_click(cmd):
         else:
             return group # =command
 
+        
+    def get_params(cmd, args):
+        params = [k for k, v in widget_registry[cmd.name].items()]
+        print(args)
+        if "yes" in params: 
+            params.remove("yes")
+        command_help = command_registry.get(cmd.name)
+        tuples_array = list(command_help.values())
+        for i, param in enumerate(params):
+            params[i] = "--" + param + f": {tuples_array[i]}: " +  f"{args[i]}"
+        return params
+
+                
+    def function_call_formatter(cmd, args):
+        params = get_params(cmd, args)
+        message = f"{cmd.name} \n"
+        parameter_message =  f"Current Command parameters: \n" + "\n".join(params)
+        return message + parameter_message
+
     def run():
         selected_command = current_command(main_tab_widget.currentWidget(), cmd) 
 
@@ -170,7 +193,7 @@ def qtgui_from_click(cmd):
 
         if inspect.getfullargspec(selected_command.callback).varkw:
             args = {}
-        else:
+        else:   
             args = []
 
         def append(option_name: str, value: Any):
@@ -229,9 +252,11 @@ def qtgui_from_click(cmd):
             return
         
         if isinstance(args, list):
+            print(f"Current Command: {function_call_formatter(selected_command, args)} \n" + f"Output:")
             selected_command.callback(*args)
         else:
-            selected_command.callback(**args)
+            print(f"Current Command: {function_call_formatter(selected_command, args)} \n" + f"Output:")
+            selected_command.callback(*args)
 
                 
     run_button.clicked.connect(run)
