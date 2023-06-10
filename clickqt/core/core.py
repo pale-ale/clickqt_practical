@@ -23,7 +23,7 @@ def qtgui_from_click(cmd):
     # Command-name to command-options and callables + expose value
     # Assuming, that every command has an unique name (TODO)
     widget_registry: Dict[str, Dict[str, Tuple[Callable, bool]]] = {}
-    command_registry: Dict[str, Dict[str, Tuple[int, click.ParamType]]] = {}
+    command_registry: Dict[str, Dict[str, Tuple[int, Callable]]] = {}
 
     def parameter_to_widget(command: click.Command, param: click.core.Parameter) -> QWidget:
         if param.name:
@@ -33,7 +33,7 @@ def qtgui_from_click(cmd):
                 widget = create_widget_mult(param.type, param.nargs, param.to_info_dict(), com=command, o=param)
                 
             widget_registry[command.name][param.name] = (lambda: widget.getValue(), param.expose_value)
-            command_registry[command.name][param.name] = (param.nargs, param.type)
+            command_registry[command.name][param.name] = (param.nargs, type(param.type).__name__)
 
             return widget.container
         else:
@@ -170,7 +170,7 @@ def qtgui_from_click(cmd):
         params = [k for k, v in widget_registry[cmd.name].items()]
         if "yes" in params: 
             params.remove("yes")
-        command_help = command_registry[cmd.name]
+        command_help = command_registry.get(cmd.name)
         tuples_array = list(command_help.values())
         for i, param in enumerate(params):
             params[i] = "--" + param + f": {tuples_array[i]}"
@@ -260,7 +260,6 @@ def qtgui_from_click(cmd):
     run_button.clicked.connect(run)
     layout.addWidget(run_button)
     
-
     terminal_output = TerminalOutput()
     terminal_output.setReadOnly(True)
     terminal_output.setToolTip("Terminal output")
