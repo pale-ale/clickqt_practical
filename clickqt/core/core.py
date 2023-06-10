@@ -23,6 +23,7 @@ def qtgui_from_click(cmd):
     # Command-name to command-options and callables + expose value
     # Assuming, that every command has an unique name (TODO)
     widget_registry: Dict[str, Dict[str, Tuple[Callable, bool]]] = {}
+    command_registry: Dict[str, Dict[str, Tuple[int, click.ParamType]]] = {}
 
     def parameter_to_widget(command: click.Command, param: click.core.Parameter) -> QWidget:
         if param.name:
@@ -32,6 +33,7 @@ def qtgui_from_click(cmd):
                 widget = create_widget_mult(param.type, param.nargs, param.to_info_dict(), com=command, o=param)
                 
             widget_registry[command.name][param.name] = (lambda: widget.getValue(), param.expose_value)
+            command_registry[command.name][param.name] = (param.nargs, param.type)
 
             return widget.container
         else:
@@ -88,6 +90,8 @@ def qtgui_from_click(cmd):
 
         if widget_registry.get(cmd.name) is None:
             widget_registry[cmd.name] = {}
+        if command_registry.get(cmd.name) is None:
+            command_registry[cmd.name] = {}
         else:
             raise RuntimeError("Every command has to have an unique name")    
 
@@ -164,12 +168,14 @@ def qtgui_from_click(cmd):
         
     def get_params(cmd):
         params = [k for k, v in widget_registry[cmd.name].items()]
+        if "yes" in params: 
+            params.remove("yes")
+        command_help = command_registry[cmd.name]
+        tuples_array = list(command_help.values())
         for i, param in enumerate(params):
-            params[i] = "--" + param
+            params[i] = "--" + param + f": {tuples_array[i]}"
         return params
 
-    def get_command_help(cmd):
-        return widget_registry[cmd.name]
                 
     def function_call_formatter(cmd):
         params = get_params(cmd)
@@ -244,7 +250,7 @@ def qtgui_from_click(cmd):
             return
         
         if isinstance(args, list):
-            print(f"Current Command: {function_call_formatter(selected_command)}: {get_command_help(selected_command)}")
+            print(f"Current Command: {function_call_formatter(selected_command)} \n" + f"Output:")
             selected_command.callback(*args)
         else:
             print(f"Current Command: {function_call_formatter(selected_command)}")
