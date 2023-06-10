@@ -15,7 +15,7 @@ class TupleWidget(BaseWidget):
         if not isinstance(param.type.types, list):
             raise TypeError
         
-        super().__init__(param, parent, *args, **kwargs)
+        super().__init__(param, *args, parent=parent, **kwargs)
         self.children:list[BaseWidget] = []
         recinfo = recinfo if recinfo else []
         self.widget.setLayout(QHBoxLayout())
@@ -61,6 +61,8 @@ class TupleWidget(BaseWidget):
         try:
             value = self.param.type.convert(self.getWidgetValue(), None, None)
         except Exception as e:
+            print("TupleWidget conversion error:", self.getWidgetValue(), "-/->", self.param.type.types)
+            self.handleValid(False)
             return (None, ClickQtError(ClickQtError.ErrorType.CONVERSION_ERROR, self.widget_name, e))
         
         try: # Consider callbacks 
