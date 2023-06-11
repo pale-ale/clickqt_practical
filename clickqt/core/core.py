@@ -20,8 +20,8 @@ import sys
 from functools import reduce
 
 def qtgui_from_click(cmd):
-    # Groups-Command-name concatinated with ":" to command-option-names to callables + expose value
-    widget_registry: Dict[str, Dict[str, Tuple[Callable, bool]]] = {}
+    # Groups-Command-name concatinated with ":" to command-option-names to callables
+    widget_registry: Dict[str, Dict[str, Callable[[], tuple[Any, ClickQtError]]]] = {}
 
     def parameter_to_widget(command: click.Command, groups_command_name:str, param: click.core.Parameter) -> QWidget:
         if param.name:
@@ -30,7 +30,7 @@ def qtgui_from_click(cmd):
             else:
                 widget = create_widget_mult(param.type, param.nargs, param.to_info_dict(), com=command, o=param)
                 
-            widget_registry[groups_command_name][param.name] = (lambda: widget.getValue(), param.expose_value)
+            widget_registry[groups_command_name][param.name] = lambda: widget.getValue()
 
             return widget.container
         else:
@@ -101,7 +101,7 @@ def qtgui_from_click(cmd):
                     ret = lambda: (True, ClickQtError()) if QMessageBox(QMessageBox.Information, "Confirmation", prompt, \
                                                                         QMessageBox.Yes|QMessageBox.No).exec() == QMessageBox.Yes \
                                                         else (False, ClickQtError(ClickQtError.ErrorType.ABORTED_ERROR))  
-                    widget_registry[groups_command_name][param.name] = (lambda: (ret, ClickQtError()), param.expose_value)
+                    widget_registry[groups_command_name][param.name] = lambda: (ret, ClickQtError())
                 else:  
                     cmd_elements.addWidget(parameter_to_widget(cmd, groups_command_name, param))
         return cmdbox
@@ -186,8 +186,9 @@ def qtgui_from_click(cmd):
                 args[option_name] = value
 
         # Check all values for errors
-        for option_name, (value_callback, expose) in widget_registry[selected_command_name].items():
-            if expose:
+        for option_name, value_callback in widget_registry[selected_command_name].items():
+            param: click.Parameter = next((x for x in selected_command.params if x.name == option_name))
+            if param.expose_value:
                 widget_value, err = value_callback()   
                 if check_error(err):
                     has_error = True
