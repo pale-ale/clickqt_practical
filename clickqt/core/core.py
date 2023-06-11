@@ -17,6 +17,7 @@ from clickqt.core.error import ClickQtError
 from clickqt.core.output import OutputStream, TerminalOutput
 from typing import Dict, Callable, List, Any, Tuple
 import sys
+from functools import reduce
 
 def qtgui_from_click(cmd):
     # Groups-Command-name concatinated with ":" to command-option-names to callables + expose value
@@ -151,22 +152,23 @@ def qtgui_from_click(cmd):
         
     run_button = QPushButton("&Run")  # Shortcut Alt+R
 
-    def current_command(tab_widget: QTabWidget, group: click.Group|click.Command) -> tuple[click.Command, str]:
+    def current_command_hierarchy(tab_widget: QTabWidget, group: click.Group|click.Command) -> list[click.Group|click.Command]:
         """
-            Returns the command of the selected tab and a string containing all group names and 
-            the seleceted command name
+            Returns the hierarchy of the command of the selected tab
         """
         if isinstance(group, click.Group):
             command = group.get_command(ctx=None, cmd_name=tab_widget.tabText(tab_widget.currentIndex()))
             if isinstance(tab_widget.currentWidget(), QTabWidget):
-                g, n = current_command(tab_widget.currentWidget(), command)
-                return (command.get_command(ctx=None, cmd_name=g.name), concat(group.name, n))
-            return (command, concat(group.name, command.name))
+                return [group] + current_command_hierarchy(tab_widget.currentWidget(), command)
+            return [group, command]
         else:
-            return (group, group.name) # =command
+            return [group]
 
     def run():
-        selected_command, selected_command_name = current_command(main_tab_widget.currentWidget(), cmd) 
+        hierarchy_selected_command = current_command_hierarchy(main_tab_widget.currentWidget(), cmd) 
+        selected_command = hierarchy_selected_command[-1]
+        #parent_group_command = hierarchy_selected_command[-2] if len(hierarchy_selected_command) >= 2 else None
+        selected_command_name = reduce(concat, [g.name for g in hierarchy_selected_command])
 
         args: List|Dict[str, Any] = None
         has_error = False
