@@ -177,7 +177,7 @@ class PathField(BaseWidget):
             if self.file_type == PathField.FileType.File:
                 # click.File hasn't "exists" attribute, click.Path hasn't "mode" attribute
                 if (hasattr(self.param.type, "exists") and self.param.type.exists) or \
-                    ("r" in hasattr(self.param.type, "mode") and self.param.type.mode):
+                    (hasattr(self.param.type, "mode") and "r" in self.param.type.mode):
                     dialog.setFileMode(QFileDialog.FileMode.ExistingFile) 
                 else:
                     dialog.setFileMode(QFileDialog.FileMode.AnyFile)  

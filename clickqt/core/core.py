@@ -17,19 +17,19 @@ from clickqt.core.error import ClickQtError
 from clickqt.core.output import OutputStream, TerminalOutput
 from typing import Dict, Callable, List, Any, Tuple
 import sys
+from functools import reduce
 
 def qtgui_from_click(cmd):
-    # Command-name to command-options and callables + expose value
-    # Assuming, that every command has an unique name (TODO)
-    widget_registry: Dict[str, Dict[str, Tuple[Callable, bool]]] = {}
+    # Groups-Command-name concatinated with ":" to command-option-names to callables
+    widget_registry: Dict[str, Dict[str, Callable[[], tuple[Any, ClickQtError]]]] = {}
     command_registry: Dict[str, Dict[str, Tuple[int, Callable]]] = {}
 
-    def parameter_to_widget(command: click.Command, param: click.Parameter) -> QWidget:
+    def parameter_to_widget(command: click.Command, groups_command_name:str, param: click.Parameter) -> QWidget:
         if param.name:
             widget = create_widget(param.type, param, widgetsource=create_widget, com=command, o=param)                
-            widget_registry[command.name][param.name] = (lambda: widget.getValue(), param.expose_value)
-            command_registry[command.name][param.name] = (param.nargs, type(param.type).__name__)
-
+            widget_registry[groups_command_name][param.name] = lambda: widget.getValue()
+            command_registry[groups_command_name][param.name] = (param.nargs, type(param.type).__name__)
+            
             return widget.container
         else:
             raise SyntaxError("No parameter name specified")
@@ -63,32 +63,36 @@ def qtgui_from_click(cmd):
             if isinstance(otype, t):
                 return widgetclass(param, *args, **kwargs)
         raise NotImplementedError(otype)    
-    def parse_cmd_group(cmdgroup: click.Group) -> QTabWidget:
+
+    def concat(a: str, b: str) -> str:
+        return a + ":" + b
+    
+    def parse_cmd_group(cmdgroup: click.Group, group_names: str) -> QTabWidget:
         group_tab_widget = QTabWidget()
         for group_name, group_cmd in cmdgroup.commands.items():
             if isinstance(group_cmd, click.Group):
-                nested_group_tab_widget = parse_cmd_group(group_cmd)
+                nested_group_tab_widget = parse_cmd_group(group_cmd, concat(group_names, group_name) if group_names else group_name)
                 group_tab_widget.addTab(nested_group_tab_widget, group_name)
             else:
                 cmd_tab_widget = QWidget()
                 cmd_tab_layout = QVBoxLayout()
                 cmd_tab_widget.setLayout(cmd_tab_layout)
-                cmd_tab_layout.addWidget(parse_cmd(group_cmd))
+                cmd_tab_layout.addWidget(parse_cmd(group_cmd, concat(group_names, group_cmd.name)))
                 group_tab_widget.addTab(cmd_tab_widget, group_name)
         return group_tab_widget
 
     
-    def parse_cmd(cmd: click.Command):
+    def parse_cmd(cmd: click.Command, groups_command_name: str):
         cmdbox = QWidget()
         cmd_elements = QVBoxLayout()
         cmdbox.setLayout(cmd_elements)
 
-        if widget_registry.get(cmd.name) is None:
-            widget_registry[cmd.name] = {}
-        if command_registry.get(cmd.name) is None:
-            command_registry[cmd.name] = {}
+        if widget_registry.get(groups_command_name) is None:
+            widget_registry[groups_command_name] = {}
+        if command_registry.get(groups_command_name) is None:
+            command_registry[groups_command_name] = {}
         else:
-            raise RuntimeError("Every command has to have an unique name")    
+            raise RuntimeError(f"Not a unique group_command_name_concat ({groups_command_name})")    
 
         for param in cmd.params:
             if isinstance(param, click.core.Parameter):
@@ -98,9 +102,9 @@ def qtgui_from_click(cmd):
                     ret = lambda: (True, ClickQtError()) if QMessageBox(QMessageBox.Information, "Confirmation", prompt, \
                                                                         QMessageBox.Yes|QMessageBox.No).exec() == QMessageBox.Yes \
                                                         else (False, ClickQtError(ClickQtError.ErrorType.ABORTED_ERROR))  
-                    widget_registry[cmd.name][param.name] = (lambda: (ret, ClickQtError()), param.expose_value)
+                    widget_registry[groups_command_name][param.name] = lambda: (ret, ClickQtError())
                 else:  
-                    cmd_elements.addWidget(parameter_to_widget(cmd, param))
+                    cmd_elements.addWidget(parameter_to_widget(cmd, groups_command_name, param))
         return cmdbox
     
     def check_error(err: ClickQtError) -> bool:
@@ -139,49 +143,52 @@ def qtgui_from_click(cmd):
                            }""")
     
     if isinstance(cmd, click.Group):
-        main_tab_widget.addTab(parse_cmd_group(cmd), cmd.name)
+        main_tab_widget.addTab(parse_cmd_group(cmd, cmd.name), cmd.name)
     else:
         standalone_group = QWidget()
         standalone_group_layout = QVBoxLayout()
         standalone_group.setLayout(standalone_group_layout)
-        standalone_group_layout.addWidget(parse_cmd(cmd))
-        main_tab_widget.addTab(standalone_group, cmd.name if hasattr(cmd, "name") else "Main")
+        standalone_group_layout.addWidget(parse_cmd(cmd, cmd.name))
+        main_tab_widget.addTab(standalone_group, cmd.name)
         
     run_button = QPushButton("&Run")  # Shortcut Alt+R
 
-    def current_command(tab_widget: QTabWidget, group: click.Group|click.Command) -> click.Command:
+    def current_command_hierarchy(tab_widget: QTabWidget, group: click.Group|click.Command) -> list[click.Group|click.Command]:
         """
-            Returns the command of the selected tab
+            Returns the hierarchy of the command of the selected tab
         """
         if isinstance(group, click.Group):
             command = group.get_command(ctx=None, cmd_name=tab_widget.tabText(tab_widget.currentIndex()))
             if isinstance(tab_widget.currentWidget(), QTabWidget):
-                return command.get_command(ctx=None, cmd_name=current_command(tab_widget.currentWidget(), command).name)
-            return command
+                return [group] + current_command_hierarchy(tab_widget.currentWidget(), command)
+            return [group, command]
         else:
-            return group # =command
+            return [group]
 
         
-    def get_params(cmd, args):
-        params = [k for k, v in widget_registry[cmd.name].items()]
+    def get_params(selected_command_name:str, args):
+        params = [k for k, v in widget_registry[selected_command_name].items()]
         print(args)
         if "yes" in params: 
             params.remove("yes")
-        command_help = command_registry.get(cmd.name)
+        command_help = command_registry.get(selected_command_name)
         tuples_array = list(command_help.values())
         for i, param in enumerate(params):
             params[i] = "--" + param + f": {tuples_array[i]}: " +  f"{args[i]}"
         return params
 
                 
-    def function_call_formatter(cmd, args):
-        params = get_params(cmd, args)
-        message = f"{cmd.name} \n"
+    def function_call_formatter(hierarchy_selected_command_name:str, selected_command_name:str, args):
+        params = get_params(hierarchy_selected_command_name, args)
+        message = f"{selected_command_name} \n"
         parameter_message =  f"Current Command parameters: \n" + "\n".join(params)
         return message + parameter_message
 
     def run():
-        selected_command = current_command(main_tab_widget.currentWidget(), cmd) 
+        hierarchy_selected_command = current_command_hierarchy(main_tab_widget.currentWidget(), cmd) 
+        selected_command = hierarchy_selected_command[-1]
+        #parent_group_command = hierarchy_selected_command[-2] if len(hierarchy_selected_command) >= 2 else None
+        hierarchy_selected_command_name = reduce(concat, [g.name for g in hierarchy_selected_command])
 
         args: List|Dict[str, Any] = None
         has_error = False
@@ -199,8 +206,9 @@ def qtgui_from_click(cmd):
                 args[option_name] = value
 
         # Check all values for errors
-        for option_name, (value_callback, expose) in widget_registry[selected_command.name].items():
-            if expose:
+        for option_name, value_callback in widget_registry[hierarchy_selected_command_name].items():
+            param: click.Parameter = next((x for x in selected_command.params if x.name == option_name))
+            if param.expose_value:
                 widget_value, err = value_callback()   
                 if check_error(err):
                     has_error = True
@@ -248,10 +256,10 @@ def qtgui_from_click(cmd):
             return
         
         if isinstance(args, list):
-            print(f"Current Command: {function_call_formatter(selected_command, args)} \n" + f"Output:")
+            print(f"Current Command: {function_call_formatter(hierarchy_selected_command_name, selected_command.name, args)} \n" + f"Output:")
             selected_command.callback(*args)
         else:
-            print(f"Current Command: {function_call_formatter(selected_command, args)} \n" + f"Output:")
+            print(f"Current Command: {function_call_formatter(hierarchy_selected_command_name, selected_command.name, args)} \n" + f"Output:")
             selected_command.callback(*args)
 
                 
