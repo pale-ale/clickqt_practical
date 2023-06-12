@@ -178,8 +178,8 @@ def qtgui_from_click(cmd):
         return params
 
                 
-    def function_call_formatter(selected_command_name:str, args):
-        params = get_params(selected_command_name, args)
+    def function_call_formatter(hierarchy_selected_command_name:str, selected_command_name:str, args):
+        params = get_params(hierarchy_selected_command_name, args)
         message = f"{selected_command_name} \n"
         parameter_message =  f"Current Command parameters: \n" + "\n".join(params)
         return message + parameter_message
@@ -188,7 +188,7 @@ def qtgui_from_click(cmd):
         hierarchy_selected_command = current_command_hierarchy(main_tab_widget.currentWidget(), cmd) 
         selected_command = hierarchy_selected_command[-1]
         #parent_group_command = hierarchy_selected_command[-2] if len(hierarchy_selected_command) >= 2 else None
-        selected_command_name = reduce(concat, [g.name for g in hierarchy_selected_command])
+        hierarchy_selected_command_name = reduce(concat, [g.name for g in hierarchy_selected_command])
 
         args: List|Dict[str, Any] = None
         has_error = False
@@ -206,7 +206,7 @@ def qtgui_from_click(cmd):
                 args[option_name] = value
 
         # Check all values for errors
-        for option_name, value_callback in widget_registry[selected_command_name].items():
+        for option_name, value_callback in widget_registry[hierarchy_selected_command_name].items():
             param: click.Parameter = next((x for x in selected_command.params if x.name == option_name))
             if param.expose_value:
                 widget_value, err = value_callback()   
@@ -256,10 +256,10 @@ def qtgui_from_click(cmd):
             return
         
         if isinstance(args, list):
-            print(f"Current Command: {function_call_formatter(selected_command_name, args)} \n" + f"Output:")
+            print(f"Current Command: {function_call_formatter(hierarchy_selected_command_name, selected_command.name, args)} \n" + f"Output:")
             selected_command.callback(*args)
         else:
-            print(f"Current Command: {function_call_formatter(selected_command_name, args)} \n" + f"Output:")
+            print(f"Current Command: {function_call_formatter(hierarchy_selected_command_name, selected_command.name, args)} \n" + f"Output:")
             selected_command.callback(*args)
 
                 
