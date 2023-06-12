@@ -4,15 +4,14 @@ from clickqt.widgets.base_widget import BaseWidget
 from clickqt.widgets.tuplewidget import TupleWidget
 from typing import Any, Callable, Tuple, List
 from clickqt.core.error import ClickQtError
-from click import Context
+from click import Context, Parameter
 
 class NValueWidget(BaseWidget):
     widget_type = QScrollArea
     
-    def __init__(self, options, widgetsource:Callable[[Any], BaseWidget], parent: BaseWidget = None, *args, **kwargs):
-        super().__init__(options, parent, *args, **kwargs)
+    def __init__(self, param:Parameter, widgetsource:Callable[[Any], BaseWidget], parent: BaseWidget = None, *args, **kwargs):
+        super().__init__(param, parent, *args, **kwargs)
         self.widget.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy(0x2))
-        self.options = options
         self.optargs = args
         self.optkwargs = kwargs
         self.widgetsource = widgetsource
@@ -27,7 +26,7 @@ class NValueWidget(BaseWidget):
     
     def add_empty_pair(self):
         self.param.multiple = False # nargs cannot be nested, so it is safe to turn this off for children
-        clickqtwidget:BaseWidget = self.widgetsource(self.param.type, self.options, *self.optargs, widgetsource=self.widgetsource, parent=self, **self.optkwargs)
+        clickqtwidget:BaseWidget = self.widgetsource(self.param.type, self.param, *self.optargs, widgetsource=self.widgetsource, parent=self, **self.optkwargs)
         self.param.multiple = True # click needs this for a correct conversion
         clickqtwidget.layout.removeWidget(clickqtwidget.label)
         clickqtwidget.label.deleteLater()

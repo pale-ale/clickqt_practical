@@ -41,7 +41,7 @@ class FocusOutValidator(QWidget):
         # self.widget.parent_widget == NValueWidget -> We have a child here
 
         try: # Try to convert the provided value into the corresponding click object type
-            ret_val = self.widget.click_object.type.convert(value=self.widget.getWidgetValue(), param=None, ctx=Context(self.widget.click_command))
+            ret_val = self.widget.param.type.convert(value=self.widget.getWidgetValue(), param=None, ctx=Context(self.widget.click_command))
             # Don't consider callbacks because we have only one child here
             self.widget.handleValid(True)
             return (ret_val, ClickQtError())

@@ -8,6 +8,7 @@ class CheckBox(BaseWidget):
     def __init__(self, param:Parameter, *args, **kwargs):
         super().__init__(param, *args, **kwargs)
         self.setValue(BaseWidget.getParamDefault(param, False))
+        
     def setValue(self, value: bool):
         self.widget.setChecked(value)
     

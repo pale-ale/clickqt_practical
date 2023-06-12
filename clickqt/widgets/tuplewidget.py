@@ -52,23 +52,3 @@ class TupleWidget(BaseWidget):
     
     def getWidgetValue(self) -> list[Any]:
         return [c.getWidgetValue() for c in self.children]
-
-    def getValue(self) -> tuple[Any, ClickQtError]:
-        if self.parent_widget:
-            return self.parent_widget.getValue()
-
-        value = None
-        try:
-            value = self.param.type.convert(self.getWidgetValue(), None, None)
-        except Exception as e:
-            print("TupleWidget conversion error:", self.getWidgetValue(), "-/->", self.param.type.types)
-            self.handleValid(False)
-            return (None, ClickQtError(ClickQtError.ErrorType.CONVERSION_ERROR, self.widget_name, e))
-        
-        try: # Consider callbacks 
-            ret_val = (self.param.process_value(Context(self.click_command), value), ClickQtError())
-            self.handleValid(True)
-            return ret_val
-        except Exception as e:
-            self.handleValid(False)
-            return (None, ClickQtError(ClickQtError.ErrorType.CALLBACK_VALIDATION_ERROR, self.widget_name, e))

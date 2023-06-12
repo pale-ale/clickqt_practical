@@ -165,7 +165,7 @@ class PathField(BaseWidget):
         assert(self.file_type != PathField.FileType.Unknown)
 
         if self.file_type & PathField.FileType.File and self.file_type & PathField.FileType.Directory:
-            dialog = QPathDialog(None, self.options["type"]["exists"])
+            dialog = QPathDialog(None, self.param.type.exists)
             if dialog.exec():
                 self.handleValid(True)
                 self.setValue(dialog.selectedPath().replace(QDir.currentPath(), "").replace("/", QDir.separator()).removeprefix(QDir.separator()))
@@ -176,12 +176,13 @@ class PathField(BaseWidget):
             # File or directory selectable
             if self.file_type == PathField.FileType.File:
                 # click.File hasn't "exists" attribute, click.Path hasn't "mode" attribute
-                if self.options["type"].get("exists", False) or "r" in self.options["type"].get("mode", ""):
+                if (hasattr(self.param.type, "exists") and self.param.type.exists) or \
+                    ("r" in hasattr(self.param.type, "mode") and self.param.type.mode):
                     dialog.setFileMode(QFileDialog.FileMode.ExistingFile) 
                 else:
                     dialog.setFileMode(QFileDialog.FileMode.AnyFile)  
             else: # Only FilePathField can be here
-                if self.options["type"]["exists"]:
+                if self.param.type.exists:
                     dialog.setFileMode(QFileDialog.FileMode.Directory)
                 else:
                     dialog.setFileMode(QFileDialog.FileMode.AnyFile)
