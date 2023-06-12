@@ -2,19 +2,20 @@ from PySide6.QtWidgets import QVBoxLayout, QWidget
 from clickqt.widgets.base_widget import BaseWidget
 from typing import Tuple, Any, Callable
 from clickqt.core.error import ClickQtError
+from click import Parameter
 
 class ConfirmationWidget(BaseWidget):
     widget_type = QWidget
 
-    def __init__(self, options, widgetsource:Callable[[Any], BaseWidget], *args, **kwargs):
-        super().__init__(options, *args, **kwargs)
+    def __init__(self, param:Parameter, widgetsource:Callable[[Any], BaseWidget], *args, **kwargs):
+        super().__init__(param, *args, **kwargs)
 
-        assert hasattr(self.click_object, "confirmation_prompt") and self.click_object.confirmation_prompt
+        assert hasattr(self.param, "confirmation_prompt") and self.param.confirmation_prompt
         
-        self.click_object.confirmation_prompt = False  # Stop recursion
-        self.field: BaseWidget = widgetsource(self.click_object.type, options, parent=self, *args, **kwargs)
+        self.param.confirmation_prompt = False  # Stop recursion
+        self.field: BaseWidget = widgetsource(self.param.type, param, parent=self, *args, **kwargs)
         kwargs["label"] = "Confirmation "
-        self.confirmation_field: BaseWidget = widgetsource(self.click_object.type, options, parent=self, *args, **kwargs)
+        self.confirmation_field: BaseWidget = widgetsource(self.param.type, param, parent=self, *args, **kwargs)
         self.widget.setLayout(QVBoxLayout())
         self.layout.removeWidget(self.label)
         self.layout.removeWidget(self.widget)

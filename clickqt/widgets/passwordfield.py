@@ -1,12 +1,13 @@
 from PySide6.QtWidgets import QLineEdit
 from PySide6.QtGui import QIcon, QAction
 from clickqt.widgets.textfield import TextField
+from click import Parameter
 
 class PasswordField(TextField):
     widget_type = QLineEdit
 
-    def __init__(self, options, *args, **kwargs):
-        super().__init__(options, *args, **kwargs)
+    def __init__(self, param:Parameter, *args, **kwargs):
+        super().__init__(param, *args, **kwargs)
 
         self.widget.setEchoMode(QLineEdit.EchoMode.Password)
 

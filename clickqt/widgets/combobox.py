@@ -25,12 +25,12 @@ class CheckableComboBox(ComboBoxBase):
 
         for v in self.getWidgetValue():
             try: # Try to convert the provided value into the corresponding click object type 
-                values.append(self.click_object.type.convert(value=v, param=self.click_object, ctx=Context(self.click_command)))
+                values.append(self.param.type.convert(value=v, param=self.param, ctx=Context(self.click_command)))
             except Exception as e:
-                return (None, ClickQtError(ClickQtError.ErrorType.CONVERTION_ERROR, self.widget_name, e))
+                return (None, ClickQtError(ClickQtError.ErrorType.CONVERSION_ERROR, self.widget_name, e))
       
         try: # Try to convert the provided value the corresponding click object type 
-            return (self.click_object.process_value(Context(self.click_command), values), ClickQtError())
+            return (self.param.process_value(Context(self.click_command), values), ClickQtError())
         except Exception as e:
             return (None, ClickQtError(ClickQtError.ErrorType.CALLBACK_VALIDATION_ERROR, self.widget_name, e))
 
