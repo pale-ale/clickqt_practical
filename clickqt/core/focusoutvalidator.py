@@ -19,7 +19,7 @@ class FocusOutValidator(QWidget):
 
     def eventFilter(self, watched: QObject, event: QEvent) -> bool:
         if event.type() == QEvent.Type.FocusOut:
-            value, err = self.validate()
+            value, err = self.__validate(self.widget)
             #if value is not None and err.type == ClickQtError.ErrorType.NO_ERROR:
                 #TODO: Check if value has correct type
                 #self.widget.setValue(value)
@@ -29,25 +29,30 @@ class FocusOutValidator(QWidget):
 
         return QWidget.eventFilter(self, watched, event)
     
-    def validate(self) -> Tuple[Any, ClickQtError]:
+    def __validate(self, widget: BaseWidget) -> Tuple[Any, ClickQtError]:
         """
             Validates the value of the widget, which went out of focus
         """
-        if (self.widget.parent_widget is not None and not isinstance(self.widget.parent_widget, NValueWidget)):
-            return self.widget.parent_widget.getValue()
-        elif self.widget.parent_widget is None:
-            return self.widget.getValue()
+        if widget.parent_widget is not None and not isinstance(widget.parent_widget, NValueWidget):
+            return self.__val(widget)
+        elif widget.parent_widget is None:
+            return widget.getValue()
 
         # self.widget.parent_widget == NValueWidget -> We have a child here
 
         try: # Try to convert the provided value into the corresponding click object type
-            ret_val = self.widget.param.type.convert(value=self.widget.getWidgetValue(), param=None, ctx=Context(self.widget.click_command))
+            ret_val = widget.param.type.convert(value=widget.getWidgetValue(), param=widget.param, ctx=Context(widget.click_command))
             # Don't consider callbacks because we have only one child here
-            self.widget.handleValid(True)
+            widget.handleValid(True)
             return (ret_val, ClickQtError())
         except Exception as e:
-            self.widget.handleValid(False)
-            return (None, ClickQtError(ClickQtError.ErrorType.CONVERSION_ERROR, self.widget.widget_name, e))
+            widget.handleValid(False)
+            return (None, ClickQtError(ClickQtError.ErrorType.CONVERSION_ERROR, widget.widget_name, e))
 
-       
-    
+    def __val(self, widget: BaseWidget) -> Tuple[Any, ClickQtError]: 
+        """
+            Calls getValue() on the widget with no parent
+        """
+        if widget.parent_widget is not None:
+            return self.__val(widget.parent_widget)
+        return widget.getValue()

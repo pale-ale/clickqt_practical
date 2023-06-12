@@ -49,11 +49,8 @@ class BaseWidget(ABC):
         """
             Validates the value of the widget and returns the result\n
             Valid -> (widget value or the value of a callback, ClickQtError.ErrorType.NO_ERROR)\n
-            Invalid -> (None, CClickQtError.ErrorType.CONVERTION_ERROR or ClickQtError.ErrorType.CALLBACK_VALIDATION_ERROR)
+            Invalid -> (None, CClickQtError.ErrorType.CONVERSION_ERROR or ClickQtError.ErrorType.CALLBACK_VALIDATION_ERROR)
         """
-        if self.parent_widget is not None: # Needed to validate a TupleWidget/MultiValueWidget correctly (when a child widget goes out of focus)
-            return self.parent_widget.getValue()
-
         value: Any = None
 
         try: # Try to convert the provided value into the corresponding click object type
@@ -62,9 +59,9 @@ class BaseWidget(ABC):
             (not isinstance(self.param.type, click_type_tuple) and self.param.nargs != 1):
                 value = []
                 for v in self.getWidgetValue():
-                    value.append(self.param.type.convert(value=v, param=None, ctx=Context(self.click_command))) 
+                    value.append(self.param.type.convert(value=v, param=self.param, ctx=Context(self.click_command))) 
             else:
-                value = self.param.type.convert(value=self.getWidgetValue(), param=None, ctx=Context(self.click_command))
+                value = self.param.type.convert(value=self.getWidgetValue(), param=self.param, ctx=Context(self.click_command))
         except Exception as e:
             self.handleValid(False)
             return (None, ClickQtError(ClickQtError.ErrorType.CONVERSION_ERROR, self.widget_name, e))
@@ -131,6 +128,11 @@ class ComboBoxBase(BaseWidget):
 
     def setValue(self, value: str):
         self.widget.setCurrentText(value)
+
+    # Changing the border color does not work because overwriting 
+    # the default stylesheet settings results in a program crash (TODO)
+    def handleValid(self, valid: bool):
+        pass
 
     @abstractmethod
     def addItems(self, items):

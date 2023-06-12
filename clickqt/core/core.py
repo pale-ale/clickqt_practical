@@ -13,6 +13,7 @@ from clickqt.widgets.tuplewidget import TupleWidget
 from clickqt.widgets.filepathfield import FilePathField
 from clickqt.widgets.filefield import FileFild
 from clickqt.widgets.nvaluewidget import NValueWidget
+from clickqt.widgets.confirmationwidget import ConfirmationWidget
 from clickqt.core.error import ClickQtError
 from clickqt.core.output import OutputStream, TerminalOutput
 from typing import Dict, Callable, List, Any, Tuple
@@ -26,7 +27,7 @@ def qtgui_from_click(cmd):
 
     def parameter_to_widget(command: click.Command, groups_command_name:str, param: click.Parameter) -> QWidget:
         if param.name:
-            widget = create_widget(param.type, param, widgetsource=create_widget, com=command, o=param)                
+            widget = create_widget(param.type, param, widgetsource=create_widget, com=command)                
             widget_registry[groups_command_name][param.name] = lambda: widget.getValue()
             command_registry[groups_command_name][param.name] = (param.nargs, type(param.type).__name__)
             
@@ -39,7 +40,7 @@ def qtgui_from_click(cmd):
             click.types.BoolParamType: CheckBox,
             click.types.IntParamType: IntField,
             click.types.FloatParamType: RealField,
-            click.types.StringParamType: PasswordField if hasattr(kwargs.get("o"), "hide_input") and kwargs["o"].hide_input else TextField,
+            click.types.StringParamType: PasswordField if hasattr(param, "hide_input") and param.hide_input else TextField,
             click.types.DateTime: DateTimeEdit,
             click.types.Tuple: TupleWidget,
             click.types.Choice: ComboBox,
@@ -52,6 +53,8 @@ def qtgui_from_click(cmd):
                 return CheckableComboBox
             return NValueWidget
         
+        if hasattr(param, "confirmation_prompt") and param.confirmation_prompt:
+            return ConfirmationWidget(param, *args, **kwargs)
         if param.multiple:
             return get_multiarg_version(otype)(param, *args, **kwargs)
         if param.nargs > 1:
