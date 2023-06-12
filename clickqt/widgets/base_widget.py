@@ -129,6 +129,11 @@ class ComboBoxBase(BaseWidget):
     def setValue(self, value: str):
         self.widget.setCurrentText(value)
 
+    # Changing the border color does not work because overwriting 
+    # the default stylesheet settings results in a program crash (TODO)
+    def handleValid(self, valid: bool):
+        pass
+
     @abstractmethod
     def addItems(self, items):
         pass
