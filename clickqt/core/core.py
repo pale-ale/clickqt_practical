@@ -24,10 +24,10 @@ def qtgui_from_click(cmd):
     widget_registry: Dict[str, Dict[str, Callable[[], tuple[Any, ClickQtError]]]] = {}
     command_registry: Dict[str, Dict[str, Tuple[int, Callable]]] = {}
 
-    def parameter_to_widget(command: click.Command, param: click.Parameter) -> QWidget:
+    def parameter_to_widget(command: click.Command, groups_command_name:str, param: click.Parameter) -> QWidget:
         if param.name:
             widget = create_widget(param.type, param, widgetsource=create_widget, com=command, o=param)                
-            widget_registry[groups_command_name][param.name] = (lambda: widget.getValue(), param.expose_value)
+            widget_registry[groups_command_name][param.name] = lambda: widget.getValue()
             command_registry[groups_command_name][param.name] = (param.nargs, type(param.type).__name__)
             
             return widget.container
@@ -166,21 +166,21 @@ def qtgui_from_click(cmd):
             return [group]
 
         
-    def get_params(cmd, args):
-        params = [k for k, v in widget_registry[cmd.name].items()]
+    def get_params(selected_command_name:str, args):
+        params = [k for k, v in widget_registry[selected_command_name].items()]
         print(args)
         if "yes" in params: 
             params.remove("yes")
-        command_help = command_registry.get(cmd.name)
+        command_help = command_registry.get(selected_command_name)
         tuples_array = list(command_help.values())
         for i, param in enumerate(params):
             params[i] = "--" + param + f": {tuples_array[i]}: " +  f"{args[i]}"
         return params
 
                 
-    def function_call_formatter(cmd, args):
-        params = get_params(cmd, args)
-        message = f"{cmd.name} \n"
+    def function_call_formatter(selected_command_name:str, args):
+        params = get_params(selected_command_name, args)
+        message = f"{selected_command_name} \n"
         parameter_message =  f"Current Command parameters: \n" + "\n".join(params)
         return message + parameter_message
 
@@ -256,10 +256,10 @@ def qtgui_from_click(cmd):
             return
         
         if isinstance(args, list):
-            print(f"Current Command: {function_call_formatter(selected_command, args)} \n" + f"Output:")
+            print(f"Current Command: {function_call_formatter(selected_command_name, args)} \n" + f"Output:")
             selected_command.callback(*args)
         else:
-            print(f"Current Command: {function_call_formatter(selected_command, args)} \n" + f"Output:")
+            print(f"Current Command: {function_call_formatter(selected_command_name, args)} \n" + f"Output:")
             selected_command.callback(*args)
 
                 
