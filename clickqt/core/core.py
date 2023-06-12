@@ -22,21 +22,19 @@ from functools import reduce
 def qtgui_from_click(cmd):
     # Groups-Command-name concatinated with ":" to command-option-names to callables
     widget_registry: Dict[str, Dict[str, Callable[[], tuple[Any, ClickQtError]]]] = {}
+    command_registry: Dict[str, Dict[str, Tuple[int, Callable]]] = {}
 
-    def parameter_to_widget(command: click.Command, groups_command_name:str, param: click.core.Parameter) -> QWidget:
+    def parameter_to_widget(command: click.Command, param: click.Parameter) -> QWidget:
         if param.name:
-            if param.nargs == 1 or isinstance(param.type, click.types.Tuple):
-                widget = create_widget(param.type, param.to_info_dict(), widgetsource=create_widget, com=command, o=param)
-            else:
-                widget = create_widget_mult(param.type, param.nargs, param.to_info_dict(), com=command, o=param)
-                
-            widget_registry[groups_command_name][param.name] = lambda: widget.getValue()
-
+            widget = create_widget(param.type, param, widgetsource=create_widget, com=command, o=param)                
+            widget_registry[groups_command_name][param.name] = (lambda: widget.getValue(), param.expose_value)
+            command_registry[groups_command_name][param.name] = (param.nargs, type(param.type).__name__)
+            
             return widget.container
         else:
             raise SyntaxError("No parameter name specified")
 
-    def create_widget(otype, *args, **kwargs):
+    def create_widget(otype:click.ParamType, param:click.Parameter, *args, **kwargs):
         typedict = {
             click.types.BoolParamType: CheckBox,
             click.types.IntParamType: IntField,
@@ -48,23 +46,24 @@ def qtgui_from_click(cmd):
             click.types.Path: FilePathField,
             click.types.File: FileFild,
         }
-        
-        def get_multiarg_version(otype):
+
+        def get_multiarg_version(otype:click.ParamType):
             if isinstance(otype, click.types.Choice):
                 return CheckableComboBox
             return NValueWidget
         
-        if hasattr(kwargs.get("o"), "multiple") and kwargs["o"].multiple:
-            return get_multiarg_version(otype)(*args, **kwargs)
+        if param.multiple:
+            return get_multiarg_version(otype)(param, *args, **kwargs)
+        if param.nargs > 1:
+            if isinstance(otype, click.types.Tuple):
+                return TupleWidget(param, *args, **kwargs)
+            return MultiValueWidget(param, *args, **kwargs)
 
         for t,widgetclass in typedict.items():
             if isinstance(otype, t):
-                return widgetclass(*args, **kwargs)
+                return widgetclass(param, *args, **kwargs)
         raise NotImplementedError(otype)    
-          
-    def create_widget_mult(otype, onargs, *args, **kwargs):
-        return MultiValueWidget(*args, otype, onargs, **kwargs)
-    
+
     def concat(a: str, b: str) -> str:
         return a + ":" + b
     
@@ -90,6 +89,8 @@ def qtgui_from_click(cmd):
 
         if widget_registry.get(groups_command_name) is None:
             widget_registry[groups_command_name] = {}
+        if command_registry.get(groups_command_name) is None:
+            command_registry[groups_command_name] = {}
         else:
             raise RuntimeError(f"Not a unique group_command_name_concat ({groups_command_name})")    
 
@@ -164,6 +165,25 @@ def qtgui_from_click(cmd):
         else:
             return [group]
 
+        
+    def get_params(cmd, args):
+        params = [k for k, v in widget_registry[cmd.name].items()]
+        print(args)
+        if "yes" in params: 
+            params.remove("yes")
+        command_help = command_registry.get(cmd.name)
+        tuples_array = list(command_help.values())
+        for i, param in enumerate(params):
+            params[i] = "--" + param + f": {tuples_array[i]}: " +  f"{args[i]}"
+        return params
+
+                
+    def function_call_formatter(cmd, args):
+        params = get_params(cmd, args)
+        message = f"{cmd.name} \n"
+        parameter_message =  f"Current Command parameters: \n" + "\n".join(params)
+        return message + parameter_message
+
     def run():
         hierarchy_selected_command = current_command_hierarchy(main_tab_widget.currentWidget(), cmd) 
         selected_command = hierarchy_selected_command[-1]
@@ -176,7 +196,7 @@ def qtgui_from_click(cmd):
 
         if inspect.getfullargspec(selected_command.callback).varkw:
             args = {}
-        else:
+        else:   
             args = []
 
         def append(option_name: str, value: Any):
@@ -236,9 +256,11 @@ def qtgui_from_click(cmd):
             return
         
         if isinstance(args, list):
+            print(f"Current Command: {function_call_formatter(selected_command, args)} \n" + f"Output:")
             selected_command.callback(*args)
         else:
-            selected_command.callback(**args)
+            print(f"Current Command: {function_call_formatter(selected_command, args)} \n" + f"Output:")
+            selected_command.callback(*args)
 
                 
     run_button.clicked.connect(run)

@@ -4,18 +4,16 @@ from clickqt.widgets.base_widget import BaseWidget
 from clickqt.widgets.tuplewidget import TupleWidget
 from typing import Any, Callable, Tuple, List
 from clickqt.core.error import ClickQtError
-from click import Context
+from click import Context, Parameter
 
 class NValueWidget(BaseWidget):
     widget_type = QScrollArea
     
-    def __init__(self, options, widgetsource:Callable[[Any], BaseWidget], parent: BaseWidget = None, *args, **kwargs):
-        super().__init__(options, parent, *args, **kwargs)
+    def __init__(self, param:Parameter, widgetsource:Callable[[Any], BaseWidget], parent: BaseWidget = None, *args, **kwargs):
+        super().__init__(param, parent, *args, **kwargs)
         self.widget.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy(0x2))
-        self.options = options
         self.optargs = args
         self.optkwargs = kwargs
-        self.optiontype = self.click_object.type
         self.widgetsource = widgetsource
         self.vbox = QWidget()
         self.vbox.setLayout(QVBoxLayout())
@@ -27,9 +25,9 @@ class NValueWidget(BaseWidget):
         self.buttondict:dict[QPushButton, BaseWidget] = dict()
     
     def add_empty_pair(self):
-        self.click_object.multiple = False # nargs cannot be nested, so it is safe to turn this off for children
-        clickqtwidget:BaseWidget = self.widgetsource(self.optiontype, self.options, *self.optargs, widgetsource=self.widgetsource, parent=self, **self.optkwargs)
-        self.click_object.multiple = True # click needs this for a correct conversion
+        self.param.multiple = False # nargs cannot be nested, so it is safe to turn this off for children
+        clickqtwidget:BaseWidget = self.widgetsource(self.param.type, self.param, *self.optargs, widgetsource=self.widgetsource, parent=self, **self.optkwargs)
+        self.param.multiple = True # click needs this for a correct conversion
         clickqtwidget.layout.removeWidget(clickqtwidget.label)
         clickqtwidget.label.deleteLater()
         removebtn = QPushButton("-", clickqtwidget.widget)
@@ -60,7 +58,7 @@ class NValueWidget(BaseWidget):
         err_messages: List[str] = []
         for child in self.buttondict.values():
             try: # Try to convert the provided value into the corresponding click object type
-                values.append(self.click_object.type.convert(value=child.getWidgetValue(), param=None, ctx=Context(self.click_command))) 
+                values.append(self.param.type.convert(value=child.getWidgetValue(), param=None, ctx=Context(self.click_command))) 
                 child.handleValid(True)
             except Exception as e:
                 child.handleValid(False)
@@ -68,10 +66,10 @@ class NValueWidget(BaseWidget):
             
         if len(err_messages): # Join all error messages and return them
             messages = ", ".join(err_messages) 
-            return (None, ClickQtError(ClickQtError.ErrorType.CONVERTION_ERROR, self.widget_name, messages if len(err_messages) == 1 else messages.join(["[", "]"])))
+            return (None, ClickQtError(ClickQtError.ErrorType.CONVERSION_ERROR, self.widget_name, messages if len(err_messages) == 1 else messages.join(["[", "]"])))
             
         try: # Consider callbacks
-            ret_val = (self.click_object.process_value(Context(self.click_command), values), ClickQtError())
+            ret_val = (self.param.process_value(Context(self.click_command), values), ClickQtError())
             self.handleValid(True)
             return ret_val
         except Exception as e:

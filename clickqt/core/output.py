@@ -2,6 +2,7 @@ import sys
 from io import BytesIO, TextIOWrapper 
 from PySide6.QtWidgets import QPlainTextEdit, QMenu
 from PySide6.QtGui import QTextCursor, QColor, QContextMenuEvent, QAction
+import html
 
 class OutputStream(TextIOWrapper):
         """
@@ -14,7 +15,7 @@ class OutputStream(TextIOWrapper):
 
         def write(self, message: bytes|str):
             if message:
-                message = message.decode(sys.stdout.encoding) if isinstance(message, bytes) else message  
+                message = html.escape(message.decode(sys.stdout.encoding) if isinstance(message, bytes) else message) 
                 message = message.replace("\r\n", "\n").replace("\n", "<br>") # Replace '\n' with HTML code
                 self.output.moveCursor(QTextCursor.End)
                 self.output.textCursor().insertHtml(f"<p span style='color: rgb({self.color.red()}, {self.color.green()}, {self.color.blue()})'>{message}</p>")
