@@ -54,10 +54,19 @@ class NValueWidget(BaseWidget):
                 c.handleValid(valid) # Recursive
 
     def getValue(self) -> Tuple[Any, ClickQtError]:
+        if BaseWidget.isRequiredValidInput(self.param, self):
+            self.handleValid(False)
+            return (None, ClickQtError(ClickQtError.ErrorType.REQUIRED_ERROR, self.widget_name, self.param.param_type_name))
+
         values = []
         err_messages: List[str] = []
+
         for child in self.buttondict.values():
             try: # Try to convert the provided value into the corresponding click object type
+                if BaseWidget.isRequiredValidInput(self.param, child):
+                    self.handleValid(False)
+                    return (None, ClickQtError(ClickQtError.ErrorType.REQUIRED_ERROR, self.widget_name, self.param.param_type_name))
+                
                 values.append(self.param.type.convert(value=child.getWidgetValue(), param=self.param, ctx=Context(self.click_command))) 
                 child.handleValid(True)
             except Exception as e:
@@ -66,7 +75,7 @@ class NValueWidget(BaseWidget):
             
         if len(err_messages): # Join all error messages and return them
             messages = ", ".join(err_messages) 
-            return (None, ClickQtError(ClickQtError.ErrorType.CONVERSION_ERROR, self.widget_name, messages if len(err_messages) == 1 else messages.join(["[", "]"])))
+            return (None, ClickQtError(ClickQtError.ErrorType.CONVERTING_ERROR, self.widget_name, messages if len(err_messages) == 1 else messages.join(["[", "]"])))
             
         try: # Consider callbacks
             ret_val = (self.param.process_value(Context(self.click_command), values), ClickQtError())
@@ -74,10 +83,20 @@ class NValueWidget(BaseWidget):
             return ret_val
         except Exception as e:
             self.handleValid(False)
-            return (None, ClickQtError(ClickQtError.ErrorType.CALLBACK_VALIDATION_ERROR, self.widget_name, e))
+            return (None, ClickQtError(ClickQtError.ErrorType.PROCESSING_VALUE_ERROR, self.widget_name, e))
 
     def setValue(self, value):
         raise NotImplementedError()
+    
+    def isEmpty(self) -> bool:
+        if len(self.buttondict.values()) == 0:
+            return True
+
+        for c in self.buttondict.values():
+            if c.isEmpty():
+                return True
+        
+        return False
     
     def getWidgetValue(self) -> list[Any]:
         return [c.getWidgetValue() for c in self.buttondict.values()]

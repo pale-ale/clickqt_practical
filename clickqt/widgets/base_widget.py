@@ -45,11 +45,15 @@ class BaseWidget(ABC):
         """
         pass
 
+    @abstractmethod
+    def isEmpty(self) -> bool:
+        pass
+
     def getValue(self) -> tuple[Any, ClickQtError]:
         """
             Validates the value of the widget and returns the result\n
             Valid -> (widget value or the value of a callback, ClickQtError.ErrorType.NO_ERROR)\n
-            Invalid -> (None, CClickQtError.ErrorType.CONVERSION_ERROR or ClickQtError.ErrorType.CALLBACK_VALIDATION_ERROR)
+            Invalid -> (None, CClickQtError.ErrorType.CONVERTING_ERROR or ClickQtError.ErrorType.PROCESSING_VALUE_ERROR)
         """
         value: Any = None
 
@@ -59,20 +63,28 @@ class BaseWidget(ABC):
             (not isinstance(self.param.type, click_type_tuple) and self.param.nargs != 1):
                 value = []
                 for v in self.getWidgetValue():
+                    if BaseWidget.isRequiredValidInput(self.param, v):
+                        self.handleValid(False)
+                        return (None, ClickQtError(ClickQtError.ErrorType.REQUIRED_ERROR, self.widget_name, self.param.param_type_name))
+
                     value.append(self.param.type.convert(value=v, param=self.param, ctx=Context(self.click_command))) 
             else:
+                if BaseWidget.isRequiredValidInput(self.param, self):
+                    self.handleValid(False)
+                    return (None, ClickQtError(ClickQtError.ErrorType.REQUIRED_ERROR, self.widget_name, self.param.param_type_name))
+                
                 value = self.param.type.convert(value=self.getWidgetValue(), param=self.param, ctx=Context(self.click_command))
         except Exception as e:
             self.handleValid(False)
-            return (None, ClickQtError(ClickQtError.ErrorType.CONVERSION_ERROR, self.widget_name, e))
-            
+            return (None, ClickQtError(ClickQtError.ErrorType.CONVERTING_ERROR, self.widget_name, e))
+        
         try: # Consider callbacks 
             ret_val = (self.param.process_value(Context(self.click_command), value), ClickQtError())
             self.handleValid(True)
             return ret_val
         except Exception as e:
             self.handleValid(False)
-            return (None, ClickQtError(ClickQtError.ErrorType.CALLBACK_VALIDATION_ERROR, self.widget_name, e))
+            return (None, ClickQtError(ClickQtError.ErrorType.PROCESSING_VALUE_ERROR, self.widget_name, e))
 
     @abstractmethod
     def getWidgetValue(self) -> Any:
@@ -94,6 +106,11 @@ class BaseWidget(ABC):
         if callable(param.default):
             return param.default()
         return param.default
+    
+    @staticmethod
+    def isRequiredValidInput(param:Parameter, widget:"BaseWidget"):
+        # If there is a default, click will use this (-> required option/argument can be omitted)
+        return param.required and widget.isEmpty() and BaseWidget.getParamDefault(param, None) is None
 
 
 class NumericField(BaseWidget):
@@ -115,6 +132,9 @@ class NumericField(BaseWidget):
 
     def getMaximum(self) -> int|float:
         self.widget.maximum()
+
+    def isEmpty(self) -> bool:
+        return False
     
     def getWidgetValue(self) -> int|float:
         return self.widget.value()
@@ -159,6 +179,9 @@ class PathField(BaseWidget):
 
     def setValue(self, value: str):
         self.widget.setText(value)
+
+    def isEmpty(self) -> bool:
+        return False # click rejects empty paths/filenames
 
     def browse(self):
         """

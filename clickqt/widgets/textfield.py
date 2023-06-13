@@ -11,6 +11,9 @@ class TextField(BaseWidget):
 
     def setValue(self, value: str):
         self.widget.setText(value)
+
+    def isEmpty(self) -> bool:
+        return self.getWidgetValue() == ""
     
     def getWidgetValue(self) -> str:
         return self.widget.text()
