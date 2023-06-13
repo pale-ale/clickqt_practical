@@ -177,7 +177,7 @@ def qtgui_from_click(cmd):
         command_help = command_registry.get(selected_command_name)
         tuples_array = list(command_help.values())
         for i, param in enumerate(params):
-            params[i] = "--" + param + f": {tuples_array[i]}: " +  f"{args[i]}"
+            params[i] = "--" + param + f": {tuples_array[i]}: " +  f"{args[param]}"
         return params
 
                 
@@ -193,20 +193,9 @@ def qtgui_from_click(cmd):
         #parent_group_command = hierarchy_selected_command[-2] if len(hierarchy_selected_command) >= 2 else None
         hierarchy_selected_command_name = reduce(concat, [g.name for g in hierarchy_selected_command])
 
-        args: List|Dict[str, Any] = None
+        args: Dict[str, Any] = {}
         has_error = False
         unused_options: List[Callable] = [] # parameters with expose_value==False
-
-        if inspect.getfullargspec(selected_command.callback).varkw:
-            args = {}
-        else:   
-            args = []
-
-        def append(option_name: str, value: Any):
-            if isinstance(args, list):
-                args.append(value)
-            else:
-                args[option_name] = value
 
         # Check all values for errors
         for option_name, value_callback in widget_registry[hierarchy_selected_command_name].items():
@@ -216,12 +205,11 @@ def qtgui_from_click(cmd):
                 if check_error(err):
                     has_error = True
                 elif isinstance(widget_value, list) and len(widget_value) and isinstance(widget_value[0], tuple):
-                    val, err = check_list(widget_value)
+                    widget_value, err = check_list(widget_value)
                     if check_error(err):
                         has_error = True
-                    append(option_name, val)
-                else:
-                    append(option_name, widget_value)
+
+                args[option_name] = widget_value
             else: # Verify it when all options are valid
                 unused_options.append(value_callback)
 
@@ -229,18 +217,11 @@ def qtgui_from_click(cmd):
             return
 
         # Replace the callables with their values and check for errors
-        if isinstance(args, list):
-            for i in range(len(args)):
-                if callable(args[i]):
-                    args[i], err = args[i]()
-                    if check_error(err):
-                        has_error = True
-        else:
-            for option_name, value in args.items():
-                if callable(value):
-                    args[option_name], err = value()
-                    if check_error(err):
-                        has_error = True
+        for option_name, value in args.items():
+            if callable(value):
+                args[option_name], err = value()
+                if check_error(err):
+                    has_error = True
 
         if has_error:
             return
@@ -258,12 +239,12 @@ def qtgui_from_click(cmd):
         if has_error:
             return
         
-        if isinstance(args, list):
-            print(f"Current Command: {function_call_formatter(hierarchy_selected_command_name, selected_command.name, args)} \n" + f"Output:")
-            selected_command.callback(*args)
+        print(f"Current Command: {function_call_formatter(hierarchy_selected_command_name, selected_command.name, args)} \n" + f"Output:")
+        
+        if inspect.getfullargspec(selected_command.callback).varkw:
+            selected_command.callback(**args)
         else:
-            print(f"Current Command: {function_call_formatter(hierarchy_selected_command_name, selected_command.name, args)} \n" + f"Output:")
-            selected_command.callback(*args)
+            selected_command.callback(*args.values())
 
                 
     run_button.clicked.connect(run)
