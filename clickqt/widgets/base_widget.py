@@ -120,7 +120,9 @@ class BaseWidget(ABC):
 class NumericField(BaseWidget):
     def __init__(self, param:Parameter, *args, **kwargs):
         super().__init__(param, *args, **kwargs)
-        self.setValue(BaseWidget.getParamDefault(param, 0))
+        default = BaseWidget.getParamDefault(param, 0)
+        if isinstance(default, int|float):
+            self.setValue(default)
 
     def setValue(self, value: int|float):
         self.widget.setValue(value)

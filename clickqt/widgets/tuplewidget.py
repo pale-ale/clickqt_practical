@@ -29,6 +29,11 @@ class TupleWidget(BaseWidget):
             bw.label.deleteLater()
             self.widget.layout().addWidget(bw.container)
             self.children.append(bw)
+
+        if self.parent_widget is None:
+            default = BaseWidget.getParamDefault(self.param, None)
+            if default is not None:
+                self.setValue(default)
     
     @staticmethod
     def getTypesRecursive(o:list|ClickTuple, recinfo:list):
