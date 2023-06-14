@@ -1,7 +1,7 @@
 from PySide6.QtWidgets import QGroupBox, QHBoxLayout
 from clickqt.widgets.base_widget import BaseWidget
 from typing import Callable, Any
-from click import Parameter, Tuple as ClickTuple
+from click import Parameter, Tuple as ClickTuple, Context
 
 class TupleWidget(BaseWidget):
     widget_type = QGroupBox
@@ -31,9 +31,12 @@ class TupleWidget(BaseWidget):
             self.children.append(bw)
 
         if self.parent_widget is None:
-            default = BaseWidget.getParamDefault(self.param, None)
-            if default is not None:
-                self.setValue(default)
+            # Consider envvar
+            if (envvar_value := self.param.resolve_envvar_value(Context(self.click_command))) is not None:
+                self.setValue(self.param.type.split_envvar_value(envvar_value))
+            else: # Consider default value
+                if len(default := BaseWidget.getParamDefault(self.param, [])):
+                    self.setValue(default)
     
     @staticmethod
     def getTypesRecursive(o:list|ClickTuple, recinfo:list):

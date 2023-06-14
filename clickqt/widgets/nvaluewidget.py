@@ -19,25 +19,37 @@ class NValueWidget(BaseWidget):
         self.vbox.setLayout(QVBoxLayout())
         self.widget.setWidgetResizable(True)
         addfieldbtn = QPushButton("+", self.widget)
-        addfieldbtn.clicked.connect(self.add_empty_pair)
+        addfieldbtn.clicked.connect(lambda: self.addPair()) # Add an empty widget
         self.vbox.layout().addWidget(addfieldbtn)
         self.widget.setWidget(self.vbox)
         self.buttondict:dict[QPushButton, BaseWidget] = dict()
-    
-    def add_empty_pair(self):
+
+        # Consider envvar
+        if (envvar_value := self.param.resolve_envvar_value(Context(self.click_command))) is not None:
+            for value in self.param.type.split_envvar_value(envvar_value):
+                if value: # Don't add empty widgets
+                    self.addPair(value)
+        else: # Consider default value
+            if len(default := BaseWidget.getParamDefault(self.param, [])):
+                for value in default:
+                    self.addPair(value)
+        
+    def addPair(self, value = None):
         self.param.multiple = False # nargs cannot be nested, so it is safe to turn this off for children
         clickqtwidget:BaseWidget = self.widgetsource(self.param.type, self.param, *self.optargs, widgetsource=self.widgetsource, parent=self, **self.optkwargs)
         self.param.multiple = True # click needs this for a correct conversion
+        if value is not None:
+            clickqtwidget.setValue(value)
         clickqtwidget.layout.removeWidget(clickqtwidget.label)
         clickqtwidget.label.deleteLater()
         removebtn = QPushButton("-", clickqtwidget.widget)
         clickqtwidget.layout.addWidget(removebtn)
-        removebtn.clicked.connect(lambda: self.remove_button_pair(removebtn))
+        removebtn.clicked.connect(lambda: self.removeButtonPair(removebtn))
         self.vbox.layout().addWidget(clickqtwidget.container)
         self.buttondict[removebtn] = clickqtwidget
         self.widget.setWidget(self.vbox)
     
-    def remove_button_pair(self, btntoremove):
+    def removeButtonPair(self, btntoremove):
         if btntoremove in self.buttondict:
             cqtwidget = self.buttondict.pop(btntoremove)
             self.vbox.layout().removeWidget(cqtwidget.container)
@@ -86,7 +98,9 @@ class NValueWidget(BaseWidget):
             return (None, ClickQtError(ClickQtError.ErrorType.PROCESSING_VALUE_ERROR, self.widget_name, e))
 
     def setValue(self, value):
-        raise NotImplementedError()
+        assert len(value) == len(self.buttondict.values())
+        for i,c in enumerate(self.buttondict.values()):
+            c.setValue(value[i])
     
     def isEmpty(self) -> bool:
         if len(self.buttondict.values()) == 0:

@@ -1,37 +1,38 @@
-import click
 from PySide6.QtWidgets import QGroupBox, QVBoxLayout
 from clickqt.widgets.base_widget import BaseWidget
-from clickqt.widgets.numericfields import IntField, RealField
-from clickqt.widgets.textfield import TextField
 from clickqt.widgets.tuplewidget import TupleWidget
-from click import Parameter
-from typing import Any, List
+from click import Parameter, Context
+from typing import Any, List, Callable
+
 
 class MultiValueWidget(BaseWidget):
     widget_type = QGroupBox
     
-    def __init__(self, param:Parameter, *args, **kwargs):
-        super().__init__(param, *args, **kwargs)
+    def __init__(self, param:Parameter, widgetsource:Callable[[Any], BaseWidget], parent: BaseWidget = None, *args, **kwargs):
+        super().__init__(param, parent, *args, **kwargs)
         self.children:list[BaseWidget] = []
         self.widget.setLayout(QVBoxLayout())
-        
-        typedict = {
-            click.types.IntParamType: IntField,
-            click.types.FloatParamType: RealField,
-            click.types.StringParamType: TextField,
-        }
 
         if param.nargs < 2:
             raise TypeError(f"param.nargs should be >= 2 when creating a MultiValueWIdget but is {param.nargs}.")
         
-        for i in range(param.nargs):
-            for t, widgetclass in typedict.items():
-                if isinstance(param.type, t):
-                    bw:BaseWidget = widgetclass(param, parent=self, *args, **kwargs)
-                    bw.layout.removeWidget(bw.label)
-                    bw.label.deleteLater()
-                    self.widget.layout().addWidget(bw.container)
-                    self.children.append(bw)
+        # Add param.nargs widgets of type param.type
+        for _ in range(param.nargs):
+            nargs = param.nargs
+            param.nargs = 1 # Stop recursion
+            bw:BaseWidget = widgetsource(param.type, param, *args, parent=self, widgetsource=widgetsource, **kwargs)
+            param.nargs = nargs # click needs the right value for a correct conversion
+            bw.layout.removeWidget(bw.label)
+            bw.label.deleteLater()
+            self.widget.layout().addWidget(bw.container)
+            self.children.append(bw)
+
+        # Consider envvar
+        if (envvar_value := self.param.resolve_envvar_value(Context(self.click_command))) is not None:
+            self.setValue(self.param.type.split_envvar_value(envvar_value))
+        else: # Consider default value
+            if len(default := BaseWidget.getParamDefault(self.param, [])):
+                self.setValue(default)
         
     def setValue(self, value):
         assert len(value) == len(self.children)

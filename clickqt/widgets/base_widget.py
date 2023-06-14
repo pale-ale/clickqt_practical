@@ -6,7 +6,7 @@ from clickqt.core.error import ClickQtError
 from clickqt.widgets.core.QPathDialog import QPathDialog
 import clickqt.core
 from enum import IntFlag
-from click import Context, Parameter, Choice, Option, Tuple as click_type_tuple
+from click import Context, Parameter, Choice, Option, Tuple as click_type_tuple, Command
 
 class BaseWidget(ABC):
     # The type of this widget
@@ -120,12 +120,11 @@ class BaseWidget(ABC):
 class NumericField(BaseWidget):
     def __init__(self, param:Parameter, *args, **kwargs):
         super().__init__(param, *args, **kwargs)
-        default = BaseWidget.getParamDefault(param, 0)
-        if isinstance(default, int|float):
-            self.setValue(default)
+        self.setValue(BaseWidget.getParamDefault(param, 0))
 
     def setValue(self, value: int|float):
-        self.widget.setValue(value)
+        if isinstance(value, int|float):
+            self.widget.setValue(value)
 
     def setMinimum(self, value: int|float):
         self.widget.setMinimum(value)
@@ -150,7 +149,8 @@ class ComboBoxBase(BaseWidget):
         self.addItems(param.type.choices)
 
     def setValue(self, value: str):
-        self.widget.setCurrentText(value)
+        if isinstance(value, str):
+            self.widget.setCurrentText(value)
 
     # Changing the border color does not work because overwriting 
     # the default stylesheet settings results in a program crash (TODO)
@@ -181,7 +181,8 @@ class PathField(BaseWidget):
         self.layout.addWidget(self.browse_btn)
 
     def setValue(self, value: str):
-        self.widget.setText(value)
+        if isinstance(value, str):
+            self.widget.setText(value)
 
     #def isEmpty(self) -> bool:
     #    return False # click rejects empty paths/filenames
