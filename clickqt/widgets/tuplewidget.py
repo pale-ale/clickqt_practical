@@ -1,8 +1,7 @@
 from PySide6.QtWidgets import QGroupBox, QHBoxLayout
-from clickqt.core.error import ClickQtError
 from clickqt.widgets.base_widget import BaseWidget
 from typing import Callable, Any
-from click import Context, Parameter, Tuple as ClickTuple
+from click import Parameter, Tuple as ClickTuple
 
 class TupleWidget(BaseWidget):
     widget_type = QGroupBox

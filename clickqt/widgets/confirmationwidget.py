@@ -35,7 +35,7 @@ class ConfirmationWidget(BaseWidget):
         self.confirmation_field.handleValid(valid)      
 
     def isEmpty(self) -> bool:
-        return self.field.isEmpty() and self.confirmation_field.isEmpty() # If only one is empty (=inputs are different), click rejects it
+        return self.field.isEmpty() and self.confirmation_field.isEmpty() # If only one is empty (=inputs are different), clickqt rejects it
 
     def getValue(self) -> Tuple[str, ClickQtError]:
         val1, err1 = self.field.getValue()

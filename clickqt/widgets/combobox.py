@@ -10,9 +10,6 @@ class ComboBox(ComboBoxBase):
 
     def addItems(self, items: List[str]):
         self.widget.addItems(items)
-
-    def isEmpty(self) -> bool:
-        return False
     
     def getWidgetValue(self) -> str:
         return self.widget.currentText()

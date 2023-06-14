@@ -45,9 +45,13 @@ class BaseWidget(ABC):
         """
         pass
 
-    @abstractmethod
     def isEmpty(self) -> bool:
-        pass
+        """
+            Checks, if the widget is empty. 
+            This could happen only for string-based widgets or the multiple choice-widget
+            -> Subclasses may need to override this method
+        """
+        return False
 
     def getValue(self) -> tuple[Any, ClickQtError]:
         """
@@ -132,9 +136,6 @@ class NumericField(BaseWidget):
 
     def getMaximum(self) -> int|float:
         self.widget.maximum()
-
-    def isEmpty(self) -> bool:
-        return False
     
     def getWidgetValue(self) -> int|float:
         return self.widget.value()
@@ -180,8 +181,8 @@ class PathField(BaseWidget):
     def setValue(self, value: str):
         self.widget.setText(value)
 
-    def isEmpty(self) -> bool:
-        return False # click rejects empty paths/filenames
+    #def isEmpty(self) -> bool:
+    #    return False # click rejects empty paths/filenames
 
     def browse(self):
         """

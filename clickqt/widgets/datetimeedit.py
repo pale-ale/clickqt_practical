@@ -12,9 +12,6 @@ class DateTimeEdit(BaseWidget):
 
     def setValue(self, value: QDateTime):
         self.widget.setDateTime(value)
-
-    def isEmpty(self) -> bool:
-        return False
     
     def getWidgetValue(self) -> str:
          # click.DateTime wants a str in form of '%Y-%m-%d', '%Y-%m-%dT%H:%M:%S'or '%Y-%m-%d %H:%M:%S'
