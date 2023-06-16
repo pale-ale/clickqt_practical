@@ -41,4 +41,5 @@ jobs:
     
     - name: Run Python tests
       run: |
+        apt install libgl1-mesa-glx
         python -m pytest
