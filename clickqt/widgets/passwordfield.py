@@ -20,10 +20,4 @@ class PasswordField(TextField):
             self.show_hide_action.setIcon(QIcon('clickqt\\images\\eye-hide.png') if show else QIcon('clickqt\\images\\eye-show.png'))
 
         self.show_hide_action.toggled.connect(showPassword)
-
-    def setValue(self, value: str):
-        self.widget.setText(value)
-        
-    def getWidgetValue(self) -> str:
-        return self.widget.text()
    

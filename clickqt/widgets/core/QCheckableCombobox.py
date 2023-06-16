@@ -107,7 +107,17 @@ class QCheckableComboBox(QComboBox):
                 data = None
             self.addItem(text, data)
 
-    def getData(self):
+    def checkItems(self, texts: list[str], case_sensitive=True):
+        texts = [text.upper() for text in texts] if not case_sensitive else texts
+        for i in range(self.model().rowCount()):
+            if self.model().item(i).data().upper() in texts:
+                self.model().item(i).setCheckState(Qt.CheckState.Checked)
+            else:
+                self.model().item(i).setCheckState(Qt.CheckState.Unchecked)
+        
+        self.updateText()
+
+    def getData(self) -> list[str]:
         # Return the list of selected items data
         res = []
         for i in range(self.model().rowCount()):
