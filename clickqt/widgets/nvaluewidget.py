@@ -94,15 +94,12 @@ class NValueWidget(BaseWidget):
                         if child.param.required and default is None:
                             self.handleValid(False)
                             return (None, ClickQtError(ClickQtError.ErrorType.REQUIRED_ERROR, child.widget_name, child.param.param_type_name))
-                        elif default is not None:
-                            if i < len(default): # Overwrite the empty widget with the default value (if one exists)
-                                child.setValue(default[i]) # If the widget is a tuple, all values will be overwritten
-                            else: # If no default exists, remove the pair
-                                remove_empty_widgets.append(btn_pair)
-                        else: 
-                            values = None
-                            break
-                    
+                        elif default is not None and i < len(default): # Overwrite the empty widget with the default value (if one exists)
+                            child.setValue(default[i]) # If the widget is a tuple, all values will be overwritten
+                        else: # No default exists
+                            remove_empty_widgets.append(btn_pair)
+                            continue
+                            
                     values.append(self.param.type.convert(value=child.getWidgetValue(), param=self.param, ctx=Context(self.click_command))) 
                     child.handleValid(True)
                 except Exception as e:
@@ -112,6 +109,9 @@ class NValueWidget(BaseWidget):
             # Remove all empty widgets with no default value
             for btn_pair in remove_empty_widgets:
                 self.removeButtonPair(btn_pair)
+
+            if len(self.buttondict.items()) == 0: # All widgets were empty
+                values = None
                 
             if len(err_messages): # Join all error messages and return them
                 messages = ", ".join(err_messages) 
