@@ -41,5 +41,5 @@ jobs:
     
     - name: Run Python tests
       run: |
-        apt install libgl1-mesa-glx
+        apt-get install freeglut3 freeglut3-dev
         python -m pytest
