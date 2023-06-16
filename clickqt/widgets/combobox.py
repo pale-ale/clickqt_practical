@@ -40,22 +40,27 @@ class CheckableComboBox(ComboBoxBase):
         self.widget.addItems(items)
 
     def getValue(self):
-        if BaseWidget.isRequiredValidInput(self.param, self):
+        value_missing = False
+        if self.isEmpty():
             default = BaseWidget.getParamDefault(self.param, None)
-            if default is None:
+            if self.param.required and default is None:
                 self.handleValid(False)
                 return (None, ClickQtError(ClickQtError.ErrorType.REQUIRED_ERROR, self.widget_name, self.param.param_type_name))
-            else: # Overwrite the empty widget with the default value and execute with this (new) value
+            elif default is not None: # Overwrite the empty widget with the default value and execute with this (new) value
                 self.setValue(default)
+            else: # param is not required and there is no default -> value is None
+                value_missing = True # But callback should be considered
 
-        values: list[str] = []
-        
-        for v in self.getWidgetValue():
-            try: # Try to convert the provided value into the corresponding click object type 
-                values.append(self.param.type.convert(value=v, param=self.param, ctx=Context(self.click_command)))
-            except Exception as e:
-                return (None, ClickQtError(ClickQtError.ErrorType.CONVERTING_ERROR, self.widget_name, e))
-      
+        values: list[str]|None = None
+
+        if not value_missing:
+            values = []
+            for v in self.getWidgetValue():
+                try: # Try to convert the provided value into the corresponding click object type 
+                    values.append(self.param.type.convert(value=v, param=self.param, ctx=Context(self.click_command)))
+                except Exception as e:
+                    return (None, ClickQtError(ClickQtError.ErrorType.CONVERTING_ERROR, self.widget_name, e))
+
         try: # Consider callbacks
             return (self.param.process_value(Context(self.click_command), values), ClickQtError())
         except Exception as e:
