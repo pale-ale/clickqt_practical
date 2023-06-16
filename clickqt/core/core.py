@@ -171,7 +171,6 @@ def qtgui_from_click(cmd):
         
     def get_params(selected_command_name:str, args):
         params = [k for k, v in widget_registry[selected_command_name].items()]
-        print(args)
         if "yes" in params: 
             params.remove("yes")
         command_help = command_registry.get(selected_command_name)

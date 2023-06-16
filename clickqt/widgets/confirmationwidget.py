@@ -51,4 +51,7 @@ class ConfirmationWidget(BaseWidget):
         
     def getWidgetValue(self) -> Any:
         return self.field.getWidgetValue()
+    
+    def getWidgetValueToString(self) -> str:
+        return str(self.getWidgetValue())
    

@@ -47,3 +47,6 @@ class MultiValueWidget(BaseWidget):
     
     def getWidgetValue(self) -> List[Any]:
         return [c.getWidgetValue() for c in self.children]
+    
+    def getWidgetValueToString(self) -> str:
+        return " ".join(self.getWidgetValue())

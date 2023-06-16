@@ -27,3 +27,5 @@ class PasswordField(TextField):
     def getWidgetValue(self) -> str:
         return self.widget.text()
    
+    def getWidgetValueToString(self) -> str:
+        return self.getWidgetValue()

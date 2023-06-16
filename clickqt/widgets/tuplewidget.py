@@ -52,3 +52,6 @@ class TupleWidget(BaseWidget):
     
     def getWidgetValue(self) -> list[Any]:
         return [c.getWidgetValue() for c in self.children]
+
+    def getWidgetValueToString(self) -> str:
+        return " ".join(self.getWidgetValue())
