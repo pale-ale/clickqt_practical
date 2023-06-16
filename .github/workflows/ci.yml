@@ -37,9 +37,10 @@ jobs:
 
     - name: Install Python package
       run: |
+        sudo apt-get install freeglut3 freeglut3-dev
+        sudo apt install libopengl0 -y  
         python -m pip install .[tests]
     
     - name: Run Python tests
       run: |
-        sudo apt install libopengl0 -y 
         python -m pytest
