@@ -84,20 +84,24 @@ class NValueWidget(BaseWidget):
             values = []
             err_messages: List[str] = []
             remove_empty_widgets = []
+            default = BaseWidget.getParamDefault(self.param, None)
 
             # len(self.buttondict.items()) < len(default): We set at most len(self.buttondict.items()) defaults
             # len(self.buttondict.items()) >= len(default): All defaults will be considered
             for i, (btn_pair, child) in enumerate(self.buttondict.items()):
                 try: # Try to convert the provided value into the corresponding click object type
-                    if BaseWidget.isRequiredValidInput(child.param, child):
-                        default = BaseWidget.getParamDefault(child.param, None)
-                        if default is None:
+                    if child.isEmpty():
+                        if child.param.required and default is None:
                             self.handleValid(False)
                             return (None, ClickQtError(ClickQtError.ErrorType.REQUIRED_ERROR, child.widget_name, child.param.param_type_name))
-                        elif i < len(default): # Overwrite the empty widget with the default value (if one exists)
-                            child.setValue(default[i]) # If the widget is a tuple, all values will be overwritten
-                        else: # If no default exists, remove the pair
-                            remove_empty_widgets.append(btn_pair)
+                        elif default is not None:
+                            if i < len(default): # Overwrite the empty widget with the default value (if one exists)
+                                child.setValue(default[i]) # If the widget is a tuple, all values will be overwritten
+                            else: # If no default exists, remove the pair
+                                remove_empty_widgets.append(btn_pair)
+                        else: 
+                            values = None
+                            break
                     
                     values.append(self.param.type.convert(value=child.getWidgetValue(), param=self.param, ctx=Context(self.click_command))) 
                     child.handleValid(True)
