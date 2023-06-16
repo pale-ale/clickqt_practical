@@ -41,5 +41,5 @@ jobs:
     
     - name: Run Python tests
       run: |
-        apt-get install freeglut3 freeglut3-dev
+        python -m pip install pyopengl
         python -m pytest
