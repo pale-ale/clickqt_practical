@@ -1,11 +1,8 @@
 from typing import Any
 from abc import ABC, abstractmethod
-from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QPushButton, QFileDialog
-from PySide6.QtCore import QDir
+from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout
 from clickqt.core.error import ClickQtError
-from clickqt.widgets.core.QPathDialog import QPathDialog
 import clickqt.core
-from enum import IntFlag
 from click import Context, Parameter, Choice, Option, Tuple as click_type_tuple
 
 class BaseWidget(ABC):
@@ -149,6 +146,7 @@ class NumericField(BaseWidget):
     def getWidgetValue(self) -> int|float:
         return self.widget.value()
 
+
 class ComboBoxBase(BaseWidget):
     def __init__(self, param:Parameter, *args, **kwargs):
         if not isinstance(param.type, Choice):
@@ -164,67 +162,3 @@ class ComboBoxBase(BaseWidget):
     @abstractmethod
     def addItems(self, items):
         pass
-
-
-class PathField(BaseWidget):
-    class FileType(IntFlag):
-        Unknown = 0
-        File = 1
-        Directory = 2
-
-    def __init__(self, param:Parameter, *args, **kwargs):
-        super().__init__(param, *args, **kwargs)
-
-        if isinstance(param, Option):
-            self.setValue(BaseWidget.getParamDefault(param, ""))
-        
-        self.file_type = PathField.FileType.Unknown
-
-        self.browse_btn = QPushButton("Browse")
-        self.browse_btn.clicked.connect(self.browse)
-        self.layout.addWidget(self.browse_btn)
-
-    def setValue(self, value: str):
-        if isinstance(value, str):
-            self.widget.setText(value)
-
-    #def isEmpty(self) -> bool:
-    #    return False # click rejects empty paths/filenames
-
-    def browse(self):
-        """
-            Sets the relative path or absolute path (when the path does not contain the path of this project) in the textfield
-        """
-        assert(self.file_type != PathField.FileType.Unknown)
-
-        if self.file_type & PathField.FileType.File and self.file_type & PathField.FileType.Directory:
-            dialog = QPathDialog(None, self.param.type.exists)
-            if dialog.exec():
-                self.handleValid(True)
-                self.setValue(dialog.selectedPath().replace(QDir.currentPath(), "").replace("/", QDir.separator()).removeprefix(QDir.separator()))
-        else:
-            dialog = QFileDialog()
-            dialog.setViewMode(QFileDialog.ViewMode.Detail)
-            dialog.setOption(QFileDialog.Option.DontUseNativeDialog, True)
-            # File or directory selectable
-            if self.file_type == PathField.FileType.File:
-                # click.File hasn't "exists" attribute, click.Path hasn't "mode" attribute
-                if (hasattr(self.param.type, "exists") and self.param.type.exists) or \
-                    (hasattr(self.param.type, "mode") and "r" in self.param.type.mode):
-                    dialog.setFileMode(QFileDialog.FileMode.ExistingFile) 
-                else:
-                    dialog.setFileMode(QFileDialog.FileMode.AnyFile)  
-            else: # Only FilePathField can be here
-                if self.param.type.exists:
-                    dialog.setFileMode(QFileDialog.FileMode.Directory)
-                else:
-                    dialog.setFileMode(QFileDialog.FileMode.AnyFile)
-                
-                dialog.setOption(QFileDialog.Option.ShowDirsOnly, True)
-            
-            if dialog.exec():
-                filenames = dialog.selectedFiles()
-                if filenames and len(filenames):
-                    self.handleValid(True)
-                    self.setValue(filenames[0].replace(QDir.currentPath(), "").replace("/", QDir.separator()).removeprefix(QDir.separator())) 
-    
