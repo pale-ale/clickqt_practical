@@ -47,7 +47,7 @@ class FocusOutValidator(QWidget):
             return (ret_val, ClickQtError())
         except Exception as e:
             widget.handleValid(False)
-            return (None, ClickQtError(ClickQtError.ErrorType.CONVERSION_ERROR, widget.widget_name, e))
+            return (None, ClickQtError(ClickQtError.ErrorType.CONVERTING_ERROR, widget.widget_name, e))
 
     def __val(self, widget: BaseWidget) -> Tuple[Any, ClickQtError]: 
         """

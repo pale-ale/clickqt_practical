@@ -44,6 +44,16 @@ class MultiValueWidget(BaseWidget):
                 BaseWidget.handleValid(c, valid)
             else:
                 c.handleValid(valid) # Recursive
+
+    def isEmpty(self) -> bool:
+        if len(self.children) == 0:
+            return True
+        
+        for c in self.children:
+            if c.isEmpty():
+                return True
+        
+        return False
     
     def getWidgetValue(self) -> List[Any]:
         return [c.getWidgetValue() for c in self.children]

@@ -41,6 +41,8 @@ def qtgui_from_click(cmd):
             click.types.IntParamType: IntField,
             click.types.FloatParamType: RealField,
             click.types.StringParamType: PasswordField if hasattr(param, "hide_input") and param.hide_input else TextField,
+            click.types.UUIDParameterType: TextField,
+            click.types.UnprocessedParamType: TextField,
             click.types.DateTime: DateTimeEdit,
             click.types.Tuple: TupleWidget,
             click.types.Choice: ComboBox,

@@ -7,10 +7,15 @@ class TextField(BaseWidget):
 
     def __init__(self, param:Parameter, *args, **kwargs):
         super().__init__(param, *args, **kwargs)
-        self.setValue(BaseWidget.getParamDefault(param, ""))
+        default = BaseWidget.getParamDefault(param, "")
+        if isinstance(default, str):
+            self.setValue(default)
 
     def setValue(self, value: str):
         self.widget.setText(value)
+
+    def isEmpty(self) -> bool:
+        return self.getWidgetValue() == ""
     
     def getWidgetValue(self) -> str:
         return self.widget.text()
