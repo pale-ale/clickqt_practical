@@ -3,14 +3,18 @@ from PySide6.QtCore import QDir
 from clickqt.widgets.core.QPathDialog import QPathDialog
 from clickqt.widgets.base_widget import BaseWidget
 from enum import IntFlag
-from click import Parameter, Option
+from click import Parameter, Context
 
 class TextField(BaseWidget):
     widget_type = QLineEdit
 
     def __init__(self, param:Parameter, *args, **kwargs):
         super().__init__(param, *args, **kwargs)
-        self.setValue(BaseWidget.getParamDefault(param, ""))
+        # Consider envvar
+        if (envvar_value := param.resolve_envvar_value(Context(self.click_command))) is not None:
+            self.setValue(envvar_value)
+        else: # Consider default value
+            self.setValue(BaseWidget.getParamDefault(param, ""))
 
     def setValue(self, value: str):
         if isinstance(value, str):
@@ -31,8 +35,7 @@ class PathField(TextField):
 
     def __init__(self, param:Parameter, *args, **kwargs):
         super().__init__(param, *args, **kwargs)
-        self.setValue(BaseWidget.getParamDefault(param, ""))
-        
+
         self.file_type = PathField.FileType.Unknown
 
         self.browse_btn = QPushButton("Browse")
