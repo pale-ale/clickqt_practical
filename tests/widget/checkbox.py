@@ -7,7 +7,8 @@ from clickqt.widgets.checkbox import CheckBox
 
 def test_checkbox(qtbot:qtbot.QtBot):
     option = click.Option(["--testboolopt"], default=True)
-    cb = CheckBox(option.to_info_dict())
+    command = click.Command("test", None, None, [option])
+    cb = CheckBox(option, com=command)
     checkbox_pos = QtCore.QPoint(2,cb.widget.height()/2)
     
     val, err = cb.getValue()
