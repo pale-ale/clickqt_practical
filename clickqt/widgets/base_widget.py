@@ -63,22 +63,35 @@ class BaseWidget(ABC):
             # if statement is obtained by creating the corresponding truth table
             if self.param.multiple or \
             (not isinstance(self.param.type, click_type_tuple) and self.param.nargs != 1):
-                value = []
-                for i, v in enumerate(self.getWidgetValue()):
-                    if str(v) == "": # Empty widget (only possible for string based widgets)
-                        if self.param.required and default is None:
-                            self.handleValid(False)
-                            return (None, ClickQtError(ClickQtError.ErrorType.REQUIRED_ERROR, self.widget_name, self.param.param_type_name))
-                        elif default is not None: # Overwrite the empty widget with the default value and execute with this (new) value
-                            values = self.getWidgetValue()
-                            values[i] = default[i] # Only overwrite the empty widget, not all
-                            self.setValue(values)
-                            v = default[i]
-                        else: # param is not required, widget is empty and there is no default (click equivalent: option not provided in click command cmd)
-                            value = None
-                            break
-                    
-                    value.append(self.param.type.convert(value=v, param=self.param, ctx=Context(self.click_command))) 
+                value_missing = False
+                widget_values: list = self.getWidgetValue()
+
+                if len(widget_values) == 0:
+                    if self.param.required and default is None:
+                        self.handleValid(False)
+                        return (None, ClickQtError(ClickQtError.ErrorType.REQUIRED_ERROR, self.widget_name, self.param.param_type_name))
+                    elif default is not None:
+                        self.setValue(default)
+                    else: # param is not required and there is no default -> value is None
+                        value_missing = True # But callback should be considered
+                
+                if not value_missing:
+                    value = []
+                    for i, v in enumerate(widget_values): # v is not a BaseWidget, but a primitive type
+                        if str(v) == "": # Empty widget (only possible for string based widgets)
+                            if self.param.required and default is None:
+                                self.handleValid(False)
+                                return (None, ClickQtError(ClickQtError.ErrorType.REQUIRED_ERROR, self.widget_name, self.param.param_type_name))
+                            elif default is not None and i < len(default): # Overwrite the empty widget with the default value and execute with this (new) value
+                                values = self.getWidgetValue()
+                                values[i] = default[i] # Only overwrite the empty widget, not all
+                                self.setValue(values)
+                                v = default[i]
+                            else: # param is not required, widget is empty and there is no default (click equivalent: option not provided in click command cmd)
+                                value = None
+                                break
+                        
+                        value.append(self.param.type.convert(value=v, param=self.param, ctx=Context(self.click_command))) 
             else:
                 value_missing = False
                 if self.isEmpty():
