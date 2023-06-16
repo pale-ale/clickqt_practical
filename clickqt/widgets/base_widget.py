@@ -6,7 +6,7 @@ from clickqt.core.error import ClickQtError
 from clickqt.widgets.core.QPathDialog import QPathDialog
 import clickqt.core
 from enum import IntFlag
-from click import Context, Parameter, Choice, Option, Tuple as click_type_tuple, Command
+from click import Context, Parameter, Choice, Option, Tuple as click_type_tuple
 
 class BaseWidget(ABC):
     # The type of this widget
@@ -62,21 +62,29 @@ class BaseWidget(ABC):
         value: Any = None
 
         try: # Try to convert the provided value into the corresponding click object type
+            default = BaseWidget.getParamDefault(self.param, None)
             # if statement is obtained by creating the corresponding truth table
             if self.param.multiple or \
             (not isinstance(self.param.type, click_type_tuple) and self.param.nargs != 1):
                 value = []
-                for v in self.getWidgetValue():
-                    if BaseWidget.isRequiredValidInput(self.param, v):
-                        self.handleValid(False)
-                        return (None, ClickQtError(ClickQtError.ErrorType.REQUIRED_ERROR, self.widget_name, self.param.param_type_name))
-
+                for i, v in enumerate(self.getWidgetValue()):
+                    if self.param.required and str(v) == "": # Empty widget (only possible for string based widgets)
+                        if default is None:
+                            self.handleValid(False)
+                            return (None, ClickQtError(ClickQtError.ErrorType.REQUIRED_ERROR, self.widget_name, self.param.param_type_name))
+                        else: # Overwrite the empty widget with the default value and execute with this (new) value
+                            values = self.getWidgetValue()
+                            values[i] = default[i] # Only overwrite the empty widget, not all
+                            self.setValue(values)
+                            v = default[i]
                     value.append(self.param.type.convert(value=v, param=self.param, ctx=Context(self.click_command))) 
             else:
                 if BaseWidget.isRequiredValidInput(self.param, self):
-                    self.handleValid(False)
-                    return (None, ClickQtError(ClickQtError.ErrorType.REQUIRED_ERROR, self.widget_name, self.param.param_type_name))
-                
+                    if default is None:
+                        self.handleValid(False)
+                        return (None, ClickQtError(ClickQtError.ErrorType.REQUIRED_ERROR, self.widget_name, self.param.param_type_name))
+                    else:
+                        self.setValue(default)
                 value = self.param.type.convert(value=self.getWidgetValue(), param=self.param, ctx=Context(self.click_command))
         except Exception as e:
             self.handleValid(False)
@@ -114,7 +122,7 @@ class BaseWidget(ABC):
     @staticmethod
     def isRequiredValidInput(param:Parameter, widget:"BaseWidget"):
         # If there is a default, click will use this (-> required option/argument can be omitted)
-        return param.required and widget.isEmpty() and BaseWidget.getParamDefault(param, None) is None
+        return param.required and widget.isEmpty()
 
 
 class NumericField(BaseWidget):

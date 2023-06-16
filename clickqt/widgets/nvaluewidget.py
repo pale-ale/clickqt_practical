@@ -66,24 +66,42 @@ class NValueWidget(BaseWidget):
                 c.handleValid(valid) # Recursive
 
     def getValue(self) -> Tuple[Any, ClickQtError]:
-        if BaseWidget.isRequiredValidInput(self.param, self):
-            self.handleValid(False)
-            return (None, ClickQtError(ClickQtError.ErrorType.REQUIRED_ERROR, self.widget_name, self.param.param_type_name))
+        if self.param.required and len(self.buttondict.values()) == 0:
+            default = BaseWidget.getParamDefault(self.param, None)
+            if default is None:
+                self.handleValid(False)
+                return (None, ClickQtError(ClickQtError.ErrorType.REQUIRED_ERROR, self.widget_name, self.param.param_type_name))
+            else: # Add new pairs
+                for value in default: # ALl defaults will be considered if len(self.buttondict.values()) == 0
+                    self.addPair(value)
 
         values = []
         err_messages: List[str] = []
+        remove_empty_widgets = []
 
-        for child in self.buttondict.values():
+        # len(self.buttondict.items()) < len(default): We set at most len(self.buttondict.items()) defaults
+        # len(self.buttondict.items()) >= len(default): All defaults will be considered
+        for i, (btn_pair, child) in enumerate(self.buttondict.items()):
             try: # Try to convert the provided value into the corresponding click object type
-                if BaseWidget.isRequiredValidInput(self.param, child):
-                    self.handleValid(False)
-                    return (None, ClickQtError(ClickQtError.ErrorType.REQUIRED_ERROR, self.widget_name, self.param.param_type_name))
+                if BaseWidget.isRequiredValidInput(child.param, child):
+                    default = BaseWidget.getParamDefault(child.param, None)
+                    if default is None:
+                        self.handleValid(False)
+                        return (None, ClickQtError(ClickQtError.ErrorType.REQUIRED_ERROR, child.widget_name, child.param.param_type_name))
+                    elif i < len(default): # Overwrite the empty widget with the default value (if one exists)
+                        child.setValue(default[i]) # If the widget is a tuple, all values will be overwritten
+                    else: # If no default exists, remove the pair
+                        remove_empty_widgets.append(btn_pair)
                 
                 values.append(self.param.type.convert(value=child.getWidgetValue(), param=self.param, ctx=Context(self.click_command))) 
                 child.handleValid(True)
             except Exception as e:
                 child.handleValid(False)
                 err_messages.append(str(e))
+        
+        # Remove all empty widgets with no default value
+        for btn_pair in remove_empty_widgets:
+            self.removeButtonPair(btn_pair)
             
         if len(err_messages): # Join all error messages and return them
             messages = ", ".join(err_messages) 

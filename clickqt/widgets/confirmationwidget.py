@@ -25,10 +25,9 @@ class ConfirmationWidget(BaseWidget):
         self.widget.layout().addWidget(self.field.container)
         self.widget.layout().addWidget(self.confirmation_field.container)
 
-    def setValue(self, value: tuple|list):
-        assert len(value) == 2
-        self.field.setValue(value[0])
-        self.confirmation_field.setValue(value[1])
+    def setValue(self, value):
+        self.field.setValue(value)
+        self.confirmation_field.setValue(value)
 
     def handleValid(self, valid: bool):
         self.field.handleValid(valid)
