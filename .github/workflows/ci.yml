@@ -41,5 +41,5 @@ jobs:
     
     - name: Run Python tests
       run: |
-        python -m pip install pyopengl
+        sudo apt install libopengl0 -y 
         python -m pytest
