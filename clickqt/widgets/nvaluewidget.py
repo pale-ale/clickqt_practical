@@ -4,7 +4,7 @@ from clickqt.widgets.base_widget import BaseWidget
 from clickqt.widgets.tuplewidget import TupleWidget
 from typing import Any, Callable, Tuple, List
 from clickqt.core.error import ClickQtError
-from click import Context, Parameter
+from click import Context, Parameter, Abort
 
 class NValueWidget(BaseWidget):
     widget_type = QScrollArea
@@ -117,6 +117,8 @@ class NValueWidget(BaseWidget):
             ret_val = (self.param.process_value(Context(self.click_command), values), ClickQtError())
             self.handleValid(True)
             return ret_val
+        except Abort as e:
+            return (None, ClickQtError(ClickQtError.ErrorType.ABORTED_ERROR))
         except Exception as e:
             self.handleValid(False)
             return (None, ClickQtError(ClickQtError.ErrorType.PROCESSING_VALUE_ERROR, self.widget_name, e))

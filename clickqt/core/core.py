@@ -114,9 +114,9 @@ def qtgui_from_click(cmd):
     
     def check_error(err: ClickQtError) -> bool:
         if err.type != ClickQtError.ErrorType.NO_ERROR:
-            if err.type != ClickQtError.ErrorType.ABORTED_ERROR:
-                print(err.message(), file=sys.stderr)
+            print(err.message(), file=sys.stderr)
             return True
+        
         return False
 
     app = QApplication([])
