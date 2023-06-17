@@ -118,20 +118,6 @@ def qtgui_from_click(cmd):
                 print(err.message(), file=sys.stderr)
             return True
         return False
-    
-    def check_list(widget_value: List[Any]) -> Tuple[List[Any], ClickQtError]:
-        tupleList = []
-        for v, err in widget_value:
-            if err.type != ClickQtError.ErrorType.NO_ERROR:
-                return [], err
-            if isinstance(v, list): # and len(v) and isinstance(v[0], tuple):
-                t, err = check_list(v)
-                if err.type != ClickQtError.ErrorType.NO_ERROR:
-                    return [], err
-                tupleList.append(t)
-            else:
-                tupleList.append(v) 
-        return tupleList, ClickQtError()
 
     app = QApplication([])
     app.setApplicationName("GUI for CLI")
@@ -194,7 +180,7 @@ def qtgui_from_click(cmd):
         #parent_group_command = hierarchy_selected_command[-2] if len(hierarchy_selected_command) >= 2 else None
         hierarchy_selected_command_name = reduce(concat, [g.name for g in hierarchy_selected_command])
 
-        args: Dict[str, Any] = {}
+        kwargs: Dict[str, Any] = {}
         has_error = False
         unused_options: List[Callable] = [] # parameters with expose_value==False
 
@@ -203,14 +189,9 @@ def qtgui_from_click(cmd):
             param: click.Parameter = next((x for x in selected_command.params if x.name == option_name))
             if param.expose_value:
                 widget_value, err = value_callback()   
-                if check_error(err):
-                    has_error = True
-                elif isinstance(widget_value, list) and len(widget_value) and isinstance(widget_value[0], tuple):
-                    widget_value, err = check_list(widget_value)
-                    if check_error(err):
-                        has_error = True
+                has_error |= check_error(err)
 
-                args[option_name] = widget_value
+                kwargs[option_name] = widget_value
             else: # Verify it when all options are valid
                 unused_options.append(value_callback)
 
@@ -218,11 +199,10 @@ def qtgui_from_click(cmd):
             return
 
         # Replace the callables with their values and check for errors
-        for option_name, value in args.items():
+        for option_name, value in kwargs.items():
             if callable(value):
-                args[option_name], err = value()
-                if check_error(err):
-                    has_error = True
+                kwargs[option_name], err = value()
+                has_error |= check_error(err)
 
         if has_error:
             return
@@ -230,22 +210,23 @@ def qtgui_from_click(cmd):
         # Parameters with expose_value==False
         for value_callback in unused_options:
             widget_value, err = value_callback()
-            if check_error(err):
-                has_error = True 
+            has_error |= check_error(err)
             if callable(widget_value):
                 _, err = widget_value()  
-                if check_error(err):
-                    has_error = True  
+                has_error |= check_error(err)
              
         if has_error:
             return
         
-        print(f"Current Command: {function_call_formatter(hierarchy_selected_command_name, selected_command.name, args)} \n" + f"Output:")
-        
-        if inspect.getfullargspec(selected_command.callback).varkw:
-            selected_command.callback(**args)
+        print(f"Current Command: {function_call_formatter(hierarchy_selected_command_name, selected_command.name, kwargs)} \n" + f"Output:")
+
+        if len(callback_args := inspect.getfullargspec(selected_command.callback).args) > 0:
+            args: list[Any] = []
+            for ca in callback_args: # Bring the args in the correct order
+                args.append(kwargs.pop(ca)) # Remove explicitly mentioned args from kwargs dict
+            selected_command.callback(*args, **kwargs)
         else:
-            selected_command.callback(*args.values())
+            selected_command.callback(**kwargs) # Throws an error (click does the same)
 
                 
     run_button.clicked.connect(run)
