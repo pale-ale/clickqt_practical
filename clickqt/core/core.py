@@ -23,13 +23,13 @@ from functools import reduce
 def qtgui_from_click(cmd):
     # Groups-Command-name concatinated with ":" to command-option-names to callables
     widget_registry: Dict[str, Dict[str, Callable[[], tuple[Any, ClickQtError]]]] = {}
-    command_registry: Dict[str, Dict[str, Tuple[int, Callable]]] = {}
+    command_param_registry: Dict[str, Dict[str, int]] = {}
 
     def parameter_to_widget(command: click.Command, groups_command_name:str, param: click.Parameter) -> QWidget:
         if param.name:
             widget = create_widget(param.type, param, widgetsource=create_widget, com=command)                
             widget_registry[groups_command_name][param.name] = lambda: widget.getValue()
-            command_registry[groups_command_name][param.name] = (param.nargs, type(param.type).__name__)
+            command_param_registry[groups_command_name][param.name] = (param.nargs)
             
             return widget.container
         else:
@@ -92,8 +92,8 @@ def qtgui_from_click(cmd):
 
         if widget_registry.get(groups_command_name) is None:
             widget_registry[groups_command_name] = {}
-        if command_registry.get(groups_command_name) is None:
-            command_registry[groups_command_name] = {}
+        if command_param_registry.get(groups_command_name) is None:
+            command_param_registry[groups_command_name] = {}
         else:
             raise RuntimeError(f"Not a unique group_command_name_concat ({groups_command_name})")    
 
@@ -173,7 +173,7 @@ def qtgui_from_click(cmd):
         params = [k for k, v in widget_registry[selected_command_name].items()]
         if "yes" in params: 
             params.remove("yes")
-        command_help = command_registry.get(selected_command_name)
+        command_help = command_param_registry.get(selected_command_name)
         tuples_array = list(command_help.values())
         for i, param in enumerate(params):
             params[i] = "--" + param + f": {tuples_array[i]}: " +  f"{args[param]}"
@@ -185,6 +185,11 @@ def qtgui_from_click(cmd):
         message = f"{selected_command_name} \n"
         parameter_message =  f"Current Command parameters: \n" + "\n".join(params)
         return message + parameter_message
+    
+    def command_to_string(hierarchy_selected_command, args):
+        params = get_params(hierarchy_selected_command, args)
+        print(command_param_registry[hierarchy_selected_command])
+        return hierarchy_selected_command
 
     def run():
         hierarchy_selected_command = current_command_hierarchy(main_tab_widget.currentWidget(), cmd) 
@@ -237,7 +242,7 @@ def qtgui_from_click(cmd):
              
         if has_error:
             return
-        
+        print(command_to_string(hierarchy_selected_command_name, args))
         print(f"Current Command: {function_call_formatter(hierarchy_selected_command_name, selected_command.name, args)} \n" + f"Output:")
         
         if inspect.getfullargspec(selected_command.callback).varkw:
