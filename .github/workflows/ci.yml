@@ -35,11 +35,14 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Install Python package
+    - name: Install openGL package
+      if: ${{matrix.os == 'ubuntu-latest'}}
       run: |
         sudo apt install freeglut3 freeglut3-dev
         sudo apt install libopengl0 -y  
-        python -m pip install .[tests]
+
+    - name: Install Python package
+      run: python -m pip install .[tests]
     
     - name: Run Python tests
       run: |
