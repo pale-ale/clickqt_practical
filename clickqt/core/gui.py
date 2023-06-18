@@ -49,7 +49,7 @@ class GUI:
             click.types.Tuple: TupleWidget,
             click.types.Choice: ComboBox,
             click.types.Path: FilePathField,
-            click.types.File: FileFild,
+            click.types.File: FileFild
         }
 
         def get_multiarg_version(otype:click.ParamType):
@@ -69,4 +69,5 @@ class GUI:
         for t,widgetclass in typedict.items():
             if isinstance(otype, t):
                 return widgetclass(param, *args, **kwargs)
-        raise NotImplementedError(otype)
+            
+        return TextField(param, *args, **kwargs) # Custom types are mapped to TextField
