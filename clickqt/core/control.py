@@ -78,13 +78,15 @@ class Control:
         for param in cmd.params:
             if isinstance(param, click.core.Parameter):
                 # Yes-Parameter
-                if hasattr(param, "is_flag") and param.is_flag and hasattr(param, "prompt") and param.prompt:
+                if hasattr(param, "is_flag") and param.is_flag and \
+                    hasattr(param, "prompt") and param.prompt:
                     prompt = str(param.prompt)
                     ret = lambda: (True, ClickQtError()) if QMessageBox(QMessageBox.Information, "Confirmation", prompt, \
                                                                         QMessageBox.Yes|QMessageBox.No).exec() == QMessageBox.Yes \
                                                         else (False, ClickQtError(ClickQtError.ErrorType.ABORTED_ERROR))  
                     self.widget_registry[groups_command_name][param.name] = lambda: (ret, ClickQtError())
-                elif hasattr(param, "is_flag") and param.is_flag and hasattr(param, "flag_value") and param.flag_value: # clicks feature switches
+                elif hasattr(param, "is_flag") and param.is_flag and \
+                    hasattr(param, "flag_value") and isinstance(param.flag_value, str) and param.flag_value: # clicks feature switches
                     if feature_switches.get(param.name) is None:
                         feature_switches[param.name] = []
                     feature_switches[param.name].append(param)
@@ -126,7 +128,7 @@ class Control:
             params.remove("yes")
         command_help = self.command_registry.get(selected_command_name)
         tuples_array = list(command_help.values())
-        for i, param in enumerate(params):
+        for i, param in enumerate(args):
             params[i] = "--" + param + f": {tuples_array[i]}: " +  f"{args[param]}"
         return params
                 
