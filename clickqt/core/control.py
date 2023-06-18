@@ -1,7 +1,8 @@
 import click
 import inspect
 from clickqt.core.gui import GUI
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QTabWidget, QMessageBox
+from PySide6.QtWidgets import QWidget, QFrame, QVBoxLayout, QTabWidget, QMessageBox, QScrollArea
+from PySide6.QtGui import QPalette
 from clickqt.core.error import ClickQtError
 from clickqt.widgets.base_widget import BaseWidget
 from typing import Dict, Callable, List, Any, Tuple, Union
@@ -21,10 +22,7 @@ class Control:
         if isinstance(cmd, click.Group):
             self.gui.main_tab.addTab(self.parse_cmd_group(cmd, cmd.name), cmd.name)
         else:
-            standalone_group = QWidget()
-            standalone_group.setLayout(QVBoxLayout())
-            standalone_group.layout().addWidget(self.parse_cmd(cmd, cmd.name))
-            self.gui.main_tab.addTab(standalone_group, cmd.name)
+            self.gui.main_tab.addTab(self.parse_cmd(cmd, cmd.name), cmd.name)
 
         # Connect GUI Run-Button with run method
         self.gui.run_button.clicked.connect(self.run)
@@ -54,12 +52,9 @@ class Control:
                 nested_group_tab_widget = self.parse_cmd_group(group_cmd, self.concat(group_names, group_name) if group_names else group_name)
                 group_tab_widget.addTab(nested_group_tab_widget, group_name)
             else:
-                cmd_tab_widget = QWidget()
-                cmd_tab_widget.setLayout(QVBoxLayout())
-                cmd_tab_widget.layout().addWidget(self.parse_cmd(group_cmd, self.concat(group_names, group_cmd.name)))
-                group_tab_widget.addTab(cmd_tab_widget, group_name)
+                group_tab_widget.addTab(self.parse_cmd(group_cmd, self.concat(group_names, group_cmd.name)), group_name)
+        
         return group_tab_widget
-
     
     def parse_cmd(self, cmd: click.Command, groups_command_name: str):
         cmdbox = QWidget()
@@ -100,7 +95,13 @@ class Control:
             cmdbox.layout().addWidget(self.parameter_to_widget(cmd, groups_command_name, choice))
             self.widget_registry[groups_command_name][param_name].setValue(default)
 
-        return cmdbox
+        cmd_tab_widget = QScrollArea()
+        cmd_tab_widget.setFrameShape(QFrame.Shape.NoFrame)
+        cmd_tab_widget.setBackgroundRole(QPalette.ColorRole.Light)
+        cmd_tab_widget.setWidgetResizable(True)
+        cmd_tab_widget.setWidget(cmdbox)
+
+        return cmd_tab_widget
     
     def check_error(self, err: ClickQtError) -> bool:
         if err.type != ClickQtError.ErrorType.NO_ERROR:
