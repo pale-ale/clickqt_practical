@@ -20,7 +20,7 @@ from typing import Dict, Callable, List, Any, Tuple
 import sys
 from functools import reduce
 
-def qtgui_from_click(cmd):
+def qtgui_from_click(cmd, testing:bool = False):
     # Groups-Command-name concatinated with ":" to command-option-names to callables
     widget_registry: Dict[str, Dict[str, Callable[[], tuple[Any, ClickQtError]]]] = {}
     command_registry: Dict[str, Dict[str, Tuple[int, Callable]]] = {}
@@ -133,19 +133,22 @@ def qtgui_from_click(cmd):
                 tupleList.append(v) 
         return tupleList, ClickQtError()
 
-    app = QApplication([])
-    app.setApplicationName("GUI for CLI")
+    app: Any = None
+    if not testing:
+        app = QApplication([])
+        app.setApplicationName("GUI for CLI")
+        app.setStyleSheet("""QToolTip { 
+                           background-color: #182035; 
+                           color: white; 
+                           border: white solid 1px
+                           }""")
+    else:
+        app = QWidget()
     main_tab_widget = QTabWidget()
     window = QWidget()
     layout = QVBoxLayout()
     window.setLayout(layout)
     layout.addWidget(main_tab_widget)
-
-    app.setStyleSheet("""QToolTip { 
-                           background-color: #182035; 
-                           color: white; 
-                           border: white solid 1px
-                           }""")
     
     if isinstance(cmd, click.Group):
         main_tab_widget.addTab(parse_cmd_group(cmd, cmd.name), cmd.name)
@@ -251,15 +254,21 @@ def qtgui_from_click(cmd):
     run_button.clicked.connect(run)
     layout.addWidget(run_button)
 
-    terminal_output = TerminalOutput()
-    terminal_output.setReadOnly(True)
-    terminal_output.setToolTip("Terminal output")
-    layout.addWidget(terminal_output)
-    sys.stdout = OutputStream(terminal_output)
-    sys.stderr = OutputStream(terminal_output, QColor("red"))
+    if not testing:
+        terminal_output = TerminalOutput()
+        terminal_output.setReadOnly(True)
+        terminal_output.setToolTip("Terminal output")
+        layout.addWidget(terminal_output)
+        sys.stdout = OutputStream(terminal_output)
+        sys.stderr = OutputStream(terminal_output, QColor("red"))
 
-    def run_app():
-        window.show()
-        app.exec()
+    class RunApp:
+        def __init__(self, window:QWidget, app:QApplication|QWidget):
+            self.window = window
+            self.app = app
 
-    return run_app
+        def __call__(self):
+            self.window.show()
+            self.app.exec()
+
+    return RunApp(window, app)

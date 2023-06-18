@@ -7,7 +7,7 @@ from clickqt.widgets.checkbox import CheckBox
 
 def test_checkbox(qtbot:qtbot.QtBot):
     option = click.Option(["--testboolopt"], default=True)
-    command = click.Command("test", None, None, [option])
+    command = click.Command("test", params=[option])
     cb = CheckBox(option, com=command)
     checkbox_pos = QtCore.QPoint(2,cb.widget.height()/2)
     
@@ -15,7 +15,7 @@ def test_checkbox(qtbot:qtbot.QtBot):
     assert val and err.type == ClickQtError.ErrorType.NO_ERROR
     qtbot.mouseClick(cb.widget, QtCore.Qt.MouseButton.LeftButton, pos=checkbox_pos)
     val, err = cb.getValue()
-    #assert not val and err.type == ClickQtError.ErrorType.NO_ERROR
+    assert not val and err.type == ClickQtError.ErrorType.NO_ERROR
     qtbot.mouseClick(cb.widget, QtCore.Qt.MouseButton.LeftButton, pos=checkbox_pos)
     val, err = cb.getValue()
-    #assert val and err.type == ClickQtError.ErrorType.NO_ERROR
+    assert val and err.type == ClickQtError.ErrorType.NO_ERROR
