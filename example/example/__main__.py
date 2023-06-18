@@ -114,8 +114,16 @@ def hello_ns2(ns):
     
 utilgroup.add_command(hello)
 hello.add_command(hello2)
+import sys
+@click.command()
+@click.option('--upper', 'transformation', flag_value='upper',
+              default=True)
+@click.option('--lower', 'transformation', flag_value='lower')
+def info(transformation):
+    click.echo(getattr(sys.platform, transformation)())
 
-gui = clickqt.qtgui_from_click(utilgroup)
+gui = clickqt.qtgui_from_click(info)
 
 if __name__ == "__main__":
-    utilgroup()
+    #mine_set()
+    gui()

@@ -3,7 +3,8 @@ import inspect
 from clickqt.core.gui import GUI
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QTabWidget, QMessageBox
 from clickqt.core.error import ClickQtError
-from typing import Dict, Callable, List, Any, Tuple
+from clickqt.widgets.base_widget import BaseWidget
+from typing import Dict, Callable, List, Any, Tuple, Union
 import sys
 from functools import reduce
 
@@ -12,8 +13,8 @@ class Control:
         self.gui = GUI()
         self.cmd = cmd
 
-        # Groups-Command-name concatinated with ":" to command-option-names to callables
-        self.widget_registry: Dict[str, Dict[str, Callable[[], tuple[Any, ClickQtError]]]] = {}
+        # Groups-Command-name concatinated with ":" to command-option-names to BaseWidget or Callable
+        self.widget_registry: Dict[str, Dict[str, Union[BaseWidget, Callable[[], Tuple[Any, ClickQtError]]]]] = {}
         self.command_registry: Dict[str, Dict[str, Tuple[int, Callable]]] = {}
 
         # Add all widgets
@@ -30,11 +31,13 @@ class Control:
 
     def __call__(self):
         self.gui()
-
+    
     def parameter_to_widget(self, command: click.Command, groups_command_name:str, param: click.Parameter) -> QWidget:
         if param.name:
+            assert self.widget_registry[groups_command_name].get(param.name) is None
+
             widget = self.gui.create_widget(param.type, param, widgetsource=self.gui.create_widget, com=command)                
-            self.widget_registry[groups_command_name][param.name] = lambda: widget.getValue()
+            self.widget_registry[groups_command_name][param.name] = widget
             self.command_registry[groups_command_name][param.name] = (param.nargs, type(param.type).__name__)
             
             return widget.container
@@ -69,6 +72,9 @@ class Control:
         else:
             raise RuntimeError(f"Not a unique group_command_name_concat ({groups_command_name})")    
 
+        # parameter name to flag values
+        feature_switches:dict[str, list[click.Parameter]] = {}
+
         for param in cmd.params:
             if isinstance(param, click.core.Parameter):
                 # Yes-Parameter
@@ -78,8 +84,20 @@ class Control:
                                                                         QMessageBox.Yes|QMessageBox.No).exec() == QMessageBox.Yes \
                                                         else (False, ClickQtError(ClickQtError.ErrorType.ABORTED_ERROR))  
                     self.widget_registry[groups_command_name][param.name] = lambda: (ret, ClickQtError())
+                elif hasattr(param, "is_flag") and param.is_flag and hasattr(param, "flag_value") and param.flag_value: # clicks feature switches
+                    if feature_switches.get(param.name) is None:
+                        feature_switches[param.name] = []
+                    feature_switches[param.name].append(param)
                 else:  
                     cmdbox.layout().addWidget(self.parameter_to_widget(cmd, groups_command_name, param))
+        
+        # Create for every feature switch a ComboBox
+        for param_name, switch_names in feature_switches.items():
+            choice = click.Option([f"--{param_name}"], type=click.Choice([x.flag_value for x in switch_names]), required=reduce(lambda x,y: x | y.required, switch_names, False))
+            default = next((x.flag_value for x in switch_names if x.default), switch_names[0].flag_value) # First param with default==True is the default
+            cmdbox.layout().addWidget(self.parameter_to_widget(cmd, groups_command_name, choice))
+            self.widget_registry[groups_command_name][param_name].setValue(default)
+
         return cmdbox
     
     def check_error(self, err: ClickQtError) -> bool:
@@ -128,15 +146,15 @@ class Control:
         unused_options: List[Callable] = [] # parameters with expose_value==False
 
         # Check all values for errors
-        for option_name, value_callback in self.widget_registry[hierarchy_selected_command_name].items():
+        for option_name, widget_or_callable in self.widget_registry[hierarchy_selected_command_name].items():
             param: click.Parameter = next((x for x in selected_command.params if x.name == option_name))
             if param.expose_value:
-                widget_value, err = value_callback()   
+                widget_value, err = widget_or_callable()   
                 has_error |= self.check_error(err)
 
                 kwargs[option_name] = widget_value
             else: # Verify it when all options are valid
-                unused_options.append(value_callback)
+                unused_options.append(widget_or_callable)
 
         if has_error: 
             return
@@ -151,8 +169,8 @@ class Control:
             return
 
         # Parameters with expose_value==False
-        for value_callback in unused_options:
-            widget_value, err = value_callback()
+        for widget_or_callable in unused_options:
+            widget_value, err = widget_or_callable()
             has_error |= self.check_error(err)
             if callable(widget_value):
                 _, err = widget_value()  
