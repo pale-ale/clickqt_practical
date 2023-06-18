@@ -3,7 +3,8 @@ from abc import ABC, abstractmethod
 from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout
 from clickqt.core.error import ClickQtError
 import clickqt.core
-from click import Context, Parameter, Choice, Option, Tuple as click_type_tuple, Abort
+from click import Context, Parameter, Choice, Option, Tuple as click_type_tuple
+from click.exceptions import Abort, Exit
 
 class BaseWidget(ABC):
     # The type of this widget
@@ -118,6 +119,8 @@ class BaseWidget(ABC):
             return ret_val
         except Abort as e:
             return (None, ClickQtError(ClickQtError.ErrorType.ABORTED_ERROR))
+        except Exit as e:
+            return (None, ClickQtError(ClickQtError.ErrorType.EXIT_ERROR))
         except Exception as e:
             self.handleValid(False)
             return (None, ClickQtError(ClickQtError.ErrorType.PROCESSING_VALUE_ERROR, self.widget_name, e))

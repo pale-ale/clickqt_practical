@@ -102,7 +102,8 @@ class Control:
     
     def check_error(self, err: ClickQtError) -> bool:
         if err.type != ClickQtError.ErrorType.NO_ERROR:
-            print(err.message(), file=sys.stderr)
+            if (message := err.message()): # Don't print on context exit
+                print(message, file=sys.stderr)
             return True
         
         return False
