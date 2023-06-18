@@ -176,7 +176,7 @@ def qtgui_from_click(cmd):
         command_help = command_param_registry.get(selected_command_name)
         tuples_array = list(command_help.values())
         for i, param in enumerate(params):
-            params[i] = "--" + param + f": {tuples_array[i]}: " +  f"{args[param]}"
+            params[i] = "--" + param + f" {tuples_array[i]}: " +  f"{args[param]}"
         return params
 
                 
@@ -188,7 +188,7 @@ def qtgui_from_click(cmd):
     
     def command_to_string(hierarchy_selected_command, args):
         params = get_params(hierarchy_selected_command, args)
-        print(command_param_registry[hierarchy_selected_command])
+        #print(command_param_registry[hierarchy_selected_command])
         return hierarchy_selected_command
 
     def run():
@@ -242,6 +242,7 @@ def qtgui_from_click(cmd):
              
         if has_error:
             return
+        print(command_param_registry[hierarchy_selected_command_name])
         print(command_to_string(hierarchy_selected_command_name, args))
         print(f"Current Command: {function_call_formatter(hierarchy_selected_command_name, selected_command.name, args)} \n" + f"Output:")
         

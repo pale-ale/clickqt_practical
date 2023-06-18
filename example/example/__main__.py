@@ -58,9 +58,10 @@ def passwd(verbose, username, count, hash_type_single, hash_type_multiple, range
 
 
 @utilgroup.command()
-@click.option('--userinfo', type=(str, (int, click.types.DateTime())))
+@click.option('--userinfo', type=(str, int, click.types.DateTime()))
 def greet(userinfo):
-    fname, (no, date) = userinfo
+    fname, no, date = userinfo
+    date = date.strftime("%Y-%m-%d")
     click.echo(f"Hello, {fname}! Int, Date: {no, date}.")
     
 @utilgroup.command()
