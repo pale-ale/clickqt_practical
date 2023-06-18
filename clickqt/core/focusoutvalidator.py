@@ -19,9 +19,9 @@ class FocusOutValidator(QWidget):
 
     def eventFilter(self, watched: QObject, event: QEvent) -> bool:
         if event.type() == QEvent.Type.FocusOut:
-            value, err = self.__validate(self.widget)
-            if err.type == ClickQtError.ErrorType.NO_ERROR:
-                self.widget.setValue(value) # Set the new value, if the value type matches the widget type
+            # Don't set the new value because the callback call could reject the (new) value
+            # when trying to execute the command (=user clicked on the "Run"-button) 
+            self.__validate(self.widget) 
 
         return QWidget.eventFilter(self, watched, event)
     
