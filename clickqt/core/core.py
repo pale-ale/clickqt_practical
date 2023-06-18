@@ -235,13 +235,12 @@ def qtgui_from_click(cmd, testing:bool = False):
     run_button.clicked.connect(run)
     layout.addWidget(run_button)
 
-    if not testing:
-        terminal_output = TerminalOutput()
-        terminal_output.setReadOnly(True)
-        terminal_output.setToolTip("Terminal output")
-        layout.addWidget(terminal_output)
-        sys.stdout = OutputStream(terminal_output)
-        sys.stderr = OutputStream(terminal_output, QColor("red"))
+    terminal_output = TerminalOutput()
+    terminal_output.setReadOnly(True)
+    terminal_output.setToolTip("Terminal output")
+    layout.addWidget(terminal_output)
+    sys.stdout = OutputStream(terminal_output, sys.stdout)
+    sys.stderr = OutputStream(terminal_output, sys.stderr, QColor("red"))
 
     class RunApp:
         def __init__(self, window:QWidget, app:QApplication|QWidget):
