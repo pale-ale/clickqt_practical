@@ -1,7 +1,5 @@
 from PySide6.QtWidgets import QMessageBox, QWidget
 from clickqt.widgets.base_widget import BaseWidget
-from typing import Tuple, Any
-from clickqt.core.error import ClickQtError
 from click import Parameter
 
 class MessageBox(BaseWidget):
