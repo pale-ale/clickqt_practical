@@ -39,7 +39,7 @@ def utilgroup():
 @click.argument('filename', type=click.Path(exists=True))
 @click.argument('input', type=click.File('rb'))
 @click.argument('output', type=click.File('wb'))
-def passwd(verbose, username, count, hash_type_single, hash_type_multiple, range, password, filename, input, output):
+def passwd(username, verbose, count, hash_type_single, hash_type_multiple, range, password, filename, input, output):
     click.echo(f"verbose: '{verbose}'\n" +
                f"username: '{username}'\n" +
                f"count: '{count}'\n" +

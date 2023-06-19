@@ -18,19 +18,19 @@ from clickqt.core.error import ClickQtError
 from clickqt.core.output import OutputStream, TerminalOutput
 from typing import Dict, Callable, List, Any, Tuple
 import sys
+import re
 from functools import reduce
 
 def qtgui_from_click(cmd):
     # Groups-Command-name concatinated with ":" to command-option-names to callables
     widget_registry: Dict[str, Dict[str, Callable[[], tuple[Any, ClickQtError]]]] = {}
-    command_param_registry: Dict[str, Dict[str, int]] = {}
+    command_param_registry: Dict[str, Dict[str, Tuple[int, Callable]]] = {}
 
     def parameter_to_widget(command: click.Command, groups_command_name:str, param: click.Parameter) -> QWidget:
         if param.name:
             widget = create_widget(param.type, param, widgetsource=create_widget, com=command)                
             widget_registry[groups_command_name][param.name] = lambda: widget.getValue()
-            command_param_registry[groups_command_name][param.name] = (param.nargs)
-            
+            command_param_registry[groups_command_name][param.name] = (param.nargs, type(param.type).__name__)
             return widget.container
         else:
             raise SyntaxError("No parameter name specified")
@@ -174,9 +174,9 @@ def qtgui_from_click(cmd):
         if "yes" in params: 
             params.remove("yes")
         command_help = command_param_registry.get(selected_command_name)
-        tuples_array = list(command_help.values())
+        command_help_array = list(command_help.values())
         for i, param in enumerate(params):
-            params[i] = "--" + param + f" {tuples_array[i]}: " +  f"{args[param]}"
+            params[i] = "--" + param + f" {command_help_array[i]}: " +  f"{args[param]}"
         return params
 
                 
@@ -186,10 +186,35 @@ def qtgui_from_click(cmd):
         parameter_message =  f"Current Command parameters: \n" + "\n".join(params)
         return message + parameter_message
     
-    def command_to_string(hierarchy_selected_command, args):
-        params = get_params(hierarchy_selected_command, args)
-        #print(command_param_registry[hierarchy_selected_command])
-        return hierarchy_selected_command
+    def command_to_string(hierarchy_selected_command_name: str, selected_command, args):
+        """ 
+            TODO: Write command string such that it can match the exact terminal call. 
+        """
+        params = [k for k, v in widget_registry[hierarchy_selected_command_name].items()]
+        if "yes" in params:
+            params.remove("yes")
+        for i, param in enumerate(selected_command.params):
+            if isinstance(param, click.core.Argument):
+                """ This is the special case for the arguments. """
+                if isinstance(param.type, click.types.Tuple) or param.nargs > 1:
+                    params[i] = "--" + param + f"{args[param.name]}"
+            if isinstance(param, click.core.Option):
+                if param.multiple:
+                    num_calls = len(args[param.name])
+                    for j in range(num_calls):
+                        temp = "--" + param.name + " " + str(args[param.name][j])
+                        if len(params[i]) == 0:
+                            params[i] = temp
+                        params[i] = params[i] + temp
+                elif param.nargs > 1:
+                    params[i] = "--" + param.name + " " + str(args[param.name])
+                elif isinstance(param.type, click.types.Tuple):
+                    temp = "--" + param.name + " " + str(args[param.name])
+                    params[i] = temp
+        for i in range(len(params)):
+            temp = params[i]
+            hierarchy_selected_command_name = hierarchy_selected_command_name + " " + temp
+        return hierarchy_selected_command_name 
 
     def run():
         hierarchy_selected_command = current_command_hierarchy(main_tab_widget.currentWidget(), cmd) 
@@ -242,8 +267,8 @@ def qtgui_from_click(cmd):
              
         if has_error:
             return
-        print(command_param_registry[hierarchy_selected_command_name])
-        print(command_to_string(hierarchy_selected_command_name, args))
+
+        print(command_to_string(hierarchy_selected_command_name, selected_command, args))
         print(f"Current Command: {function_call_formatter(hierarchy_selected_command_name, selected_command.name, args)} \n" + f"Output:")
         
         if inspect.getfullargspec(selected_command.callback).varkw:
