@@ -3,8 +3,7 @@ from PySide6.QtWidgets import QComboBox
 from PySide6.QtCore import Qt
 from clickqt.widgets.base_widget import ComboBoxBase, BaseWidget
 from clickqt.widgets.core.QCheckableCombobox import QCheckableComboBox
-from clickqt.core.error import ClickQtError
-from click import Context, Parameter
+from click import Parameter
 
 class ComboBox(ComboBoxBase):
     widget_type = QComboBox
