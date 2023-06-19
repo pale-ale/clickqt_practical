@@ -50,9 +50,6 @@ class BaseWidget(ABC):
             -> Subclasses may need to override this method
         """
         return False
-    
-    def __call__(self) -> tuple[Any, ClickQtError]:
-        return self.getValue()
 
     def getValue(self) -> tuple[Any, ClickQtError]:
         """

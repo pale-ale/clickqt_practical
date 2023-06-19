@@ -139,18 +139,18 @@ class Control:
 
         kwargs: Dict[str, Any] = {}
         has_error = False
-        unused_options: List[Callable] = [] # parameters with expose_value==False
+        unused_options: List[BaseWidget] = [] # parameters with expose_value==False
 
         # Check all values for errors
-        for option_name, widget_or_callable in self.widget_registry[hierarchy_selected_command_name].items():
+        for option_name, widget in self.widget_registry[hierarchy_selected_command_name].items():
             param: click.Parameter = next((x for x in selected_command.params if x.name == option_name))
             if param.expose_value:
-                widget_value, err = widget_or_callable()   
+                widget_value, err = widget.getValue()  
                 has_error |= self.check_error(err)
 
                 kwargs[option_name] = widget_value
             else: # Verify it when all options are valid
-                unused_options.append(widget_or_callable)
+                unused_options.append(widget)
 
         if has_error: 
             return
@@ -165,8 +165,8 @@ class Control:
             return
 
         # Parameters with expose_value==False
-        for widget_or_callable in unused_options:
-            widget_value, err = widget_or_callable()
+        for widget in unused_options:
+            widget_value, err = widget.getValue()
             has_error |= self.check_error(err)
             if callable(widget_value):
                 _, err = widget_value()  
