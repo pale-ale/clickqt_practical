@@ -1,7 +1,7 @@
 import click
 import inspect
 from clickqt.core.gui import GUI
-from PySide6.QtWidgets import QWidget, QFrame, QVBoxLayout, QTabWidget, QMessageBox, QScrollArea
+from PySide6.QtWidgets import QWidget, QFrame, QVBoxLayout, QTabWidget, QScrollArea
 from PySide6.QtGui import QPalette
 from clickqt.core.error import ClickQtError
 from clickqt.widgets.base_widget import BaseWidget
@@ -14,8 +14,8 @@ class Control:
         self.gui = GUI()
         self.cmd = cmd
 
-        # Groups-Command-name concatinated with ":" to command-option-names to BaseWidget or Callable
-        self.widget_registry: Dict[str, Dict[str, Union[BaseWidget, Callable[[], Tuple[Any, ClickQtError]]]]] = {}
+        # Groups-Command-name concatinated with ":" to command-option-names to BaseWidget
+        self.widget_registry: Dict[str, Dict[str, BaseWidget]] = {}
         self.command_registry: Dict[str, Dict[str, Tuple[int, Callable]]] = {}
 
         # Add all widgets
@@ -72,15 +72,7 @@ class Control:
 
         for param in cmd.params:
             if isinstance(param, click.core.Parameter):
-                # Yes-Parameter
                 if hasattr(param, "is_flag") and param.is_flag and \
-                    hasattr(param, "prompt") and param.prompt:
-                    prompt = str(param.prompt)
-                    ret = lambda: (True, ClickQtError()) if QMessageBox(QMessageBox.Information, "Confirmation", prompt, \
-                                                                        QMessageBox.Yes|QMessageBox.No).exec() == QMessageBox.Yes \
-                                                        else (False, ClickQtError(ClickQtError.ErrorType.ABORTED_ERROR))  
-                    self.widget_registry[groups_command_name][param.name] = lambda: (ret, ClickQtError())
-                elif hasattr(param, "is_flag") and param.is_flag and \
                     hasattr(param, "flag_value") and isinstance(param.flag_value, str) and param.flag_value: # clicks feature switches
                     if feature_switches.get(param.name) is None:
                         feature_switches[param.name] = []
@@ -96,9 +88,9 @@ class Control:
             self.widget_registry[groups_command_name][param_name].setValue(default)
 
         cmd_tab_widget = QScrollArea()
-        cmd_tab_widget.setFrameShape(QFrame.Shape.NoFrame)
+        cmd_tab_widget.setFrameShape(QFrame.Shape.NoFrame) # Remove black border
         cmd_tab_widget.setBackgroundRole(QPalette.ColorRole.Light)
-        cmd_tab_widget.setWidgetResizable(True)
+        cmd_tab_widget.setWidgetResizable(True) # Widgets should use the whole area
         cmd_tab_widget.setWidget(cmdbox)
 
         return cmd_tab_widget

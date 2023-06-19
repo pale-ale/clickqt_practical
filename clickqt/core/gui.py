@@ -13,6 +13,7 @@ from clickqt.widgets.filepathfield import FilePathField
 from clickqt.widgets.filefield import FileFild
 from clickqt.widgets.nvaluewidget import NValueWidget
 from clickqt.widgets.confirmationwidget import ConfirmationWidget
+from clickqt.widgets.messagebox import MessageBox
 from clickqt.core.output import OutputStream, TerminalOutput
 import sys
 
@@ -43,7 +44,7 @@ class GUI:
 
     def create_widget(self, otype:click.ParamType, param:click.Parameter, *args, **kwargs):
         typedict = {
-            click.types.BoolParamType: CheckBox,
+            click.types.BoolParamType: MessageBox if hasattr(param, "is_flag") and param.is_flag and hasattr(param, "prompt") and param.prompt else CheckBox,
             click.types.IntParamType: IntField,
             click.types.FloatParamType: RealField,
             click.types.StringParamType: PasswordField if hasattr(param, "hide_input") and param.hide_input else TextField,
