@@ -39,15 +39,16 @@ def test_gui_intfield():
 
     control = clickqt.qtgui_from_click(dist)
     run_button = control.gui.run_button
-
+    int_field_widget = control.widget_registry[dist.name][dist.params[0].name]
+    assert isinstance(int_field_widget, IntField)
     # Check if default value was set correctly
     run_button.click() 
 
     for _ in range(5):
         expected = random.randint(-10000, 10000)
-        control.widget_registry[dist.name][dist.params[0].name].setValue(expected)
+        int_field_widget.setValue(expected)
         run_button.click() 
 
     # Wrong type does not change the widget value
-    control.widget_registry[dist.name][dist.params[0].name].setValue(str(expected+12))
+    int_field_widget.setValue(str(expected+12))
     run_button.click() 

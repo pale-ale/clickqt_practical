@@ -32,15 +32,17 @@ def test_gui_checkbox():
 
     control = clickqt.qtgui_from_click(dist)
     run_button = control.gui.run_button
+    checkbox_widget = control.widget_registry[dist.name][dist.params[0].name]
+    assert isinstance(checkbox_widget, CheckBox)
 
     # Check if default value was set correctly
     run_button.click() 
 
     for _ in range(2):
         expected = not expected
-        control.widget_registry[dist.name][dist.params[0].name].setValue(expected)
+        checkbox_widget.setValue(expected)
         run_button.click() 
     
     # Wrong type does not change the widget value
-    control.widget_registry[dist.name][dist.params[0].name].setValue(0)
+    checkbox_widget.setValue(0)
     run_button.click()
