@@ -5,7 +5,7 @@ from clickqt.widgets.base_widget import BaseWidget
 from clickqt.widgets.nvaluewidget import NValueWidget
 from click import Context
 from typing import Tuple, Any
-import sys
+
 
 class FocusOutValidator(QWidget):
     """

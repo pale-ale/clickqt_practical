@@ -29,31 +29,25 @@ def test_intfield(qtbot:qtbot.QtBot):
     val, err = ifield.getValue()
     assert val == -1 and err.type == ClickQtError.ErrorType.NO_ERROR
 
-def test_gui_intfield(qtbot:qtbot.QtBot):
+def test_gui_intfield():
     expected:int = 1
 
     @click.command()
     @click.option("--count", default=expected)
     def dist(count):
+        assert isinstance(count, int)
         assert count == expected
 
-    gui = clickqt.qtgui_from_click(dist, testing=True)
-    qtbot.addWidget(gui.window)
+    gui = clickqt.qtgui_from_click(dist).gui
 
-    tab_widget:QWidget = gui.window.findChild(QTabWidget).currentWidget()
-    assert tab_widget is not None
-
-    tab_window:QWidget = tab_widget.findChild(QWidget)
+    tab_window:QWidget = gui.main_tab.findChild(QWidget)
     assert tab_window is not None
     count:QSpinBox = tab_window.findChild(QWidget).findChild(QSpinBox)
     assert count is not None
 
-    run_button:QPushButton = gui.window.findChild(QPushButton)
-    assert run_button is not None
-
-    run_button.click() # Check if default value was set correctly
+    gui.run_button.click() # Check if default value was set correctly
 
     for _ in range(5):
         expected = random.randint(-10000, 10000)
         count.setValue(expected)
-        run_button.click() 
+        gui.run_button.click() 
