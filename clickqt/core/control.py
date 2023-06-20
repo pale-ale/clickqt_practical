@@ -183,4 +183,4 @@ class Control:
                 args.append(kwargs.pop(ca)) # Remove explicitly mentioned args from kwargs dict
             selected_command.callback(*args, **kwargs)
         else:
-            selected_command.callback(**kwargs) # Throws an error (click does the same)
+            selected_command.callback(**kwargs)
