@@ -55,7 +55,7 @@ def test(verbose, username, count, hash_type_single, hash_type_multiple, range, 
 
 
 @utilgroup.command()
-@click.option('--userinfo', type=(str, (int, click.types.DateTime())), default=["test", (1, "2023-06-14 15:20:25")])
+@click.option('--userinfo', type=(str, int, click.types.DateTime()), default=["test", 1, "2023-06-14 15:20:25"])
 def greet(userinfo):
     fname, no, date = userinfo
     date = date.strftime("%Y-%m-%d")
