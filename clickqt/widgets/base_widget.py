@@ -125,7 +125,7 @@ class BaseWidget(ABC):
             Returns the value of the widget without any checks
         """
         pass
-
+    
     def handleValid(self, valid: bool):
         if not valid:
             self.widget.setStyleSheet("border: 1px solid red")
@@ -164,6 +164,8 @@ class NumericField(BaseWidget):
     
     def getWidgetValue(self) -> int|float:
         return self.widget.value()
+    
+    
 
 
 class ComboBoxBase(BaseWidget):

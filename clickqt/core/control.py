@@ -6,6 +6,7 @@ from clickqt.core.error import ClickQtError
 from typing import Dict, Callable, List, Any, Tuple
 import sys
 from functools import reduce
+import re 
 
 class Control:
     def __init__(self, cmd:click.Group|click.Command):
@@ -110,6 +111,42 @@ class Control:
         for i, param in enumerate(params):
             params[i] = "--" + param + f": {tuples_array[i]}: " +  f"{args[param]}"
         return params
+    
+    def clean_command_string(self, word, text):
+        pattern = r'\b{}\b|[():;]'.format(re.escape(word))  # Create a regex pattern for the word and symbols
+        replaced_text = re.sub(pattern, '', text)  # Remove the word and symbols from the text
+        return replaced_text
+    
+    def command_to_string(self, hierarchy_selected_command_name: str, selected_command, args):
+        """ 
+            TODO: Write command string such that it can match the exact terminal call. 
+        """
+        parameter_strings = [k for k, v in self.widget_registry[hierarchy_selected_command_name].items()]
+        parameter_strings = [param for param in parameter_strings if param != 'yes']
+        parameter_list = [param for param in selected_command.params if param.name != 'yes']
+        for i, param in enumerate(parameter_list):
+            if isinstance(param, click.core.Argument):
+                """ This is the special case for the arguments. """
+                parameter_strings[i] = f"{args[param.name]}"
+            if isinstance(param, click.core.Option):
+                if param.multiple:
+                    num_calls = len(args[param.name])
+                    for j in range(num_calls):
+                        temp = "--" + param.name + " " + str(args[param.name][j])
+                        if len(parameter_strings[i]) == 0:
+                            parameter_strings[i] = temp
+                        parameter_strings[i] = parameter_strings[i] + temp
+                elif isinstance(param.type, click.types.Tuple):
+                    temp = "--" + param.name + " " + str(args[param.name])
+                    parameter_strings[i] = temp
+                else:
+                    parameter_strings[i] = "--" + param.name + " " + str(args[param.name])
+        for i in range(len(parameter_strings)):
+            temp = parameter_strings[i]
+            hierarchy_selected_command_name = hierarchy_selected_command_name + " " + temp
+            
+        hierarchy_selected_command_name = self.clean_command_string(self.cmd.name, hierarchy_selected_command_name)
+        return hierarchy_selected_command_name
                 
     def function_call_formatter(self, hierarchy_selected_command_name:str, selected_command_name:str, args):
         params = self.get_params(hierarchy_selected_command_name, args)
@@ -160,7 +197,7 @@ class Control:
              
         if has_error:
             return
-        
+        print(self.command_to_string(hierarchy_selected_command_name, selected_command, kwargs))
         print(f"Current Command: {self.function_call_formatter(hierarchy_selected_command_name, selected_command.name, kwargs)} \n" + f"Output:")
 
         if len(callback_args := inspect.getfullargspec(selected_command.callback).args) > 0:

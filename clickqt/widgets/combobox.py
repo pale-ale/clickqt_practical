@@ -23,6 +23,7 @@ class ComboBox(ComboBoxBase):
     
     def getWidgetValue(self) -> str:
         return self.widget.currentText()
+    
    
 class CheckableComboBox(ComboBoxBase):
     widget_type = QCheckableComboBox
@@ -43,3 +44,4 @@ class CheckableComboBox(ComboBoxBase):
 
     def getWidgetValue(self) -> List[str]:
         return self.widget.getData()
+    

@@ -53,4 +53,4 @@ class ConfirmationWidget(BaseWidget):
         
     def getWidgetValue(self) -> Any:
         return self.field.getWidgetValue()
-   
+    

@@ -16,3 +16,4 @@ class CheckBox(BaseWidget):
     def getWidgetValue(self) -> bool:
         return self.widget.isChecked()
     
+    

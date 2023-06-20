@@ -140,3 +140,4 @@ class NValueWidget(BaseWidget):
     
     def getWidgetValue(self) -> list[Any]:
         return [c.getWidgetValue() for c in self.buttondict.values()]
+    

@@ -57,7 +57,8 @@ def test(verbose, username, count, hash_type_single, hash_type_multiple, range, 
 @utilgroup.command()
 @click.option('--userinfo', type=(str, (int, click.types.DateTime())), default=["test", (1, "2023-06-14 15:20:25")])
 def greet(userinfo):
-    fname, (no, date) = userinfo
+    fname, no, date = userinfo
+    date = date.strftime("%Y-%m-%d")
     click.echo(f"Hello, {fname}! Int, Date: {no, date}.")
     
 @utilgroup.command()
@@ -71,7 +72,7 @@ def hello():
     print("Hello group")
 
 @hello.command()
-@click.option('-n', type=int, default=3)
+@click.option('--n', type=int, default=3)
 def test(n):
     for i in range(n):
         click.echo(i)
@@ -86,7 +87,6 @@ def test_callback(ctx, param, value):
 @click.option('-t', type=str, callback=test_callback)
 def test_with_callback(t):
     click.echo(t)
-
 @hello.command()
 @click.option('-ns', type=(int, str), multiple=True, required=True, default=[(1, "a"), (2, "b")])
 def hello_ns(ns):
