@@ -186,14 +186,18 @@ def qtgui_from_click(cmd):
         parameter_message =  f"Current Command parameters: \n" + "\n".join(params)
         return message + parameter_message
     
+    def clean_command_string(word, text):
+        pattern = r'\b{}\b|[():;]'.format(re.escape(word))  # Create a regex pattern for the word and symbols
+        replaced_text = re.sub(pattern, '', text)  # Remove the word and symbols from the text
+        return replaced_text
+    
     def command_to_string(hierarchy_selected_command_name: str, selected_command, args):
         """ 
             TODO: Write command string such that it can match the exact terminal call. 
         """
         parameter_strings = [k for k, v in widget_registry[hierarchy_selected_command_name].items()]
+        parameter_strings = [param for param in parameter_strings if param != 'yes']
         parameter_list = [param for param in selected_command.params if param.name != 'yes']
-        if "yes" in parameter_strings:
-            parameter_strings.remove("yes")
         for i, param in enumerate(parameter_list):
             if isinstance(param, click.core.Argument):
                 """ This is the special case for the arguments. """
@@ -214,6 +218,8 @@ def qtgui_from_click(cmd):
         for i in range(len(parameter_strings)):
             temp = parameter_strings[i]
             hierarchy_selected_command_name = hierarchy_selected_command_name + " " + temp
+            
+        hierarchy_selected_command_name = clean_command_string(cmd.name, hierarchy_selected_command_name)
         return hierarchy_selected_command_name 
 
     def run():
