@@ -16,8 +16,7 @@ class MessageBox(BaseWidget):
         self.container.setVisible(False)
 
     def setValue(self, value: bool):
-        if isinstance(value, bool):
-            self.yes = value
+        raise NotImplementedError()
     
     def getWidgetValue(self) -> bool:
         if QMessageBox.information(self.widget, "Confirmation", str(self.param.prompt), 
