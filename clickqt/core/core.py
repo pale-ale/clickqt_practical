@@ -190,29 +190,29 @@ def qtgui_from_click(cmd):
         """ 
             TODO: Write command string such that it can match the exact terminal call. 
         """
-        params = [k for k, v in widget_registry[hierarchy_selected_command_name].items()]
-        if "yes" in params:
-            params.remove("yes")
-        for i, param in enumerate(selected_command.params):
+        parameter_strings = [k for k, v in widget_registry[hierarchy_selected_command_name].items()]
+        parameter_list = [param for param in selected_command.params if param.name != 'yes']
+        if "yes" in parameter_strings:
+            parameter_strings.remove("yes")
+        for i, param in enumerate(parameter_list):
             if isinstance(param, click.core.Argument):
                 """ This is the special case for the arguments. """
-                if isinstance(param.type, click.types.Tuple) or param.nargs > 1:
-                    params[i] = "--" + param + f"{args[param.name]}"
+                parameter_strings[i] = f"{args[param.name]}"
             if isinstance(param, click.core.Option):
                 if param.multiple:
                     num_calls = len(args[param.name])
                     for j in range(num_calls):
                         temp = "--" + param.name + " " + str(args[param.name][j])
-                        if len(params[i]) == 0:
-                            params[i] = temp
-                        params[i] = params[i] + temp
-                elif param.nargs > 1:
-                    params[i] = "--" + param.name + " " + str(args[param.name])
+                        if len(parameter_strings[i]) == 0:
+                            parameter_strings[i] = temp
+                        parameter_strings[i] = parameter_strings[i] + temp
                 elif isinstance(param.type, click.types.Tuple):
                     temp = "--" + param.name + " " + str(args[param.name])
-                    params[i] = temp
-        for i in range(len(params)):
-            temp = params[i]
+                    parameter_strings[i] = temp
+                else:
+                    parameter_strings[i] = "--" + param.name + " " + str(args[param.name])
+        for i in range(len(parameter_strings)):
+            temp = parameter_strings[i]
             hierarchy_selected_command_name = hierarchy_selected_command_name + " " + temp
         return hierarchy_selected_command_name 
 
