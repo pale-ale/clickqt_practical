@@ -31,12 +31,16 @@ def test_gui_textfield():
     run_button.click() 
 
 def test_gui_textfield_envvar():
-    expected:str = os.environ.get("USERNAME")
+    expected:str = None
+    temp_envvars = ["TMPDIR", "TEMP", "TMP"] # OS dependent
+    for envvar in temp_envvars:
+        if (path := os.environ.get(envvar)):
+            expected = path
+            break
 
     @click.command()
-    @click.option("--message", envvar="USERNAME")
+    @click.option("--message", envvar=temp_envvars)
     def dist(message):
-        print(message)
         assert isinstance(message, str)
         assert message == expected
 
