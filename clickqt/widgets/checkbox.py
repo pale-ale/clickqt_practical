@@ -10,10 +10,10 @@ class CheckBox(BaseWidget):
         self.setValue(BaseWidget.getParamDefault(param, False))
         
     def setValue(self, value: bool):
-        self.widget.setChecked(value)
+        if isinstance(value, bool):
+            self.widget.setChecked(value)
     
     def getWidgetValue(self) -> bool:
         return self.widget.isChecked()
     
-    def getWidgetValueToString(self) -> str:
-        return str(self.getWidgetValue())
+    

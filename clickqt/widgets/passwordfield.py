@@ -21,11 +21,3 @@ class PasswordField(TextField):
 
         self.show_hide_action.toggled.connect(showPassword)
 
-    def setValue(self, value: str):
-        self.widget.setText(value)
-        
-    def getWidgetValue(self) -> str:
-        return self.widget.text()
-   
-    def getWidgetValueToString(self) -> str:
-        return self.getWidgetValue()

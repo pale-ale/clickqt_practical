@@ -1,12 +1,23 @@
 from typing import List
 from PySide6.QtWidgets import QComboBox
-from clickqt.widgets.base_widget import ComboBoxBase
+from PySide6.QtCore import Qt
+from clickqt.widgets.base_widget import ComboBoxBase, BaseWidget
 from clickqt.widgets.core.QCheckableCombobox import QCheckableComboBox
 from clickqt.core.error import ClickQtError
-from click import Context
+from click import Context, Parameter
 
 class ComboBox(ComboBoxBase):
     widget_type = QComboBox
+
+    def __init__(self, param:Parameter, *args, **kwargs):
+        super().__init__(param, *args, **kwargs)
+        self.setValue(BaseWidget.getParamDefault(param, None)) # Ignore, if there is no default
+
+    def setValue(self, value: str):
+        if isinstance(value, str):
+            if (index := self.widget.findText(value, Qt.MatchFlag.MatchCaseSensitive if self.param.type.case_sensitive 
+                                              else Qt.MatchFlag.MatchFixedString)) >= 0:
+                self.widget.setCurrentIndex(index)
 
     def addItems(self, items: List[str]):
         self.widget.addItems(items)
@@ -14,32 +25,24 @@ class ComboBox(ComboBoxBase):
     def getWidgetValue(self) -> str:
         return self.widget.currentText()
     
-    def getWidgetValueToString(self) -> str:
-        return str(self.getWidgetValue())
    
 class CheckableComboBox(ComboBoxBase):
     widget_type = QCheckableComboBox
 
+    def __init__(self, param:Parameter, *args, **kwargs):
+        super().__init__(param, *args, **kwargs)
+        self.setValue(BaseWidget.getParamDefault(param, []))
+
+    def setValue(self, value: list[str]):
+        if isinstance(value, list):
+            self.widget.checkItems(value, self.param.type.case_sensitive)
+
     def addItems(self, items: List[str]):
         self.widget.addItems(items)
 
-    def getValue(self):
-        values = []
-
-        for v in self.getWidgetValue():
-            try: # Try to convert the provided value into the corresponding click object type 
-                values.append(self.param.type.convert(value=v, param=self.param, ctx=Context(self.click_command)))
-            except Exception as e:
-                return (None, ClickQtError(ClickQtError.ErrorType.CONVERSION_ERROR, self.widget_name, e))
-      
-        try: # Try to convert the provided value the corresponding click object type 
-            return (self.param.process_value(Context(self.click_command), values), ClickQtError())
-        except Exception as e:
-            return (None, ClickQtError(ClickQtError.ErrorType.CALLBACK_VALIDATION_ERROR, self.widget_name, e))
-
+    def isEmpty(self) -> bool:
+        return len(self.getWidgetValue()) == 0
 
     def getWidgetValue(self) -> List[str]:
         return self.widget.getData()
     
-    def getWidgetValueToString(self) -> str:
-        return " ".join(self.getWidgetValue())

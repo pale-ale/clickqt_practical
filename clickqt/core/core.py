@@ -21,7 +21,7 @@ import sys
 import re
 from functools import reduce
 
-def qtgui_from_click(cmd):
+def qtgui_from_click(cmd, testing:bool = False):
     # Groups-Command-name concatinated with ":" to command-option-names to callables
     widget_registry: Dict[str, Dict[str, Callable[[], tuple[Any, ClickQtError]]]] = {}
     command_param_registry: Dict[str, Dict[str, Tuple[int, Callable]]] = {}
@@ -41,6 +41,8 @@ def qtgui_from_click(cmd):
             click.types.IntParamType: IntField,
             click.types.FloatParamType: RealField,
             click.types.StringParamType: PasswordField if hasattr(param, "hide_input") and param.hide_input else TextField,
+            click.types.UUIDParameterType: TextField,
+            click.types.UnprocessedParamType: TextField,
             click.types.DateTime: DateTimeEdit,
             click.types.Tuple: TupleWidget,
             click.types.Choice: ComboBox,
@@ -112,38 +114,27 @@ def qtgui_from_click(cmd):
     
     def check_error(err: ClickQtError) -> bool:
         if err.type != ClickQtError.ErrorType.NO_ERROR:
-            if err.type != ClickQtError.ErrorType.ABORTED_ERROR:
-                print(err.message(), file=sys.stderr)
+            print(err.message(), file=sys.stderr)
             return True
+        
         return False
-    
-    def check_list(widget_value: List[Any]) -> Tuple[List[Any], ClickQtError]:
-        tupleList = []
-        for v, err in widget_value:
-            if err.type != ClickQtError.ErrorType.NO_ERROR:
-                return [], err
-            if isinstance(v, list): # and len(v) and isinstance(v[0], tuple):
-                t, err = check_list(v)
-                if err.type != ClickQtError.ErrorType.NO_ERROR:
-                    return [], err
-                tupleList.append(t)
-            else:
-                tupleList.append(v) 
-        return tupleList, ClickQtError()
 
-    app = QApplication([])
-    app.setApplicationName("GUI for CLI")
+    app: Any = None
+    if not testing:
+        app = QApplication([])
+        app.setApplicationName("GUI for CLI")
+        app.setStyleSheet("""QToolTip { 
+                           background-color: #182035; 
+                           color: white; 
+                           border: white solid 1px
+                           }""")
+    else:
+        app = QWidget()
     main_tab_widget = QTabWidget()
     window = QWidget()
     layout = QVBoxLayout()
     window.setLayout(layout)
     layout.addWidget(main_tab_widget)
-
-    app.setStyleSheet("""QToolTip { 
-                           background-color: #182035; 
-                           color: white; 
-                           border: white solid 1px
-                           }""")
     
     if isinstance(cmd, click.Group):
         main_tab_widget.addTab(parse_cmd_group(cmd, cmd.name), cmd.name)
@@ -228,7 +219,7 @@ def qtgui_from_click(cmd):
         #parent_group_command = hierarchy_selected_command[-2] if len(hierarchy_selected_command) >= 2 else None
         hierarchy_selected_command_name = reduce(concat, [g.name for g in hierarchy_selected_command])
 
-        args: Dict[str, Any] = {}
+        kwargs: Dict[str, Any] = {}
         has_error = False
         unused_options: List[Callable] = [] # parameters with expose_value==False
 
@@ -237,14 +228,9 @@ def qtgui_from_click(cmd):
             param: click.Parameter = next((x for x in selected_command.params if x.name == option_name))
             if param.expose_value:
                 widget_value, err = value_callback()   
-                if check_error(err):
-                    has_error = True
-                elif isinstance(widget_value, list) and len(widget_value) and isinstance(widget_value[0], tuple):
-                    widget_value, err = check_list(widget_value)
-                    if check_error(err):
-                        has_error = True
+                has_error |= check_error(err)
 
-                args[option_name] = widget_value
+                kwargs[option_name] = widget_value
             else: # Verify it when all options are valid
                 unused_options.append(value_callback)
 
@@ -252,11 +238,10 @@ def qtgui_from_click(cmd):
             return
 
         # Replace the callables with their values and check for errors
-        for option_name, value in args.items():
+        for option_name, value in kwargs.items():
             if callable(value):
-                args[option_name], err = value()
-                if check_error(err):
-                    has_error = True
+                kwargs[option_name], err = value()
+                has_error |= check_error(err)
 
         if has_error:
             return
@@ -264,23 +249,23 @@ def qtgui_from_click(cmd):
         # Parameters with expose_value==False
         for value_callback in unused_options:
             widget_value, err = value_callback()
-            if check_error(err):
-                has_error = True 
+            has_error |= check_error(err)
             if callable(widget_value):
                 _, err = widget_value()  
-                if check_error(err):
-                    has_error = True  
+                has_error |= check_error(err)
              
         if has_error:
             return
-
         print(command_to_string(hierarchy_selected_command_name, selected_command, args))
         print(f"Current Command: {function_call_formatter(hierarchy_selected_command_name, selected_command.name, args)} \n" + f"Output:")
-        
-        if inspect.getfullargspec(selected_command.callback).varkw:
-            selected_command.callback(**args)
+
+        if len(callback_args := inspect.getfullargspec(selected_command.callback).args) > 0:
+            args: list[Any] = []
+            for ca in callback_args: # Bring the args in the correct order
+                args.append(kwargs.pop(ca)) # Remove explicitly mentioned args from kwargs dict
+            selected_command.callback(*args, **kwargs)
         else:
-            selected_command.callback(*args.values())
+            selected_command.callback(**kwargs) # Throws an error (click does the same)
 
                 
     run_button.clicked.connect(run)
@@ -290,11 +275,16 @@ def qtgui_from_click(cmd):
     terminal_output.setReadOnly(True)
     terminal_output.setToolTip("Terminal output")
     layout.addWidget(terminal_output)
-    sys.stdout = OutputStream(terminal_output)
-    sys.stderr = OutputStream(terminal_output, QColor("red"))
+    sys.stdout = OutputStream(terminal_output, sys.stdout)
+    sys.stderr = OutputStream(terminal_output, sys.stderr, QColor("red"))
 
-    def run_app():
-        window.show()
-        app.exec()
+    class RunApp:
+        def __init__(self, window:QWidget, app:QApplication|QWidget):
+            self.window = window
+            self.app = app
 
-    return run_app
+        def __call__(self):
+            self.window.show()
+            self.app.exec()
+
+    return RunApp(window, app)

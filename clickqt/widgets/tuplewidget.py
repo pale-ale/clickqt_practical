@@ -1,8 +1,7 @@
 from PySide6.QtWidgets import QGroupBox, QHBoxLayout
-from clickqt.core.error import ClickQtError
 from clickqt.widgets.base_widget import BaseWidget
 from typing import Callable, Any
-from click import Context, Parameter, Tuple as ClickTuple
+from click import Parameter, Tuple as ClickTuple, Context
 
 class TupleWidget(BaseWidget):
     widget_type = QGroupBox
@@ -30,6 +29,14 @@ class TupleWidget(BaseWidget):
             bw.label.deleteLater()
             self.widget.layout().addWidget(bw.container)
             self.children.append(bw)
+
+        if self.parent_widget is None:
+            # Consider envvar
+            if (envvar_value := self.param.resolve_envvar_value(Context(self.click_command))) is not None:
+                self.setValue(self.param.type.split_envvar_value(envvar_value))
+            else: # Consider default value
+                if len(default := BaseWidget.getParamDefault(self.param, [])):
+                    self.setValue(default)
     
     @staticmethod
     def getTypesRecursive(o:list|ClickTuple, recinfo:list):
@@ -49,9 +56,16 @@ class TupleWidget(BaseWidget):
                 BaseWidget.handleValid(c, valid)
             else:
                 c.handleValid(valid) # Recursive
+
+    def isEmpty(self) -> bool:
+        if len(self.children) == 0:
+            return True
+
+        for c in self.children:
+            if c.isEmpty():
+                return True
+        
+        return False
     
     def getWidgetValue(self) -> list[Any]:
         return [c.getWidgetValue() for c in self.children]
-
-    def getWidgetValueToString(self) -> str:
-        return " ".join(self.getWidgetValue())

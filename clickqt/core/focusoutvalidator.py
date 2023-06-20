@@ -20,12 +20,8 @@ class FocusOutValidator(QWidget):
     def eventFilter(self, watched: QObject, event: QEvent) -> bool:
         if event.type() == QEvent.Type.FocusOut:
             value, err = self.__validate(self.widget)
-            #if value is not None and err.type == ClickQtError.ErrorType.NO_ERROR:
-                #TODO: Check if value has correct type
-                #self.widget.setValue(value)
-            #    pass
-            #else:
-            #    print(err.message(), file=sys.stderr)
+            if err.type == ClickQtError.ErrorType.NO_ERROR:
+                self.widget.setValue(value) # Set the new value, if the value type matches the widget type
 
         return QWidget.eventFilter(self, watched, event)
     
@@ -47,7 +43,7 @@ class FocusOutValidator(QWidget):
             return (ret_val, ClickQtError())
         except Exception as e:
             widget.handleValid(False)
-            return (None, ClickQtError(ClickQtError.ErrorType.CONVERSION_ERROR, widget.widget_name, e))
+            return (None, ClickQtError(ClickQtError.ErrorType.CONVERTING_ERROR, widget.widget_name, e))
 
     def __val(self, widget: BaseWidget) -> Tuple[Any, ClickQtError]: 
         """

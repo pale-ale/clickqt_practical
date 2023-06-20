@@ -25,14 +25,16 @@ class ConfirmationWidget(BaseWidget):
         self.widget.layout().addWidget(self.field.container)
         self.widget.layout().addWidget(self.confirmation_field.container)
 
-    def setValue(self, value: tuple|list):
-        assert len(value) == 2
-        self.field.setValue(value[0])
-        self.confirmation_field.setValue(value[1])
+    def setValue(self, value):
+        self.field.setValue(value)
+        self.confirmation_field.setValue(value)
 
     def handleValid(self, valid: bool):
         self.field.handleValid(valid)
         self.confirmation_field.handleValid(valid)      
+
+    def isEmpty(self) -> bool:
+        return self.field.isEmpty() and self.confirmation_field.isEmpty() # If only one is empty (=inputs are different), clickqt rejects it
 
     def getValue(self) -> Tuple[str, ClickQtError]:
         val1, err1 = self.field.getValue()
@@ -52,6 +54,3 @@ class ConfirmationWidget(BaseWidget):
     def getWidgetValue(self) -> Any:
         return self.field.getWidgetValue()
     
-    def getWidgetValueToString(self) -> str:
-        return str(self.getWidgetValue())
-   

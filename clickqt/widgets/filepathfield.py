@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QLineEdit
-from clickqt.widgets.base_widget import PathField
+from clickqt.widgets.textfield import PathField
 from click import Parameter, Path
 
 class FilePathField(PathField):
@@ -15,9 +15,3 @@ class FilePathField(PathField):
 
         if self.file_type == PathField.FileType.Unknown:
             raise ValueError(f"Neither 'file_okay' nor 'dir_okay' in argument '{self.widget_name}' is set")
-        
-    def getWidgetValue(self) -> str:
-        return self.widget.text()
-   
-    def getWidgetValueToString(self) -> str:
-        return self.getWidgetValue()
