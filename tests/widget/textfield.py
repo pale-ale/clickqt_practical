@@ -32,7 +32,7 @@ def test_gui_textfield():
 
 def test_gui_textfield_envvar():
     expected:str = None
-    temp_envvars = ["TMPDIR", "TEMP", "TMP"] # OS dependent
+    temp_envvars = ["TMPDIR", "TEMP", "TMP", "SHELL"] # OS dependent
     for envvar in temp_envvars:
         if (path := os.environ.get(envvar)):
             expected = path
