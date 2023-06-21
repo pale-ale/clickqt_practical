@@ -38,8 +38,8 @@ tests = [
     "pytest-qt",
 ]
 docs = [
-    "m2r2",
     "sphinx",
+    "sphinx_mdinclude",
     "sphinx_rtd_theme",
 ]
 

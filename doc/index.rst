@@ -4,10 +4,9 @@ clickqt
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
-
-    intro
-    demo
-    api
+   
+   intro
+   api
 
 Indices and tables
 ==================
