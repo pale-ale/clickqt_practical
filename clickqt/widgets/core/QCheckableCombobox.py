@@ -45,6 +45,9 @@ class QCheckableComboBox(QComboBox):
                 else:
                     self.showPopup()
                 return True
+            elif event.type() == QEvent.Type.Wheel:
+                return True # Disable wheel event
+            
             return False
 
         if object == self.view().viewport():

@@ -1,9 +1,11 @@
 import click
 import inspect
 from clickqt.core.gui import GUI
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QTabWidget, QMessageBox
+from PySide6.QtWidgets import QWidget, QFrame, QVBoxLayout, QTabWidget, QScrollArea
+from PySide6.QtGui import QPalette
 from clickqt.core.error import ClickQtError
-from typing import Dict, Callable, List, Any, Tuple
+from clickqt.widgets.base_widget import BaseWidget
+from typing import Dict, Callable, List, Any, Tuple, Union
 import sys
 from functools import reduce
 import re 
@@ -13,29 +15,28 @@ class Control:
         self.gui = GUI()
         self.cmd = cmd
 
-        # Groups-Command-name concatinated with ":" to command-option-names to callables
-        self.widget_registry: Dict[str, Dict[str, Callable[[], tuple[Any, ClickQtError]]]] = {}
+        # Groups-Command-name concatinated with ":" to command-option-names to BaseWidget
+        self.widget_registry: Dict[str, Dict[str, BaseWidget]] = {}
         self.command_registry: Dict[str, Dict[str, Tuple[int, Callable]]] = {}
 
         # Add all widgets
         if isinstance(cmd, click.Group):
             self.gui.main_tab.addTab(self.parse_cmd_group(cmd, cmd.name), cmd.name)
         else:
-            standalone_group = QWidget()
-            standalone_group.setLayout(QVBoxLayout())
-            standalone_group.layout().addWidget(self.parse_cmd(cmd, cmd.name))
-            self.gui.main_tab.addTab(standalone_group, cmd.name)
+            self.gui.main_tab.addTab(self.parse_cmd(cmd, cmd.name), cmd.name)
 
         # Connect GUI Run-Button with run method
         self.gui.run_button.clicked.connect(self.run)
 
     def __call__(self):
         self.gui()
-
+    
     def parameter_to_widget(self, command: click.Command, groups_command_name:str, param: click.Parameter) -> QWidget:
         if param.name:
+            assert self.widget_registry[groups_command_name].get(param.name) is None
+
             widget = self.gui.create_widget(param.type, param, widgetsource=self.gui.create_widget, com=command)                
-            self.widget_registry[groups_command_name][param.name] = lambda: widget.getValue()
+            self.widget_registry[groups_command_name][param.name] = widget
             self.command_registry[groups_command_name][param.name] = (param.nargs, type(param.type).__name__)
             
             return widget.container
@@ -52,12 +53,9 @@ class Control:
                 nested_group_tab_widget = self.parse_cmd_group(group_cmd, self.concat(group_names, group_name) if group_names else group_name)
                 group_tab_widget.addTab(nested_group_tab_widget, group_name)
             else:
-                cmd_tab_widget = QWidget()
-                cmd_tab_widget.setLayout(QVBoxLayout())
-                cmd_tab_widget.layout().addWidget(self.parse_cmd(group_cmd, self.concat(group_names, group_cmd.name)))
-                group_tab_widget.addTab(cmd_tab_widget, group_name)
+                group_tab_widget.addTab(self.parse_cmd(group_cmd, self.concat(group_names, group_cmd.name)), group_name)
+        
         return group_tab_widget
-
     
     def parse_cmd(self, cmd: click.Command, groups_command_name: str):
         cmdbox = QWidget()
@@ -70,22 +68,38 @@ class Control:
         else:
             raise RuntimeError(f"Not a unique group_command_name_concat ({groups_command_name})")    
 
+        # parameter name to flag values
+        feature_switches:dict[str, list[click.Parameter]] = {}
+
         for param in cmd.params:
             if isinstance(param, click.core.Parameter):
-                # Yes-Parameter
-                if hasattr(param, "is_flag") and param.is_flag and hasattr(param, "prompt") and param.prompt:
-                    prompt = str(param.prompt)
-                    ret = lambda: (True, ClickQtError()) if QMessageBox(QMessageBox.Information, "Confirmation", prompt, \
-                                                                        QMessageBox.Yes|QMessageBox.No).exec() == QMessageBox.Yes \
-                                                        else (False, ClickQtError(ClickQtError.ErrorType.ABORTED_ERROR))  
-                    self.widget_registry[groups_command_name][param.name] = lambda: (ret, ClickQtError())
+                if hasattr(param, "is_flag") and param.is_flag and \
+                    hasattr(param, "flag_value") and isinstance(param.flag_value, str) and param.flag_value: # clicks feature switches
+                    if feature_switches.get(param.name) is None:
+                        feature_switches[param.name] = []
+                    feature_switches[param.name].append(param)
                 else:  
                     cmdbox.layout().addWidget(self.parameter_to_widget(cmd, groups_command_name, param))
-        return cmdbox
+        
+        # Create for every feature switch a ComboBox
+        for param_name, switch_names in feature_switches.items():
+            choice = click.Option([f"--{param_name}"], type=click.Choice([x.flag_value for x in switch_names]), required=reduce(lambda x,y: x | y.required, switch_names, False))
+            default = next((x.flag_value for x in switch_names if x.default), switch_names[0].flag_value) # First param with default==True is the default
+            cmdbox.layout().addWidget(self.parameter_to_widget(cmd, groups_command_name, choice))
+            self.widget_registry[groups_command_name][param_name].setValue(default)
+
+        cmd_tab_widget = QScrollArea()
+        cmd_tab_widget.setFrameShape(QFrame.Shape.NoFrame) # Remove black border
+        cmd_tab_widget.setBackgroundRole(QPalette.ColorRole.Light)
+        cmd_tab_widget.setWidgetResizable(True) # Widgets should use the whole area
+        cmd_tab_widget.setWidget(cmdbox)
+
+        return cmd_tab_widget
     
     def check_error(self, err: ClickQtError) -> bool:
         if err.type != ClickQtError.ErrorType.NO_ERROR:
-            print(err.message(), file=sys.stderr)
+            if (message := err.message()): # Don't print on context exit
+                print(message, file=sys.stderr)
             return True
         
         return False
@@ -108,7 +122,7 @@ class Control:
             params.remove("yes")
         command_help = self.command_registry.get(selected_command_name)
         tuples_array = list(command_help.values())
-        for i, param in enumerate(params):
+        for i, param in enumerate(args):
             params[i] = "--" + param + f": {tuples_array[i]}: " +  f"{args[param]}"
         return params
     
@@ -162,18 +176,18 @@ class Control:
 
         kwargs: Dict[str, Any] = {}
         has_error = False
-        unused_options: List[Callable] = [] # parameters with expose_value==False
+        unused_options: List[BaseWidget] = [] # parameters with expose_value==False
 
         # Check all values for errors
-        for option_name, value_callback in self.widget_registry[hierarchy_selected_command_name].items():
+        for option_name, widget in self.widget_registry[hierarchy_selected_command_name].items():
             param: click.Parameter = next((x for x in selected_command.params if x.name == option_name))
             if param.expose_value:
-                widget_value, err = value_callback()   
+                widget_value, err = widget.getValue()  
                 has_error |= self.check_error(err)
 
                 kwargs[option_name] = widget_value
             else: # Verify it when all options are valid
-                unused_options.append(value_callback)
+                unused_options.append(widget)
 
         if has_error: 
             return
@@ -188,8 +202,8 @@ class Control:
             return
 
         # Parameters with expose_value==False
-        for value_callback in unused_options:
-            widget_value, err = value_callback()
+        for widget in unused_options:
+            widget_value, err = widget.getValue()
             has_error |= self.check_error(err)
             if callable(widget_value):
                 _, err = widget_value()  
@@ -206,4 +220,4 @@ class Control:
                 args.append(kwargs.pop(ca)) # Remove explicitly mentioned args from kwargs dict
             selected_command.callback(*args, **kwargs)
         else:
-            selected_command.callback(**kwargs) # Throws an error (click does the same)
+            selected_command.callback(**kwargs)

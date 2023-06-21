@@ -1,7 +1,6 @@
 import click
 import clickqt
 import PySide6.QtCore as QtCore
-from PySide6.QtWidgets import QTabWidget, QWidget, QSpinBox, QPushButton
 import pytestqt.qtbot as qtbot
 from clickqt.widgets.numericfields import IntField
 from clickqt.core.error import ClickQtError
@@ -38,16 +37,18 @@ def test_gui_intfield():
         assert isinstance(count, int)
         assert count == expected
 
-    gui = clickqt.qtgui_from_click(dist).gui
-
-    tab_window:QWidget = gui.main_tab.findChild(QWidget)
-    assert tab_window is not None
-    count:QSpinBox = tab_window.findChild(QWidget).findChild(QSpinBox)
-    assert count is not None
-
-    gui.run_button.click() # Check if default value was set correctly
+    control = clickqt.qtgui_from_click(dist)
+    run_button = control.gui.run_button
+    int_field_widget = control.widget_registry[dist.name][dist.params[0].name]
+    assert isinstance(int_field_widget, IntField)
+    # Check if default value was set correctly
+    run_button.click() 
 
     for _ in range(5):
         expected = random.randint(-10000, 10000)
-        count.setValue(expected)
-        gui.run_button.click() 
+        int_field_widget.setValue(expected)
+        run_button.click() 
+
+    # Wrong type does not change the widget value
+    int_field_widget.setValue(str(expected+12))
+    run_button.click() 

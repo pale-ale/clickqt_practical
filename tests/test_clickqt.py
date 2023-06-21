@@ -1,2 +1,4 @@
-from tests.widget.checkbox import test_checkbox
-from tests.widget.numericfields import test_intfield, test_gui_intfield
+from tests.widget.checkbox import *
+from tests.widget.numericfields import *
+from tests.widget.textfield import *
+from tests.widget.messagebox import *
