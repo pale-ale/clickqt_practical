@@ -32,14 +32,15 @@ def test_gui_textfield():
 
 def test_gui_textfield_envvar():
     expected:str = None
-    temp_envvars = ["TMPDIR", "TEMP", "TMP", "SHELL"] # OS dependent
-    for envvar in temp_envvars:
-        if (path := os.environ.get(envvar)):
+    # Take one envvar, OS dependent
+    envvars = ["TMPDIR", "TEMP", "TMP", "HOME"] 
+    for ev in envvars:
+        if (path := os.environ.get(ev)):
             expected = path
             break
 
     @click.command()
-    @click.option("--message", envvar=temp_envvars)
+    @click.option("--message", envvar=envvars)
     def dist(message):
         assert isinstance(message, str)
         assert message == expected

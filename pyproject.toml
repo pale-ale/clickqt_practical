@@ -19,7 +19,7 @@ maintainers = [
     { name = "Dominic Kempf", email = "ssc@iwr.uni-heidelberg.de" },
 ]
 dynamic = ["version"]
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 license = { text = "MIT" }
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -34,12 +34,13 @@ dependencies = [
 [project.optional-dependencies]
 tests = [
     "pytest",
+    "pytest-xvfb",
     "pytest-cov",
     "pytest-qt",
 ]
 docs = [
-    "m2r2",
     "sphinx",
+    "sphinx_mdinclude",
     "sphinx_rtd_theme",
 ]
 
@@ -64,4 +65,5 @@ write_to = "clickqt/_version.py"
 [tool.pytest.ini_options]
 testpaths = [
     "tests",
+    "tests/widgets",
 ]
