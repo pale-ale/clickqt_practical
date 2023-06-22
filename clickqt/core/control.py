@@ -159,7 +159,10 @@ class Control:
                 widget_values.append(widgets[widget].getWidgetValue())
         parameter_strings = []
         for i, param in enumerate(parameter_list):
-            parameter_strings.append(parameter_list[i] + " " + str(widget_values[i]))    
+            if param != "Argument":
+                parameter_strings.append(parameter_list[i] + " " + str(widget_values[i])) 
+            else: 
+                parameter_strings.append(str(widget_values[i]))  
         message = hierarchy_selected_name + " " +" ".join(parameter_strings)
         message = self.clean_command_string(self.cmd.name, message)     
         print(message)  
