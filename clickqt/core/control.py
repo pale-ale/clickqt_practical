@@ -123,8 +123,12 @@ class Control:
             if isinstance(param, click.Option):
                 long_forms = [opt for opt in param.opts if opt.startswith('--')]
                 longest_long_form = max(long_forms, key=len) if long_forms else None
+                short_forms = [opt for opt in param.opts if opt.startswith("-")]
+                short_forms = max(short_forms, key=len) if short_forms else None
                 if longest_long_form:
                     option_names.append(longest_long_form)
+                else: 
+                    option_names.append(short_forms)
             elif isinstance(param, click.Argument):
                 option_names.append("Argument")
         return option_names
