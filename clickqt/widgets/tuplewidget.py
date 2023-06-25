@@ -3,6 +3,7 @@ from clickqt.widgets.basewidget import BaseWidget
 from typing import Callable, Any
 from click import Parameter, Tuple as ClickTuple, Context, ParamType, BadParameter
 from gettext import ngettext
+import os
 
 class TupleWidget(BaseWidget):
     widget_type = QGroupBox
@@ -33,7 +34,8 @@ class TupleWidget(BaseWidget):
         if self.parent_widget is None:
             # Consider envvar
             if (envvar_values := self.param.resolve_envvar_value(Context(self.click_command))) is not None:
-                self.setValue(self.type.split_envvar_value(envvar_values))
+                # otype.split_envvar_value(envvar_values) does not work because clicks "self.envvar_list_splitter" is not set corrently
+                self.setValue(envvar_values.split(os.path.pathsep))
             elif (default := BaseWidget.getParamDefault(param, None)) is not None: # Consider default value
                 self.setValue(default)
     

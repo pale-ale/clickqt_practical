@@ -6,6 +6,7 @@ from typing import Any, Callable, Tuple, List
 from clickqt.core.error import ClickQtError
 from click import Context, Parameter, ParamType
 from click.exceptions import Abort, Exit
+import os
 
 class NValueWidget(BaseWidget):
     widget_type = QScrollArea
@@ -27,7 +28,8 @@ class NValueWidget(BaseWidget):
 
         # Consider envvar
         if (envvar_values := self.param.resolve_envvar_value(Context(self.click_command))) is not None:
-            for ev in self.type.split_envvar_value(envvar_values):
+            # otype.split_envvar_value(envvar_values) does not work because clicks "self.envvar_list_splitter" is not set corrently
+            for ev in envvar_values.split(os.path.pathsep):
                 self.addPair(ev)
         elif (default := BaseWidget.getParamDefault(param, None)) is not None: # Consider default value
             for value in default:
@@ -73,7 +75,7 @@ class NValueWidget(BaseWidget):
                 self.handleValid(False)
                 return (None, ClickQtError(ClickQtError.ErrorType.REQUIRED_ERROR, self.widget_name, self.param.param_type_name))
             elif (envvar_values := self.param.resolve_envvar_value(Context(self.click_command))) is not None:
-                for ev in self.type.split_envvar_value(envvar_values):
+                for ev in envvar_values.split(os.path.pathsep):
                     self.addPair(ev)
             elif default is not None: # Add new pairs
                 for value in default: # All defaults will be considered if len(self.buttondict.values()) == 0
