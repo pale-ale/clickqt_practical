@@ -11,7 +11,9 @@ from clickqt.core.gui import GUI
         (clickqt.widgets.TextField, {"type":str}, "test123", "test123"),
         (clickqt.widgets.TextField, {"type":str}, ["test1", "test2"], os.path.pathsep.join(["test1", "test2"])),
         (clickqt.widgets.FileField, {"type":click.types.File()}, "test", "test"),
+        (clickqt.widgets.FileField, {"type":click.types.File()}, ["test1", "test2"], os.path.pathsep.join(["test1", "test2"])),
         (clickqt.widgets.FilePathField, {"type":click.types.Path()}, "test", "test"),
+        (clickqt.widgets.FilePathField, {"type":click.types.Path()}, ["test1", "test2"], os.path.pathsep.join(["test1", "test2"])),
         (clickqt.widgets.MultiValueWidget, {"type":click.types.Path(), "nargs":2}, ["a", "b"], ["a", "b"]),
         (clickqt.widgets.MultiValueWidget, {"type":click.types.File(), "nargs":2}, ["a", "b"], ["a", "b"]),
     ]
@@ -35,6 +37,10 @@ def test_set_envvar(clickqt_type:clickqt.widgets.BaseWidget, click_attrs:dict, e
     [
         (clickqt.widgets.MultiValueWidget, {"type":click.types.Path(), "nargs":3}, ["a", "b"], "Takes 3 values but 2 were given."),
         (clickqt.widgets.MultiValueWidget, {"type":click.types.File(), "nargs":2}, ["a", "b", "c"], "Takes 2 values but 3 were given."),
+        (clickqt.widgets.TupleWidget, {"type":(click.types.Path(), click.types.Path())}, ["a", "b", "c"], "Takes 2 values but 3 were given."),
+        (clickqt.widgets.TupleWidget, {"type":(click.types.Path(), click.types.File())}, ["a"], "Takes 2 values but 1 was given."),
+        (clickqt.widgets.TupleWidget, {"type":(click.types.File(), click.types.Path())}, ["a", "c", "b"], "Takes 2 values but 3 were given."),
+        (clickqt.widgets.TupleWidget, {"type":(click.types.File(), click.types.File())}, ["a", "b", "c", "d"], "Takes 2 values but 4 were given."),
     ]
 )
 def test_set_envvar_fail(clickqt_type:clickqt.widgets.BaseWidget, click_attrs:dict, envvar_values:str|list[str], expected:str|list[str]):

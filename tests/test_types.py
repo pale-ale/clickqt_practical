@@ -21,11 +21,12 @@ from typing import Any
         ({"type":str, "nargs":2}, clickqt.widgets.MultiValueWidget), 
         ({"type":click.types.UUID}, clickqt.widgets.TextField), 
         ({"type":click.types.UNPROCESSED}, clickqt.widgets.TextField), 
-        ({"type":click.types.Choice([])}, clickqt.widgets.ComboBox), 
-        ({"type":click.types.Choice([]), "multiple":True}, clickqt.widgets.CheckableComboBox), 
+        ({"type":click.types.Choice(["a"])}, clickqt.widgets.ComboBox), 
+        ({"type":click.types.Choice(["a"]), "multiple":True}, clickqt.widgets.CheckableComboBox), 
         ({"type":click.types.File()}, clickqt.widgets.FileField), 
         ({"type":click.types.Path()}, clickqt.widgets.FilePathField), 
-        ({"type":()}, clickqt.widgets.TupleWidget), 
+        ({"type":(click.types.Path(), int)}, clickqt.widgets.TupleWidget),
+        ({"type":(click.types.Path(), (int, str))}, clickqt.widgets.TupleWidget),  
     ]
 )
 def test_type_assignment(attrs:dict, expected_clickqt_type:clickqt.widgets.BaseWidget):
