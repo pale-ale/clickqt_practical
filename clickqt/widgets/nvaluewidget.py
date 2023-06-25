@@ -26,9 +26,9 @@ class NValueWidget(BaseWidget):
         self.buttondict:dict[QPushButton, BaseWidget] = dict()
 
         # Consider envvar
-        if (envvar_value := self.param.resolve_envvar_value(Context(self.click_command))) is not None:
-            for value in self.type.split_envvar_value(envvar_value):
-                self.addPair(value)
+        if (envvar_values := self.param.value_from_envvar(Context(self.click_command))) is not None:
+            for ev in self.type.split_envvar_value(envvar_values):
+                self.addPair(ev)
         elif default is not None: # Consider default value
             for value in default:
                 self.addPair(value)
@@ -70,9 +70,9 @@ class NValueWidget(BaseWidget):
             if self.param.required and default is None:
                 self.handleValid(False)
                 return (None, ClickQtError(ClickQtError.ErrorType.REQUIRED_ERROR, self.widget_name, self.param.param_type_name))
-            elif (envvar_value := self.param.resolve_envvar_value(Context(self.click_command))) is not None:
-                for value in self.type.split_envvar_value(envvar_value):
-                    self.addPair(value)
+            elif (envvar_values := self.param.value_from_envvar(Context(self.click_command))) is not None:
+                for ev in self.type.split_envvar_value(envvar_values):
+                    self.addPair(ev)
             elif (default := BaseWidget.getParamDefault(self.param, None)) is not None: # Add new pairs
                 for value in default: # All defaults will be considered if len(self.buttondict.values()) == 0
                     self.addPair(value)

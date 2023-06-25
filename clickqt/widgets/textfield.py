@@ -12,7 +12,7 @@ class TextField(BaseWidget):
     def __init__(self, otype:ParamType, param:Parameter, default:Any, *args, **kwargs):
         super().__init__(otype, param, *args, **kwargs)
         # Consider envvar
-        if (envvar_value := param.resolve_envvar_value(Context(self.click_command))) is not None and len(self.type.split_envvar_value(envvar_value)) == 1:
+        if (envvar_value := param.value_from_envvar(Context(self.click_command))) is not None:
             self.setValue(envvar_value)
         else: # Consider default value
             self.setValue(default if default is not None else "")
@@ -36,8 +36,14 @@ class PathField(TextField):
         File = 1
         Directory = 2
 
-    def __init__(self, param:Parameter, *args, **kwargs):
-        super().__init__(param, *args, **kwargs)
+    def __init__(self, otype:ParamType, param:Parameter, default:Any, *args, **kwargs):
+        super().__init__(otype, param, default, *args, **kwargs)
+
+        # Consider envvar
+        if (envvar_value := param.value_from_envvar(Context(self.click_command))) is not None:
+            self.setValue(envvar_value) 
+        else: # Consider default value
+            self.setValue(default if default is not None else "")
 
         self.file_type = PathField.FileType.Unknown
 

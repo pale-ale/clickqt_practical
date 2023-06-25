@@ -32,8 +32,8 @@ class TupleWidget(BaseWidget):
 
         if self.parent_widget is None:
             # Consider envvar
-            if (envvar_value := self.param.resolve_envvar_value(Context(self.click_command))) is not None:
-                self.setValue(self.type.split_envvar_value(envvar_value))
+            if (envvar_values := self.param.value_from_envvar(Context(self.click_command))) is not None:
+                self.setValue(envvar_values)
             elif default is not None: # Consider default value
                 self.setValue(default)
     

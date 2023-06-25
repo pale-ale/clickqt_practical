@@ -35,7 +35,7 @@ class Control:
         if param.name:
             assert self.widget_registry[groups_command_name].get(param.name) is None
             
-            widget = self.gui.create_widget(param.type, param, BaseWidget.getParamDefault(param, None), widgetsource=self.gui.create_widget, com=command)                
+            widget = self.gui.create_widget(param.type, param, param.get_default(ctx=click.Context(command), call=True), widgetsource=self.gui.create_widget, com=command)                
             self.widget_registry[groups_command_name][param.name] = widget
             self.command_registry[groups_command_name][param.name] = (param.nargs, type(param.type).__name__)
             

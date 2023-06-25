@@ -1,8 +1,9 @@
 from PySide6.QtWidgets import QGroupBox, QVBoxLayout
 from clickqt.widgets.basewidget import BaseWidget
 from clickqt.widgets.tuplewidget import TupleWidget
-from click import Parameter, Context, ParamType
+from click import Parameter, Context, ParamType, BadParameter
 from typing import Any, List, Callable
+from gettext import ngettext
 
 
 class MultiValueWidget(BaseWidget):
@@ -29,13 +30,18 @@ class MultiValueWidget(BaseWidget):
             self.children.append(bw)
 
         # Consider envvar
-        if (envvar_value := self.param.resolve_envvar_value(Context(self.click_command))) is not None:
-            self.setValue(self.type.split_envvar_value(envvar_value))
+        if (envvar_values := self.param.value_from_envvar(Context(self.click_command))) is not None:
+            self.setValue(envvar_values)
         elif default is not None: # Consider default value
             self.setValue(default)
         
     def setValue(self, value:list[Any]):
-        assert len(value) == len(self.children)
+        if len(value) != self.param.nargs:
+            raise BadParameter(ngettext("Takes {nargs} values but 1 was given.", "Takes {nargs} values but {len} were given.",len(value),)
+                               .format(nargs=self.param.nargs, len=len(value)),
+                               ctx=Context(self.click_command),
+                               param=self.param)
+        
         for i,c in enumerate(self.children):
             c.setValue(value[i])
 
