@@ -23,7 +23,7 @@ from typing import Any
         (ClickAttrs.filefield(), clickqt.widgets.FileField), 
         (ClickAttrs.filepathfield(), clickqt.widgets.FilePathField), 
         (ClickAttrs.nvalue_widget(), clickqt.widgets.NValueWidget),
-        (ClickAttrs.tuple_widget(types=[click.types.Path(),int]), clickqt.widgets.TupleWidget),
+        (ClickAttrs.tuple_widget(types=(click.types.Path(),int)), clickqt.widgets.TupleWidget),
         (ClickAttrs.multi_value_widget(nargs=2), clickqt.widgets.MultiValueWidget),  
     ]
 )
@@ -64,7 +64,7 @@ def test_type_assignment(click_attrs:dict, expected_clickqt_type:clickqt.widgets
         (ClickAttrs.checkable_combobox(choices=["A", "B", "C"], case_sensitive=False), ["a", "c"], ["A", "C"]), 
         (ClickAttrs.filefield(), "test.abc", "test.abc"), 
         (ClickAttrs.filepathfield(), ".", "."), 
-        (ClickAttrs.tuple_widget(types=[str,int]), ["s", 1], ["s", 1]),
+        (ClickAttrs.tuple_widget(types=(str,int)), ["s", 1], ["s", 1]),
         (ClickAttrs.multi_value_widget(nargs=3), ["a", "b", "c"], ["a", "b", "c"]),
         (ClickAttrs.nvalue_widget(type=int), [1, 2, 5], [1, 2, 5]),
         (ClickAttrs.nvalue_widget(type=(str,float)), [["a", 12.2], ["b", -873.21]], [["a", 12.2], ["b", -873.21]]),
@@ -95,7 +95,7 @@ def test_set_value(click_attrs:dict, value:Any, expected:Any):
         (ClickAttrs.checkable_combobox(choices=["A", "B", "C"], case_sensitive=False), ["a", "t", "c"], "'t' is not one of 'A', 'B', 'C'."),
         (ClickAttrs.multi_value_widget(nargs=3, type=int), ["1", 2, 3.2], "'3.2' is not a valid integer."),
         (ClickAttrs.multi_value_widget(nargs=2, type=float), ["yes", "y"], "'yes' is not a valid float."), # First wrong value fails the test
-        (ClickAttrs.tuple_widget(types=[str,int]), ["s", 12.3], "'12.3' is not a valid integer."),
+        (ClickAttrs.tuple_widget(types=(str,int)), ["s", 12.3], "'12.3' is not a valid integer."),
         (ClickAttrs.nvalue_widget(type=(str,float)), [["a", "set"], ["b", "t"]], "'set' is not a valid float."), # First wrong value fails the test
     ]
 )
