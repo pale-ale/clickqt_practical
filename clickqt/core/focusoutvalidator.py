@@ -1,7 +1,7 @@
 from PySide6.QtWidgets import QWidget
 from PySide6.QtCore import QObject, QEvent
 from clickqt.core.error import ClickQtError
-from clickqt.widgets.base_widget import BaseWidget
+from clickqt.widgets.basewidget import BaseWidget
 from clickqt.widgets.nvaluewidget import NValueWidget
 from click import Context
 from typing import Tuple, Any

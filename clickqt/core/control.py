@@ -4,8 +4,8 @@ from clickqt.core.gui import GUI
 from PySide6.QtWidgets import QWidget, QFrame, QVBoxLayout, QTabWidget, QScrollArea
 from PySide6.QtGui import QPalette
 from clickqt.core.error import ClickQtError
-from clickqt.widgets.base_widget import BaseWidget
-from typing import Dict, Callable, List, Any, Tuple, Union
+from clickqt.widgets.basewidget import BaseWidget
+from typing import Dict, Callable, List, Any, Tuple
 import sys
 from functools import reduce
 import re 
@@ -34,8 +34,8 @@ class Control:
     def parameter_to_widget(self, command: click.Command, groups_command_name:str, param: click.Parameter) -> QWidget:
         if param.name:
             assert self.widget_registry[groups_command_name].get(param.name) is None
-
-            widget = self.gui.create_widget(param.type, param, widgetsource=self.gui.create_widget, com=command)                
+            
+            widget = self.gui.create_widget(param.type, param, BaseWidget.getParamDefault(param, None), widgetsource=self.gui.create_widget, com=command)                
             self.widget_registry[groups_command_name][param.name] = widget
             self.command_registry[groups_command_name][param.name] = (param.nargs, type(param.type).__name__)
             

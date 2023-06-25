@@ -1,12 +1,12 @@
 from PySide6.QtWidgets import QGroupBox, QHBoxLayout
-from clickqt.widgets.base_widget import BaseWidget
+from clickqt.widgets.basewidget import BaseWidget
 from typing import Callable, Any
-from click import Parameter, Tuple as ClickTuple, Context
+from click import Parameter, Tuple as ClickTuple, Context, ParamType
 
 class TupleWidget(BaseWidget):
     widget_type = QGroupBox
 
-    def __init__(self, param:Parameter, widgetsource:Callable[[Any], BaseWidget], *args, parent: BaseWidget=None, recinfo:list=None, **kwargs):
+    def __init__(self, otype:ParamType, param:Parameter, default:Any, widgetsource:Callable[[Any], BaseWidget], *args, parent:BaseWidget|None=None, recinfo:list=None, **kwargs):
         if not isinstance(param.type, ClickTuple):
             raise TypeError
         if not param.type.is_composite:
@@ -14,16 +14,16 @@ class TupleWidget(BaseWidget):
         if not isinstance(param.type.types, list):
             raise TypeError
         
-        super().__init__(param, *args, parent=parent, **kwargs)
+        super().__init__(otype, param, *args, parent=parent, **kwargs)
         self.children:list[BaseWidget] = []
         recinfo = recinfo if recinfo else []
         self.widget.setLayout(QHBoxLayout())
 
-
         for i,t in enumerate(TupleWidget.getTypesRecursive(self.param.type.types, recinfo)):
             recinfo.append(i)
             self.param.nargs = 0
-            bw = widgetsource(t, self.param, *args, widgetsource=widgetsource, parent=self, recinfo=recinfo, **kwargs)
+            # defaults have to be considered after all widgets are constructed
+            bw:BaseWidget = widgetsource(t, self.param, None, *args, widgetsource=widgetsource, parent=self, recinfo=recinfo, **kwargs)
             recinfo.pop()
             bw.layout.removeWidget(bw.label)
             bw.label.deleteLater()
@@ -33,10 +33,9 @@ class TupleWidget(BaseWidget):
         if self.parent_widget is None:
             # Consider envvar
             if (envvar_value := self.param.resolve_envvar_value(Context(self.click_command))) is not None:
-                self.setValue(self.param.type.split_envvar_value(envvar_value))
-            else: # Consider default value
-                if len(default := BaseWidget.getParamDefault(self.param, [])):
-                    self.setValue(default)
+                self.setValue(self.type.split_envvar_value(envvar_value))
+            elif default is not None: # Consider default value
+                self.setValue(default)
     
     @staticmethod
     def getTypesRecursive(o:list|ClickTuple, recinfo:list):

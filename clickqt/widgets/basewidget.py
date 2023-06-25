@@ -1,20 +1,22 @@
-from typing import Any
+from typing import Any, ClassVar, Type
 from abc import ABC, abstractmethod
 from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout
 from clickqt.core.error import ClickQtError
 import clickqt.core
-from click import Context, Parameter, Choice, Option, Tuple as click_type_tuple
+from click import Context, Parameter, Command, Choice, Option, ParamType, Tuple as click_type_tuple
 from click.exceptions import Abort, Exit
 
 class BaseWidget(ABC):
     # The type of this widget
-    widget_type: Any
+    widget_type: ClassVar[Type]
 
-    def __init__(self, param:Parameter, *args, parent:"BaseWidget|None"=None, **kwargs):
+    def __init__(self, otype:ParamType, param:Parameter, *args, parent:"BaseWidget|None"=None, **kwargs):
+        assert isinstance(otype, ParamType)
         assert isinstance(param, Parameter)
-        self.parent_widget = parent
-        self.param = param
-        self.click_command = kwargs.get("com")
+        self.type:ParamType = otype
+        self.param:Parameter = param
+        self.parent_widget:BaseWidget|None = parent
+        self.click_command:Command = kwargs.get("com")
         self.widget_name = param.name
         self.container = QWidget()
         self.layout = QHBoxLayout()
@@ -29,6 +31,7 @@ class BaseWidget(ABC):
         assert self.widget is not None, "Widget not initialized"
         assert self.param is not None, "Click param object not provided"
         assert self.click_command is not None, "Click command not provided"
+        assert self.type is not None, "Type not provided"
 
         self.focus_out_validator = clickqt.core.FocusOutValidator(self)
         self.widget.installEventFilter(self.focus_out_validator)
@@ -50,6 +53,13 @@ class BaseWidget(ABC):
             -> Subclasses may need to override this method
         """
         return False
+    
+    #@abstractmethod
+    #def __repr__(self) -> str:
+        """
+            Returns the representation of the widget as string (e.g. IntField -> "int")
+        """
+    #    pass
 
     def getValue(self) -> tuple[Any, ClickQtError]:
         """
@@ -63,7 +73,7 @@ class BaseWidget(ABC):
             default = BaseWidget.getParamDefault(self.param, None)
             # if statement is obtained by creating the corresponding truth table
             if self.param.multiple or \
-            (not isinstance(self.param.type, click_type_tuple) and self.param.nargs != 1):
+            (not isinstance(self.type, click_type_tuple) and self.param.nargs != 1):
                 value_missing = False
                 widget_values: list = self.getWidgetValue()
 
@@ -92,7 +102,7 @@ class BaseWidget(ABC):
                                 value = None
                                 break
                         
-                        value.append(self.param.type.convert(value=v, param=self.param, ctx=Context(self.click_command))) 
+                        value.append(self.type.convert(value=v, param=self.param, ctx=Context(self.click_command))) 
             else:
                 value_missing = False
                 if self.isEmpty():
@@ -105,7 +115,7 @@ class BaseWidget(ABC):
                         value_missing = True # -> value is None
 
                 if not value_missing:
-                    value = self.param.type.convert(value=self.getWidgetValue(), param=self.param, ctx=Context(self.click_command))
+                    value = self.type.convert(value=self.getWidgetValue(), param=self.param, ctx=Context(self.click_command))
         except Exception as e:
             self.handleValid(False)
             return (None, ClickQtError(ClickQtError.ErrorType.CONVERTING_ERROR, self.widget_name, e))
@@ -145,13 +155,8 @@ class BaseWidget(ABC):
 
 
 class NumericField(BaseWidget):
-    def __init__(self, param:Parameter, *args, **kwargs):
-        super().__init__(param, *args, **kwargs)
-        self.setValue(BaseWidget.getParamDefault(param, 0))
-
-    def setValue(self, value: int|float):
-        if isinstance(value, int|float):
-            self.widget.setValue(value)
+    def setValue(self, value: Any):
+        self.widget.setValue(self.type.convert(value=str(value), param=self.click_command, ctx=Context(self.click_command)))
 
     def setMinimum(self, value: int|float):
         self.widget.setMinimum(value)
@@ -168,14 +173,12 @@ class NumericField(BaseWidget):
     def getWidgetValue(self) -> int|float:
         return self.widget.value()
     
-    
-
 
 class ComboBoxBase(BaseWidget):
-    def __init__(self, param:Parameter, *args, **kwargs):
+    def __init__(self, otype:ParamType, param:Parameter, *args, **kwargs):
         if not isinstance(param.type, Choice):
             raise TypeError(f"'param' must be of type 'Choice'.")
-        super().__init__(param, *args, **kwargs)
+        super().__init__(otype, param, *args, **kwargs)
         self.addItems(param.type.choices)
 
     # Changing the border color does not work because overwriting 

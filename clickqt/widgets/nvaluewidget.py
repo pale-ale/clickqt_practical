@@ -1,18 +1,18 @@
 from PySide6.QtWidgets import QVBoxLayout, QScrollArea, QPushButton, QWidget
 from PySide6.QtCore import Qt
-from clickqt.widgets.base_widget import BaseWidget
+from clickqt.widgets.basewidget import BaseWidget
 from clickqt.widgets.tuplewidget import TupleWidget
 from typing import Any, Callable, Tuple, List
 from clickqt.core.error import ClickQtError
-from click import Context, Parameter
+from click import Context, Parameter, ParamType
 from click.exceptions import Abort, Exit
 
 class NValueWidget(BaseWidget):
     widget_type = QScrollArea
     
-    def __init__(self, param:Parameter, widgetsource:Callable[[Any], BaseWidget], parent: BaseWidget = None, *args, **kwargs):
-        super().__init__(param, parent, *args, **kwargs)
-        self.widget.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy(0x2))
+    def __init__(self, otype:ParamType, param:Parameter, default:Any, widgetsource:Callable[[Any], BaseWidget], parent:BaseWidget=None, *args, **kwargs):
+        super().__init__(otype, param, parent, *args, **kwargs)
+        self.widget.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
         self.optargs = args
         self.optkwargs = kwargs
         self.widgetsource = widgetsource
@@ -27,17 +27,15 @@ class NValueWidget(BaseWidget):
 
         # Consider envvar
         if (envvar_value := self.param.resolve_envvar_value(Context(self.click_command))) is not None:
-            for value in self.param.type.split_envvar_value(envvar_value):
-                if value: # Don't add empty widgets
-                    self.addPair(value)
-        else: # Consider default value
-            if len(default := BaseWidget.getParamDefault(self.param, [])):
-                for value in default:
-                    self.addPair(value)
+            for value in self.type.split_envvar_value(envvar_value):
+                self.addPair(value)
+        elif default is not None: # Consider default value
+            for value in default:
+                self.addPair(value)
         
     def addPair(self, value = None):
         self.param.multiple = False # nargs cannot be nested, so it is safe to turn this off for children
-        clickqtwidget:BaseWidget = self.widgetsource(self.param.type, self.param, *self.optargs, widgetsource=self.widgetsource, parent=self, **self.optkwargs)
+        clickqtwidget:BaseWidget = self.widgetsource(self.type, self.param, value, *self.optargs, widgetsource=self.widgetsource, parent=self, **self.optkwargs)
         self.param.multiple = True # click needs this for a correct conversion
         if value is not None:
             clickqtwidget.setValue(value)
@@ -69,11 +67,13 @@ class NValueWidget(BaseWidget):
     def getValue(self) -> Tuple[Any, ClickQtError]:
         value_missing = False
         if len(self.buttondict.values()) == 0:
-            default = BaseWidget.getParamDefault(self.param, None)
             if self.param.required and default is None:
                 self.handleValid(False)
                 return (None, ClickQtError(ClickQtError.ErrorType.REQUIRED_ERROR, self.widget_name, self.param.param_type_name))
-            elif default is not None: # Add new pairs
+            elif (envvar_value := self.param.resolve_envvar_value(Context(self.click_command))) is not None:
+                for value in self.type.split_envvar_value(envvar_value):
+                    self.addPair(value)
+            elif (default := BaseWidget.getParamDefault(self.param, None)) is not None: # Add new pairs
                 for value in default: # All defaults will be considered if len(self.buttondict.values()) == 0
                     self.addPair(value)
             else: # param is not required and there is no default -> value is None
@@ -101,7 +101,7 @@ class NValueWidget(BaseWidget):
                             # having multiple string based widgets (the validator would remove the widget before all child-widgets could be filled)
                             continue
                             
-                    values.append(self.param.type.convert(value=child.getWidgetValue(), param=self.param, ctx=Context(self.click_command))) 
+                    values.append(self.type.convert(value=child.getWidgetValue(), param=self.param, ctx=Context(self.click_command))) 
                     child.handleValid(True)
                 except Exception as e:
                     child.handleValid(False)
@@ -127,8 +127,16 @@ class NValueWidget(BaseWidget):
             return (None, ClickQtError(ClickQtError.ErrorType.PROCESSING_VALUE_ERROR, self.widget_name, e))
 
     def setValue(self, value):
-        assert len(value) == len(self.buttondict.values())
-        for i,c in enumerate(self.buttondict.values()):
+        if len(value) < len(self.buttondict.values()): # Remove pairs
+            for i, btns in enumerate(self.buttondict.keys()):   
+                if i <= len(value):
+                    continue
+                self.removeButtonPair(btns)  
+        elif len(value) > len(self.buttondict.values()): # Add pairs
+            for i in range(len(value)-len(self.buttondict.values())):   
+                self.addPair()
+        
+        for i,c in enumerate(self.buttondict.values()): # Set the value
             c.setValue(value[i])
     
     def isEmpty(self) -> bool:

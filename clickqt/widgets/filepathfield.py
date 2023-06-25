@@ -1,12 +1,13 @@
 from PySide6.QtWidgets import QLineEdit
 from clickqt.widgets.textfield import PathField
-from click import Parameter, Path
+from click import Parameter, Path, ParamType
+from typing import Any
 
 class FilePathField(PathField):
     widget_type = QLineEdit
 
-    def __init__(self, param:Parameter, *args, **kwargs):
-        super().__init__(param, *args, **kwargs)
+    def __init__(self, otype:ParamType, param:Parameter, default:Any, *args, **kwargs):
+        super().__init__(otype, param, default, *args, **kwargs)
 
         if not isinstance(param.type, Path):
             raise TypeError("'param' must be of type 'Path'.")

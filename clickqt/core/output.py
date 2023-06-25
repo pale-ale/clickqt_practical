@@ -16,7 +16,7 @@ class OutputStream(TextIOWrapper):
     def write(self, message: bytes|str):
         if message:
             message = message.decode("utf-8") if isinstance(message, bytes) else message
-            self.old_stream.write(message) # Write to "normal" stream as well
+            print(message, file=self.old_stream, end="") # Write to "normal" stream as well
             message = html.escape(message).replace("\r\n", "\n").replace("\n", "<br>") # Replace '\n' with HTML code
             self.output.moveCursor(QTextCursor.End)
             self.output.textCursor().insertHtml(f"<p span style='color: rgb({self.color.red()}, {self.color.green()}, {self.color.blue()})'>{message}</p>")

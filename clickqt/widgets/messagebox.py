@@ -1,12 +1,18 @@
+from typing import Any
 from PySide6.QtWidgets import QMessageBox, QWidget
-from clickqt.widgets.base_widget import BaseWidget
-from click import Parameter
+from clickqt.core.error import ClickQtError
+from clickqt.widgets.basewidget import BaseWidget
+from click import Parameter, ParamType, Context
 
 class MessageBox(BaseWidget):
     widget_type = QWidget
 
-    def __init__(self, param:Parameter, *args, **kwargs):
-        super().__init__(param, *args, **kwargs)
+    def __init__(self, otype:ParamType, param:Parameter, default:Any, *args, **kwargs):
+        super().__init__(otype, param, *args, **kwargs)
+
+        self.yes:bool
+
+        self.setValue(default if default is not None else False)
 
         self.layout.removeWidget(self.label)
         self.layout.removeWidget(self.widget)
@@ -15,12 +21,17 @@ class MessageBox(BaseWidget):
         self.container = self.widget
         self.container.setVisible(False)
 
-    def setValue(self, value: bool):
-        raise NotImplementedError()
+    def setValue(self, value:Any):
+        self.yes = bool(self.type.convert(str(value), self.click_command, Context(self.click_command)))
     
-    def getWidgetValue(self) -> bool:
+    def getValue(self) -> tuple[Any, ClickQtError]:
         if QMessageBox.information(self.widget, "Confirmation", str(self.param.prompt), 
                                    QMessageBox.Yes|QMessageBox.No) == QMessageBox.Yes:
-            return True
+            self.yes = True
         else:
-            return False
+            self.yes = False
+        
+        return super().getValue()
+    
+    def getWidgetValue(self) -> bool:
+        return self.yes
