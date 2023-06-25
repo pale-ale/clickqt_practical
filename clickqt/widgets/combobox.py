@@ -7,10 +7,10 @@ from click import Parameter, ParamType, Context
 class ComboBox(ComboBoxBase):
     widget_type = QComboBox
 
-    def __init__(self, otype:ParamType, param:Parameter, default:Any, *args, **kwargs):
+    def __init__(self, otype:ParamType, param:Parameter, *args, **kwargs):
         super().__init__(otype, param, *args, **kwargs)
         
-        if default is not None:
+        if self.parent_widget is None and (default := BaseWidget.getParamDefault(param, None)) is not None:
             self.setValue(default)
 
     def setValue(self, value: Any):
@@ -26,10 +26,11 @@ class ComboBox(ComboBoxBase):
 class CheckableComboBox(ComboBoxBase):
     widget_type = QCheckableComboBox
 
-    def __init__(self, otype:ParamType, param:Parameter, default:Any, *args, **kwargs):
+    def __init__(self, otype:ParamType, param:Parameter, *args, **kwargs):
         super().__init__(otype, param, *args, **kwargs)
 
-        self.setValue(default if default is not None else [])
+        if self.parent_widget is None:
+            self.setValue(BaseWidget.getParamDefault(param, []))
 
     def setValue(self, value: list[Any]):
         check_values: list[str] = []

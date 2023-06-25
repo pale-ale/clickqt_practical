@@ -147,6 +147,7 @@ class BaseWidget(ABC):
     
     @staticmethod
     def getParamDefault(param:Parameter, alternative=None):
+        # TODO: Replace with param.get_default(ctx=click.Context(command), call=True)
         if param.default is None:
             return alternative
         if callable(param.default):
@@ -176,10 +177,10 @@ class NumericField(BaseWidget):
 
 class ComboBoxBase(BaseWidget):
     def __init__(self, otype:ParamType, param:Parameter, *args, **kwargs):
-        if not isinstance(param.type, Choice):
+        if not isinstance(otype, Choice):
             raise TypeError(f"'param' must be of type 'Choice'.")
         super().__init__(otype, param, *args, **kwargs)
-        self.addItems(param.type.choices)
+        self.addItems(otype.choices)
 
     # Changing the border color does not work because overwriting 
     # the default stylesheet settings results in a program crash (TODO)

@@ -7,12 +7,13 @@ from click import Parameter, ParamType, Context
 class MessageBox(BaseWidget):
     widget_type = QWidget
 
-    def __init__(self, otype:ParamType, param:Parameter, default:Any, *args, **kwargs):
+    def __init__(self, otype:ParamType, param:Parameter, *args, **kwargs):
         super().__init__(otype, param, *args, **kwargs)
 
         self.yes:bool
 
-        self.setValue(default if default is not None else False)
+        if self.parent_widget is None:
+            self.setValue(BaseWidget.getParamDefault(param, False))
 
         self.layout.removeWidget(self.label)
         self.layout.removeWidget(self.widget)

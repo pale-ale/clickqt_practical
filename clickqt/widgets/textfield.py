@@ -9,13 +9,14 @@ from click import Parameter, Context, ParamType
 class TextField(BaseWidget):
     widget_type = QLineEdit
 
-    def __init__(self, otype:ParamType, param:Parameter, default:Any, *args, **kwargs):
+    def __init__(self, otype:ParamType, param:Parameter, *args, **kwargs):
         super().__init__(otype, param, *args, **kwargs)
-        # Consider envvar
-        if (envvar_value := param.value_from_envvar(Context(self.click_command))) is not None:
-            self.setValue(envvar_value)
-        else: # Consider default value
-            self.setValue(default if default is not None else "")
+
+        if self.parent_widget is None:
+            if (envvar_value := param.resolve_envvar_value(Context(self.click_command))) is not None: # Consider envvar
+                self.setValue(envvar_value)
+            else: # Consider default value
+                self.setValue(BaseWidget.getParamDefault(param, ""))
 
     def setValue(self, value:Any):
         if isinstance(value, str):
@@ -36,14 +37,8 @@ class PathField(TextField):
         File = 1
         Directory = 2
 
-    def __init__(self, otype:ParamType, param:Parameter, default:Any, *args, **kwargs):
-        super().__init__(otype, param, default, *args, **kwargs)
-
-        # Consider envvar
-        if (envvar_value := param.value_from_envvar(Context(self.click_command))) is not None:
-            self.setValue(envvar_value) 
-        else: # Consider default value
-            self.setValue(default if default is not None else "")
+    def __init__(self, otype:ParamType, param:Parameter, *args, **kwargs):
+        super().__init__(otype, param, *args, **kwargs)
 
         self.file_type = PathField.FileType.Unknown
 

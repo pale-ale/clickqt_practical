@@ -10,7 +10,7 @@ from click.exceptions import Abort, Exit
 class NValueWidget(BaseWidget):
     widget_type = QScrollArea
     
-    def __init__(self, otype:ParamType, param:Parameter, default:Any, widgetsource:Callable[[Any], BaseWidget], parent:BaseWidget=None, *args, **kwargs):
+    def __init__(self, otype:ParamType, param:Parameter, widgetsource:Callable[[Any], BaseWidget], parent:BaseWidget=None, *args, **kwargs):
         super().__init__(otype, param, parent, *args, **kwargs)
         self.widget.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
         self.optargs = args
@@ -26,16 +26,16 @@ class NValueWidget(BaseWidget):
         self.buttondict:dict[QPushButton, BaseWidget] = dict()
 
         # Consider envvar
-        if (envvar_values := self.param.value_from_envvar(Context(self.click_command))) is not None:
+        if (envvar_values := self.param.resolve_envvar_value(Context(self.click_command))) is not None:
             for ev in self.type.split_envvar_value(envvar_values):
                 self.addPair(ev)
-        elif default is not None: # Consider default value
+        elif (default := BaseWidget.getParamDefault(param, None)) is not None: # Consider default value
             for value in default:
                 self.addPair(value)
         
     def addPair(self, value = None):
         self.param.multiple = False # nargs cannot be nested, so it is safe to turn this off for children
-        clickqtwidget:BaseWidget = self.widgetsource(self.type, self.param, value, *self.optargs, widgetsource=self.widgetsource, parent=self, **self.optkwargs)
+        clickqtwidget:BaseWidget = self.widgetsource(self.type, self.param, *self.optargs, widgetsource=self.widgetsource, parent=self, **self.optkwargs)
         self.param.multiple = True # click needs this for a correct conversion
         if value is not None:
             clickqtwidget.setValue(value)
@@ -67,13 +67,15 @@ class NValueWidget(BaseWidget):
     def getValue(self) -> Tuple[Any, ClickQtError]:
         value_missing = False
         if len(self.buttondict.values()) == 0:
+            default = BaseWidget.getParamDefault(self.param, None)
+
             if self.param.required and default is None:
                 self.handleValid(False)
                 return (None, ClickQtError(ClickQtError.ErrorType.REQUIRED_ERROR, self.widget_name, self.param.param_type_name))
-            elif (envvar_values := self.param.value_from_envvar(Context(self.click_command))) is not None:
+            elif (envvar_values := self.param.resolve_envvar_value(Context(self.click_command))) is not None:
                 for ev in self.type.split_envvar_value(envvar_values):
                     self.addPair(ev)
-            elif (default := BaseWidget.getParamDefault(self.param, None)) is not None: # Add new pairs
+            elif default is not None: # Add new pairs
                 for value in default: # All defaults will be considered if len(self.buttondict.values()) == 0
                     self.addPair(value)
             else: # param is not required and there is no default -> value is None

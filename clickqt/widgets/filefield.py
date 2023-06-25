@@ -9,8 +9,8 @@ from io import StringIO, BytesIO
 class FileField(PathField):
     widget_type = QLineEdit
 
-    def __init__(self, otype:ParamType, param:Parameter, default:Any, *args, **kwargs):
-        super().__init__(otype, param, default, *args, **kwargs)
+    def __init__(self, otype:ParamType, param:Parameter, *args, **kwargs):
+        super().__init__(otype, param, *args, **kwargs)
 
         self.file_type = PathField.FileType.File
 

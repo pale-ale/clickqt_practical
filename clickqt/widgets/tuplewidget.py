@@ -1,30 +1,30 @@
 from PySide6.QtWidgets import QGroupBox, QHBoxLayout
 from clickqt.widgets.basewidget import BaseWidget
 from typing import Callable, Any
-from click import Parameter, Tuple as ClickTuple, Context, ParamType
+from click import Parameter, Tuple as ClickTuple, Context, ParamType, BadParameter
+from gettext import ngettext
 
 class TupleWidget(BaseWidget):
     widget_type = QGroupBox
 
-    def __init__(self, otype:ParamType, param:Parameter, default:Any, widgetsource:Callable[[Any], BaseWidget], *args, parent:BaseWidget|None=None, recinfo:list=None, **kwargs):
-        if not isinstance(param.type, ClickTuple):
+    def __init__(self, otype:ParamType, param:Parameter, widgetsource:Callable[[Any], BaseWidget], *args, parent:BaseWidget|None=None, **kwargs):
+        if not isinstance(otype, ClickTuple):
             raise TypeError
-        if not param.type.is_composite:
+        if not otype.is_composite:
             raise TypeError
-        if not isinstance(param.type.types, list):
+        if not isinstance(otype.types, list):
             raise TypeError
         
         super().__init__(otype, param, *args, parent=parent, **kwargs)
         self.children:list[BaseWidget] = []
-        recinfo = recinfo if recinfo else []
+
         self.widget.setLayout(QHBoxLayout())
 
-        for i,t in enumerate(TupleWidget.getTypesRecursive(self.param.type.types, recinfo)):
-            recinfo.append(i)
+        for i,t in enumerate(otype.types if hasattr(otype, "types") else otype):
+            nargs = self.param.nargs
             self.param.nargs = 0
-            # defaults have to be considered after all widgets are constructed
-            bw:BaseWidget = widgetsource(t, self.param, None, *args, widgetsource=widgetsource, parent=self, recinfo=recinfo, **kwargs)
-            recinfo.pop()
+            bw:BaseWidget = widgetsource(t, self.param, *args, widgetsource=widgetsource, parent=self, **kwargs)
+            self.param.nargs = nargs 
             bw.layout.removeWidget(bw.label)
             bw.label.deleteLater()
             self.widget.layout().addWidget(bw.container)
@@ -32,20 +32,18 @@ class TupleWidget(BaseWidget):
 
         if self.parent_widget is None:
             # Consider envvar
-            if (envvar_values := self.param.value_from_envvar(Context(self.click_command))) is not None:
-                self.setValue(envvar_values)
-            elif default is not None: # Consider default value
+            if (envvar_values := self.param.resolve_envvar_value(Context(self.click_command))) is not None:
+                self.setValue(self.type.split_envvar_value(envvar_values))
+            elif (default := BaseWidget.getParamDefault(param, None)) is not None: # Consider default value
                 self.setValue(default)
     
-    @staticmethod
-    def getTypesRecursive(o:list|ClickTuple, recinfo:list):
-        optiontype = o
-        for i in recinfo:
-            optiontype = optiontype[i]
-        yield from optiontype.types if hasattr(optiontype, "types") else optiontype
-    
     def setValue(self, value):
-        assert len(value) == len(self.children)
+        if len(value) != self.param.nargs:
+            raise BadParameter(ngettext("Takes {nargs} values but 1 was given.", "Takes {nargs} values but {len} were given.",len(value))
+                               .format(nargs=self.param.nargs, len=len(value)),
+                               ctx=Context(self.click_command),
+                               param=self.param)
+        
         for i,c in enumerate(self.children):
             c.setValue(value[i])
 

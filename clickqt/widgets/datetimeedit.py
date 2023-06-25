@@ -8,10 +8,10 @@ from typing import Any
 class DateTimeEdit(BaseWidget):
     widget_type = QDateTimeEdit
 
-    def __init__(self, otype:ParamType, param:Parameter, default:Any, *args, **kwargs):
+    def __init__(self, otype:ParamType, param:Parameter, *args, **kwargs):
         super().__init__(otype, param, *args, **kwargs)
 
-        if default is not None:
+        if self.parent_widget is None and (default := BaseWidget.getParamDefault(param, None)) is not None:
             self.setValue(default)
 
     def setValue(self, value: str):
