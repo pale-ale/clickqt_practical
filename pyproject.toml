@@ -65,5 +65,4 @@ write_to = "clickqt/_version.py"
 [tool.pytest.ini_options]
 testpaths = [
     "tests",
-    "tests/widgets",
 ]

@@ -6,6 +6,7 @@ on:
     branches:
       - main
       - dev
+      - 69-add-more-tests
   # and on all pull requests to the main branch
   pull_request:
     branches:
