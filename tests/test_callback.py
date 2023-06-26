@@ -15,6 +15,7 @@ from typing import Any
         (ClickAttrs.realfield(callback=lambda a,b,value: value+1.5), 10.5, 12), 
         (ClickAttrs.realfield(callback=lambda a,b,value: None), -312.2, None), 
         (ClickAttrs.realfield(callback=lambda a,b,value: "test"), 14.2, "test"), # Return type can be completely different
+        (ClickAttrs.datetime(callback=lambda a,b,value:"2023-06-23 15:14:20"), "2020-01-21 10:11:12", "2023-06-23 15:14:20"),
         (ClickAttrs.nvalue_widget(type=float, callback=lambda a,b,value: 1), [14.2, -2.3], 1),
         (ClickAttrs.tuple_widget(types=(int, str), callback=lambda a,b,value: [value[0]+5, "test"]), [10, "10"], [15, "test"]),
         (ClickAttrs.multi_value_widget(nargs=2, type=int, callback=lambda a,b,value: [value[0]+5, value[1]-5]), [10, 10], [15, 5]),
