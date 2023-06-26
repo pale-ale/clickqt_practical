@@ -2,9 +2,13 @@ from typing import Any, ClassVar, Type
 from abc import ABC, abstractmethod
 from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout
 from clickqt.core.error import ClickQtError
-import clickqt.core
-from click import Context, Parameter, Command, Choice, Option, ParamType, Tuple as click_type_tuple
+import clickqt.core # FocusOutValidator
+import clickqt.widgets # TupleWidget
+from click import Context, Parameter, Command, Choice, Option, ParamType, BadParameter, Tuple as click_type_tuple
 from click.exceptions import Abort, Exit
+from gettext import ngettext
+from _collections_abc import dict_values
+import os
 
 class BaseWidget(ABC):
     # The type of this widget
@@ -193,3 +197,48 @@ class ComboBoxBase(BaseWidget):
     @abstractmethod
     def addItems(self, items):
         pass
+
+class MultiWidget(BaseWidget):
+    def __init__(self, otype:ParamType, param:Parameter, *args, **kwargs):
+        super().__init__(otype, param, *args, **kwargs)
+        
+        self.children:list[BaseWidget]|dict_values[BaseWidget] = []
+
+    def init(self):
+        if self.parent_widget is None:
+            # Consider envvar
+            if (envvar_values := self.param.resolve_envvar_value(Context(self.click_command))) is not None:
+                # self.type.split_envvar_value(envvar_values) does not work because clicks "self.envvar_list_splitter" is not set corrently
+                self.setValue(envvar_values.split(os.path.pathsep))
+            elif (default := BaseWidget.getParamDefault(self.param, None)) is not None: # Consider default value
+                self.setValue(default)
+
+    def setValue(self, value):
+        if len(value) != self.param.nargs:
+            raise BadParameter(ngettext("Takes {nargs} values but 1 was given.", "Takes {nargs} values but {len} were given.",len(value))
+                               .format(nargs=self.param.nargs, len=len(value)),
+                               ctx=Context(self.click_command),
+                               param=self.param)
+        
+        for i,c in enumerate(self.children):
+            c.setValue(value[i])
+
+    def handleValid(self, valid: bool):
+        for c in self.children:
+            if not isinstance(c, clickqt.widgets.TupleWidget):
+                BaseWidget.handleValid(c, valid)
+            else:
+                c.handleValid(valid) # Recursive
+
+    def isEmpty(self) -> bool:
+        if len(self.children) == 0:
+            return True
+
+        for c in self.children:
+            if c.isEmpty():
+                return True
+        
+        return False
+    
+    def getWidgetValue(self) -> list[Any]:
+        return [c.getWidgetValue() for c in self.children]
