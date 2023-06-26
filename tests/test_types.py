@@ -3,7 +3,6 @@ import pytest
 
 from tests.testutils import ClickAttrs
 import clickqt.widgets
-from typing import Any
 
 @pytest.mark.parametrize(
     ("click_attrs", "expected_clickqt_type"),
@@ -32,4 +31,4 @@ def test_type_assignment(click_attrs:dict, expected_clickqt_type:clickqt.widgets
     cli = click.Command("cli", params=[param])
 
     control = clickqt.qtgui_from_click(cli)
-    assert type(control.widget_registry[cli.name][param.name]) is expected_clickqt_type, "clickqt"
+    assert type(control.widget_registry[cli.name][param.name]) is expected_clickqt_type, "clickqt" # Perfect type match
