@@ -1,7 +1,6 @@
 from PySide6.QtWidgets import QSpinBox, QDoubleSpinBox
 from clickqt.widgets.basewidget import NumericField, BaseWidget
 from click import Parameter, IntRange, FloatRange, ParamType
-from typing import Any
 import sys
 
 class IntField(NumericField):
@@ -16,9 +15,9 @@ class IntField(NumericField):
             self.setMaximum(2**31 - 1) # Default is 99
         else:
             if otype.min is not None:
-                self.setMinimum(otype.min)
+                self.setMinimum(otype.min + (1 if otype.min_open else 0))
             if otype.max is not None:
-                self.setMaximum(otype.max)
+                self.setMaximum(otype.max - (1 if otype.max_open else 0))
         
         if self.parent_widget is None:
             self.setValue(BaseWidget.getParamDefault(param, 0))
@@ -35,9 +34,9 @@ class RealField(NumericField):
             self.setMaximum(sys.float_info.max) # Default is 99.0
         else:
             if otype.min is not None:
-                self.setMinimum(otype.min)
+                self.setMinimum(otype.min + (10**-self.widget.decimals() if otype.min_open else 0.0))
             if otype.max is not None:
-                self.setMaximum(otype.max)
+                self.setMaximum(otype.max - (10**-self.widget.decimals() if otype.max_open else 0.0))
 
         if self.parent_widget is None:
             self.setValue(BaseWidget.getParamDefault(param, 0.0))
