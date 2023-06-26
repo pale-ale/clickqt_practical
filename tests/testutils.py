@@ -23,6 +23,14 @@ class ClickAttrs():
         return {"type":click.types.FLOAT, **attrs_dict}
     
     @staticmethod
+    def intrange(min:int|None=None, max:int|None=None, min_open:bool=False, max_open:bool=False, clamp:bool=False, **attrs_dict) -> dict:
+        return {"type":click.IntRange(min=min, max=max, min_open=min_open, max_open=max_open, clamp=clamp), **attrs_dict}
+    
+    @staticmethod
+    def floatrange(min:int|None=None, max:int|None=None, min_open:bool=False, max_open:bool=False, clamp:bool=False, **attrs_dict) -> dict:
+        return {"type":click.FloatRange(min=min, max=max, min_open=min_open, max_open=max_open, clamp=clamp), **attrs_dict}
+    
+    @staticmethod
     def confirmation_widget(**attrs_dict) -> dict:
         return {"confirmation_prompt":True, **attrs_dict}
     
