@@ -128,9 +128,9 @@ class Control:
                 if longest_long_form:
                     option_names.append((longest_long_form, param.multiple))
                 else: 
-                    option_names.append((short_forms, param.multiple))
+                    option_names.append((short_forms, param.type, param.multiple))
             elif isinstance(param, click.Argument):
-                option_names.append("Argument")
+                option_names.append(("Argument", param.type))
         return option_names
         
     def get_params(self, selected_command_name:str, args):
@@ -144,7 +144,6 @@ class Control:
         return params
     
     def clean_command_string(self, word, text):
-        #text = re.sub(r'[^a-zA-Z0-9 .-]',r' ',text)
         text = re.sub(r'\b{}\b'.format(re.escape(word)), '', text)
         text = re.sub(r'[^a-zA-Z0-9 .-]', ' ', text)
         return text
@@ -171,13 +170,12 @@ class Control:
             if type(widget) != ConfirmationWidget and widget != "yes":
                 widget_values.append(widgets[widget].getWidgetValue())
         parameter_strings = []
-        print(parameter_list)
         for i, param in enumerate(parameter_list):
-            if type(param) is tuple and param[0] != "Argument":
+            if param[0] != "Argument":
                 parameter_strings.append(parameter_list[i][0] + " " + str(widget_values[i])) 
             else:
                 parameter_strings.append(str(widget_values[i])) 
-                        
+        parameter_message = " ".join(parameter_strings)
         message = hierarchy_selected_name + " " +" ".join(parameter_strings)
         message = self.clean_command_string(self.cmd.name, message)     
         print(message)  
