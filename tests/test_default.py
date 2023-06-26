@@ -34,6 +34,7 @@ from typing import Any
         (ClickAttrs.nvalue_widget(type=int), [1, -2, 5], [1, -2, 5]),
         (ClickAttrs.nvalue_widget(type=(str, float)), [["a", 12.2], ["b", -873.21]], [["a", 12.2], ["b", -873.21]]),
         (ClickAttrs.nvalue_widget(type=(str, (int, str))), [["a", [12, "b"]], ["c", [-1, "d"]]], [["a", [12, "b"]], ["c", [-1, "d"]]]),
+        (ClickAttrs.nvalue_widget(type=(str, (int, float))), lambda: [["a", [1, 2.1]], ["b", [3, -4.2]]], [["a", [1, 2.1]], ["b", [3, -4.2]]]) # callable as default
     ]
 )
 def test_set_default(click_attrs:dict, default:Any, expected:Any):

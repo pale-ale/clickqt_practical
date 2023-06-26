@@ -18,9 +18,10 @@ from typing import Any
         (ClickAttrs.nvalue_widget(type=float, callback=lambda a,b,value: 1), [14.2, -2.3], 1),
         (ClickAttrs.tuple_widget(types=(int, str), callback=lambda a,b,value: [value[0]+5, "test"]), [10, "10"], [15, "test"]),
         (ClickAttrs.multi_value_widget(nargs=2, type=int, callback=lambda a,b,value: [value[0]+5, value[1]-5]), [10, 10], [15, 5]),
+        (ClickAttrs.nvalue_widget(type=(int, (str, float)), callback=lambda a,b,value: [[value[0][0]+4, [value[0][1][0]+"est", value[0][1][1]+3]]]), [[1, ["t", 2.1]]], [[5, ["test", 5.1]]]),
     ]
 )
-def test_set_value(click_attrs:dict, value:Any, expected:Any):
+def test_callback(click_attrs:dict, value:Any, expected:Any):
     param = click.Option(param_decls=["--test"], **click_attrs)
     cli = click.Command("cli", params=[param])
     
@@ -30,3 +31,54 @@ def test_set_value(click_attrs:dict, value:Any, expected:Any):
 
     assert val == expected and err.type == ClickQtError.ErrorType.NO_ERROR, "clickqt"
 
+@pytest.mark.parametrize(
+    ("click_attrs", "value", "expected"),
+    [
+        (ClickAttrs.checkbox(callback=lambda ctx,param,value: (_ for _ in ()).throw(Exception("..."))), False, None),
+        (ClickAttrs.intfield(callback=lambda a,b,c: (_ for _ in ()).throw(click.BadParameter("..."))), 123, None),
+        (ClickAttrs.nvalue_widget(type=(int, (str, float)), callback=lambda a,b,c: (_ for _ in ()).throw(click.BadParameter("..."))), [[1, ["t", 2.1]]], None),
+    ]
+)
+def test_callback_fail(click_attrs:dict, value:Any, expected:Any):
+    param = click.Option(param_decls=["--test"], **click_attrs)
+    cli = click.Command("cli", params=[param])
+    
+    control = clickqt.qtgui_from_click(cli)
+    control.widget_registry[cli.name][param.name].setValue(value)
+    val, err = control.widget_registry[cli.name][param.name].getValue()
+
+    assert val == expected and err.type == ClickQtError.ErrorType.PROCESSING_VALUE_ERROR, "clickqt"
+
+@pytest.mark.parametrize(
+    ("click_attrs", "value", "expected"),
+    [
+        (ClickAttrs.intfield(callback=lambda ctx,param,value: ctx.abort()), 1, None),
+        (ClickAttrs.nvalue_widget(type=(int, str), callback=lambda ctx,param,value: ctx.abort()), [[1, "t"]], None),
+    ]
+)
+def test_callback_abort(click_attrs:dict, value:Any, expected:Any):
+    param = click.Option(param_decls=["--test"], **click_attrs)
+    cli = click.Command("cli", params=[param])
+    
+    control = clickqt.qtgui_from_click(cli)
+    control.widget_registry[cli.name][param.name].setValue(value)
+    val, err = control.widget_registry[cli.name][param.name].getValue()
+
+    assert val == expected and err.type == ClickQtError.ErrorType.ABORTED_ERROR, "clickqt"
+
+@pytest.mark.parametrize(
+    ("click_attrs", "value", "expected"),
+    [
+        (ClickAttrs.textfield(callback=lambda ctx,param,value: ctx.exit()), "test", None),
+        (ClickAttrs.nvalue_widget(type=(int, str), callback=lambda ctx,param,value: ctx.exit()), [[1, "t"]], None),
+    ]
+)
+def test_callback_exit(click_attrs:dict, value:Any, expected:Any):
+    param = click.Option(param_decls=["--test"], **click_attrs)
+    cli = click.Command("cli", params=[param])
+    
+    control = clickqt.qtgui_from_click(cli)
+    control.widget_registry[cli.name][param.name].setValue(value)
+    val, err = control.widget_registry[cli.name][param.name].getValue()
+
+    assert val == expected and err.type == ClickQtError.ErrorType.EXIT_ERROR, "clickqt"
