@@ -62,6 +62,9 @@ def test_type_assignment(click_attrs:dict, expected_clickqt_type:clickqt.widgets
         (ClickAttrs.combobox(choices=["A", "B", "C"], case_sensitive=False), "b", "B"), 
         (ClickAttrs.checkable_combobox(choices=["A", "B", "C"]), ["B", "C"], ["B", "C"]), 
         (ClickAttrs.checkable_combobox(choices=["A", "B", "C"], case_sensitive=False), ["a", "c"], ["A", "C"]), 
+        (ClickAttrs.datetime(), "2023-06-23 15:14:20", "2023-06-23 15:14:20"), # Use the default formats
+        (ClickAttrs.datetime(formats=["%d-%m-%Y"]), "23-06-2023", "23-06-2023"),
+        (ClickAttrs.datetime(formats=["%d-%m-%Y", "%d-%m-%Y %H:%M:%S"]), "23-06-2023", "23-06-2023 00:00:00"), # Always use the last format
         (ClickAttrs.filefield(), "test.abc", "test.abc"), 
         (ClickAttrs.filepathfield(), ".", "."), 
         (ClickAttrs.tuple_widget(types=(str,int)), ["s", 1], ["s", 1]),
