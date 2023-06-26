@@ -170,12 +170,19 @@ class Control:
             if type(widget) != ConfirmationWidget and widget != "yes":
                 widget_values.append(widgets[widget].getWidgetValue())
         parameter_strings = []
+        print(widget_values)
+        depth = len(widget_values[0])
+        print(depth)
         for i, param in enumerate(parameter_list):
             if param[0] != "Argument":
-                parameter_strings.append(parameter_list[i][0] + " " + str(widget_values[i])) 
+                if type(widget_values[0]) != list:
+                    parameter_strings.append(parameter_list[i][0] + " " + str(widget_values[i]))
+                else:
+                    depth = len(widget_values[0])
+                    for j in range(depth):
+                        parameter_strings.append(parameter_list[i][0] + " " + str(widget_values[i][j]))
             else:
                 parameter_strings.append(str(widget_values[i])) 
-        parameter_message = " ".join(parameter_strings)
         message = hierarchy_selected_name + " " +" ".join(parameter_strings)
         message = self.clean_command_string(self.cmd.name, message)     
         print(message)  
