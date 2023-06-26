@@ -96,6 +96,8 @@ def test_set_value(click_attrs:dict, value:Any, expected:Any):
         (ClickAttrs.combobox(choices=["A", "B"], case_sensitive=False), "C", "'C' is not one of 'A', 'B'."), 
         (ClickAttrs.checkable_combobox(choices=["A", "B", "C"]), ["b", "C"], "'b' is not one of 'A', 'B', 'C'."), 
         (ClickAttrs.checkable_combobox(choices=["A", "B", "C"], case_sensitive=False), ["a", "t", "c"], "'t' is not one of 'A', 'B', 'C'."),
+        (ClickAttrs.datetime(), "23-06-2023", "'23-06-2023' does not match the formats '%Y-%m-%d', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%d %H:%M:%S'."), # Dafault formats
+        (ClickAttrs.datetime(formats=["%d-%m-%Y", "%d-%m-%Y %H:%M:%S"]), "23-066-2023", "'23-066-2023' does not match the formats '%d-%m-%Y', '%d-%m-%Y %H:%M:%S'."), # User defined formats
         (ClickAttrs.multi_value_widget(nargs=3, type=int), ["1", 2, 3.2], "'3.2' is not a valid integer."),
         (ClickAttrs.multi_value_widget(nargs=2, type=float), ["yes", "y"], "'yes' is not a valid float."), # First wrong value fails the test
         (ClickAttrs.tuple_widget(types=(str,int)), ["s", 12.3], "'12.3' is not a valid integer."),
@@ -110,4 +112,4 @@ def test_set_value_fail(click_attrs:dict, value:Any, expected:Any):
     with pytest.raises(click.exceptions.BadParameter) as exc_info:
         control.widget_registry[cli.name][param.name].setValue(value)
 
-    assert expected in exc_info.value.message, "clickqt"
+    assert expected == exc_info.value.message, "clickqt"

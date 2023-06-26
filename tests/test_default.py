@@ -71,4 +71,4 @@ def test_set_default_fail(click_attrs:dict, default:Any, expected:Any):
     with pytest.raises(click.exceptions.BadParameter) as exc_info:
         clickqt.qtgui_from_click(cli).widget_registry[cli.name][param.name]
 
-    assert expected in exc_info.value.message, "clickqt"
+    assert expected == exc_info.value.message, "clickqt"

@@ -49,4 +49,4 @@ def test_set_envvar_fail(click_attrs:dict, envvar_values:str|list[str], expected
     with pytest.raises(click.exceptions.BadParameter) as exc_info:
         clickqt.qtgui_from_click(cli).widget_registry[cli.name][param.name]
 
-    assert expected in exc_info.value.message, "clickqt"
+    assert expected == exc_info.value.message, "clickqt"

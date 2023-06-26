@@ -47,8 +47,8 @@ class ClickAttrs():
         return {"type":click.types.Path(**type_dict), **attrs_dict}
     
     @staticmethod
-    def datetime(type_dict:dict={}, **attrs_dict) -> dict:
-        return {"type":click.types.DateTime(**type_dict), **attrs_dict}
+    def datetime(formats:Sequence[str]|None=None, **attrs_dict) -> dict:
+        return {"type":click.types.DateTime(formats), **attrs_dict}
     
     @staticmethod
     def tuple_widget(types:Sequence[Type|click.ParamType], **attrs_dict) -> dict:
