@@ -120,6 +120,9 @@ class BaseWidget(ABC):
             self.handleValid(False)
             return (None, ClickQtError(ClickQtError.ErrorType.CONVERTING_ERROR, self.widget_name, e))
 
+        return self.handleCallback(value)
+    
+    def handleCallback(self, value:Any):
         try: # Consider callbacks 
             ret_val = (self.param.process_value(Context(self.click_command), value), ClickQtError())
             self.handleValid(True)

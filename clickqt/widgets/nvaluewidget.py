@@ -5,7 +5,6 @@ from clickqt.widgets.tuplewidget import TupleWidget
 from typing import Any, Callable, Tuple, List
 from clickqt.core.error import ClickQtError
 from click import Context, Parameter, ParamType
-from click.exceptions import Abort, Exit
 import os
 
 class NValueWidget(BaseWidget):
@@ -118,17 +117,7 @@ class NValueWidget(BaseWidget):
             if len(values) == 0: # All widgets are empty
                 values = None
 
-        try: # Consider callbacks
-            ret_val = (self.param.process_value(Context(self.click_command), values), ClickQtError())
-            self.handleValid(True)
-            return ret_val
-        except Abort as e:
-            return (None, ClickQtError(ClickQtError.ErrorType.ABORTED_ERROR))
-        except Exit as e:
-            return (None, ClickQtError(ClickQtError.ErrorType.EXIT_ERROR))
-        except Exception as e:
-            self.handleValid(False)
-            return (None, ClickQtError(ClickQtError.ErrorType.PROCESSING_VALUE_ERROR, self.widget_name, e))
+        return self.handleCallback(values)
 
     def setValue(self, value):
         if len(value) < len(self.buttondict.values()): # Remove pairs
