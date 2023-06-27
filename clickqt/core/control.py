@@ -189,55 +189,68 @@ class Control:
         return message + parameter_message
 
     def run(self):
-        hierarchy_selected_command = self.current_command_hierarchy(self.gui.main_tab.currentWidget(), self.cmd) 
-        selected_command = hierarchy_selected_command[-1]
-        #parent_group_command = hierarchy_selected_command[-2] if len(hierarchy_selected_command) >= 2 else None
-        hierarchy_selected_command_name = reduce(self.concat, [g.name for g in hierarchy_selected_command])
+        hierarchy_selected_command = self.current_command_hierarchy(self.gui.main_tab.currentWidget(), self.cmd)
 
-        kwargs: Dict[str, Any] = {}
-        has_error = False
-        unused_options: List[BaseWidget] = [] # parameters with expose_value==False
+        click.globals.push_context(click.Context(hierarchy_selected_command[-1])) # push context of selected command
+        
+        def run_command(command:click.Command|click.Group, hierarchy_command:str) -> Callable|None:
+            kwargs: Dict[str, Any] = {}
+            has_error = False
+            unused_options: List[BaseWidget] = [] # parameters with expose_value==False
 
-        # Check all values for errors
-        for option_name, widget in self.widget_registry[hierarchy_selected_command_name].items():
-            param: click.Parameter = next((x for x in selected_command.params if x.name == option_name))
-            if param.expose_value:
-                widget_value, err = widget.getValue()  
-                has_error |= self.check_error(err)
+            if self.widget_registry.get(hierarchy_command) is not None: # Groups with no options are not in the dict
+                # Check all values for errors
+                for option_name, widget in self.widget_registry[hierarchy_command].items():
+                    param: click.Parameter = next((x for x in command.params if x.name == option_name))
+                    if param.expose_value:
+                        widget_value, err = widget.getValue()  
+                        has_error |= self.check_error(err)
 
-                kwargs[option_name] = widget_value
-            else: # Verify it when all options are valid
-                unused_options.append(widget)
+                        kwargs[option_name] = widget_value
+                    else: # Verify it when all options are valid
+                        unused_options.append(widget)
 
-        if has_error: 
-            return
+                if has_error:
+                    return None
 
-        # Replace the callables with their values and check for errors
-        for option_name, value in kwargs.items():
-            if callable(value):
-                kwargs[option_name], err = value()
-                has_error |= self.check_error(err)
+                # Replace the callables with their values and check for errors
+                for option_name, value in kwargs.items():
+                    if callable(value):
+                        kwargs[option_name], err = value()
+                        has_error |= self.check_error(err)
 
-        if has_error:
-            return
+                if has_error:
+                    return None
 
-        # Parameters with expose_value==False
-        for widget in unused_options:
-            widget_value, err = widget.getValue()
-            has_error |= self.check_error(err)
-            if callable(widget_value):
-                _, err = widget_value()  
-                has_error |= self.check_error(err)
-             
-        if has_error:
-            return
-        print(self.command_to_string(hierarchy_selected_command_name, selected_command, kwargs))
-        print(f"Current Command: {self.function_call_formatter(hierarchy_selected_command_name, selected_command.name, kwargs)} \n" + f"Output:")
-
-        if len(callback_args := inspect.getfullargspec(selected_command.callback).args) > 0:
-            args: list[Any] = []
-            for ca in callback_args: # Bring the args in the correct order
-                args.append(kwargs.pop(ca)) # Remove explicitly mentioned args from kwargs dict
-            selected_command.callback(*args, **kwargs)
-        else:
-            selected_command.callback(**kwargs)
+                # Parameters with expose_value==False
+                for widget in unused_options:
+                    widget_value, err = widget.getValue()
+                    has_error |= self.check_error(err)
+                    if callable(widget_value):
+                        _, err = widget_value()  
+                        has_error |= self.check_error(err)
+                    
+                if has_error:
+                    return None
+            
+            #print(self.command_to_string(hierarchy_selected_command_name, selected_command, kwargs))
+            #print(f"Current Command: {self.function_call_formatter(hierarchy_selected_command_name, selected_command.name, kwargs)} \n" + f"Output:")
+            
+            if len(callback_args := inspect.getfullargspec(command.callback).args) > 0:
+                args: list[Any] = []
+                for ca in callback_args: # Bring the args in the correct order
+                    args.append(kwargs.pop(ca)) # Remove explicitly mentioned args from kwargs dict
+                return lambda: command.callback(*args, **kwargs)
+            else:
+                return lambda: command.callback(**kwargs)
+        callables:list[Callable] = []
+        is_valid: bool = True
+        for i, command in enumerate(hierarchy_selected_command, 1):    
+            if (c := run_command(command, reduce(self.concat, [g.name for g in hierarchy_selected_command[:i]]))) is not None:
+                callables.append(c)
+            else:
+                is_valid = False
+  
+        if is_valid:
+            for c in callables:
+                c()
