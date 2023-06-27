@@ -31,6 +31,8 @@ class BaseWidget(ABC):
         self.layout.addWidget(self.widget)
         self.container.setLayout(self.layout)
 
+        self.widget.setObjectName(param.name) # Only change the stylesheet of this widget and not of all (child-)widgets
+
         assert self.widget is not None, "Widget not initialized"
         assert self.param is not None, "Click param object not provided"
         assert self.click_command is not None, "Click command not provided"
@@ -193,7 +195,6 @@ class ComboBoxBase(BaseWidget):
             raise TypeError(f"'param' must be of type 'Choice'.")
         super().__init__(otype, param, *args, **kwargs)
 
-        self.widget.setObjectName(param.name) # Only reset the stylesheet of the QComboBox and not of all (child-)widgets, otherwise the programm will crash
         self.addItems(otype.choices)
 
     @abstractmethod

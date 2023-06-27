@@ -22,7 +22,6 @@ class NValueWidget(MultiWidget):
         addfieldbtn.clicked.connect(lambda: self.addPair()) # Add an empty widget
         self.vbox.layout().addWidget(addfieldbtn)
         self.widget.setWidget(self.vbox)
-        self.widget.setObjectName(param.name) # len(self.children) == 0: Only change the border of this widget
         self.buttondict:dict[QPushButton, BaseWidget] = {}
 
         self.children = self.buttondict.values()
