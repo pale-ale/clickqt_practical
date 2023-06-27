@@ -191,7 +191,8 @@ class Control:
     def run(self):
         hierarchy_selected_command = self.current_command_hierarchy(self.gui.main_tab.currentWidget(), self.cmd)
 
-        click.globals.push_context(click.Context(hierarchy_selected_command[-1])) # push context of selected command
+        # Push context of selected command, needed for @click.pass_context and @click.pass_obj
+        click.globals.push_context(click.Context(hierarchy_selected_command[-1])) 
         
         def run_command(command:click.Command|click.Group, hierarchy_command:str) -> Callable|None:
             kwargs: Dict[str, Any] = {}
@@ -243,14 +244,12 @@ class Control:
                 return lambda: command.callback(*args, **kwargs)
             else:
                 return lambda: command.callback(**kwargs)
+
         callables:list[Callable] = []
-        is_valid: bool = True
         for i, command in enumerate(hierarchy_selected_command, 1):    
             if (c := run_command(command, reduce(self.concat, [g.name for g in hierarchy_selected_command[:i]]))) is not None:
                 callables.append(c)
-            else:
-                is_valid = False
   
-        if is_valid:
+        if len(callables) == len(hierarchy_selected_command):
             for c in callables:
                 c()
