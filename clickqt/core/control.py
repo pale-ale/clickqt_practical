@@ -21,7 +21,16 @@ class Control:
 
         # Add all widgets
         if isinstance(cmd, click.Group):
-            self.gui.main_tab.addTab(self.parse_cmd_group(cmd, cmd.name), cmd.name)
+            child_tabs: QWidget = None
+            if len(cmd.params) > 0:
+                child_tabs = QWidget()
+                child_tabs.setLayout(QVBoxLayout())
+                child_tabs.layout().addWidget(self.parse_cmd(cmd, cmd.name)) # Group params
+                child_tabs.layout().addWidget(self.parse_cmd_group(cmd, cmd.name)) # Child group/commands params 
+            else:
+                child_tabs = self.parse_cmd_group(cmd, cmd.name)
+
+            self.gui.main_tab.addTab(child_tabs, cmd.name)
         else:
             self.gui.main_tab.addTab(self.parse_cmd(cmd, cmd.name), cmd.name)
 
@@ -50,8 +59,17 @@ class Control:
         group_tab_widget = QTabWidget()
         for group_name, group_cmd in cmdgroup.commands.items():
             if isinstance(group_cmd, click.Group):
-                nested_group_tab_widget = self.parse_cmd_group(group_cmd, self.concat(group_names, group_name) if group_names else group_name)
-                group_tab_widget.addTab(nested_group_tab_widget, group_name)
+                child_tabs: QWidget = None
+                concat_group_names = self.concat(group_names, group_name) if group_names else group_name
+                if len(group_cmd.params) > 0:
+                    child_tabs = QWidget()
+                    child_tabs.setLayout(QVBoxLayout())
+                    child_tabs.layout().addWidget(self.parse_cmd(group_cmd, concat_group_names))
+                    child_tabs.layout().addWidget(self.parse_cmd_group(group_cmd, concat_group_names))
+                else:
+                    child_tabs = self.parse_cmd_group(group_cmd, concat_group_names)
+
+                group_tab_widget.addTab(child_tabs, group_name)
             else:
                 group_tab_widget.addTab(self.parse_cmd(group_cmd, self.concat(group_names, group_cmd.name)), group_name)
         
@@ -104,15 +122,17 @@ class Control:
         
         return False
 
-    def current_command_hierarchy(self, tab_widget: QTabWidget, group: click.Group|click.Command) -> list[click.Group|click.Command]:
+    def current_command_hierarchy(self, tab_widget: QTabWidget|QWidget, group: click.Group|click.Command) -> list[click.Group|click.Command]:
         """
             Returns the hierarchy of the command of the selected tab
         """
         if isinstance(group, click.Group):
+            if len(group.params) > 0: # Group has params
+                tab_widget = tab_widget.findChild(QTabWidget)
+            
             command = group.get_command(ctx=None, cmd_name=tab_widget.tabText(tab_widget.currentIndex()))
-            if isinstance(tab_widget.currentWidget(), QTabWidget):
-                return [group] + self.current_command_hierarchy(tab_widget.currentWidget(), command)
-            return [group, command]
+
+            return [group] + self.current_command_hierarchy(tab_widget.currentWidget(), command)
         else:
             return [group]
         
