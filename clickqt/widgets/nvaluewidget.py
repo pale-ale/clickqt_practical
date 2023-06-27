@@ -22,13 +22,17 @@ class NValueWidget(MultiWidget):
         addfieldbtn.clicked.connect(lambda: self.addPair()) # Add an empty widget
         self.vbox.layout().addWidget(addfieldbtn)
         self.widget.setWidget(self.vbox)
+        self.widget.setObjectName(param.name)
         self.buttondict:dict[QPushButton, BaseWidget] = {}
 
         self.children = self.buttondict.values()
 
         self.init()
         
-    def addPair(self, value = None):
+    def addPair(self, value:Any=None):
+        if len(self.children) == 0:
+            self.handleValid(True)
+
         self.param.multiple = False # nargs cannot be nested, so it is safe to turn this off for children
         clickqtwidget:BaseWidget = self.widgetsource(self.type, self.param, *self.optargs, widgetsource=self.widgetsource, parent=self, **self.optkwargs)
         self.param.multiple = True # click needs this for a correct conversion
@@ -118,4 +122,10 @@ class NValueWidget(MultiWidget):
         
         for i,c in enumerate(self.children): # Set the value
             c.setValue(value[i])
+
+    def handleValid(self, valid: bool):
+        if len(self.children) == 0:
+            BaseWidget.handleValid(self, valid)
+        else:
+            super().handleValid(valid)
     
