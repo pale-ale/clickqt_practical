@@ -152,7 +152,10 @@ class BaseWidget(ABC):
             else:
                 self.widget.setStyleSheet("border: 1px solid red")
         else:
-            self.widget.setStyleSheet("")
+            if (oname := self.widget.objectName()):
+                self.widget.setStyleSheet(f"QWidget#{oname}{{ }}")
+            else:
+                self.widget.setStyleSheet("")
     
     @staticmethod
     def getParamDefault(param:Parameter, alternative=None):
@@ -189,12 +192,9 @@ class ComboBoxBase(BaseWidget):
         if not isinstance(otype, Choice):
             raise TypeError(f"'param' must be of type 'Choice'.")
         super().__init__(otype, param, *args, **kwargs)
-        self.addItems(otype.choices)
 
-    # Changing the border color does not work because overwriting 
-    # the default stylesheet settings results in a program crash (TODO)
-    def handleValid(self, valid: bool):
-        pass
+        self.widget.setObjectName(param.name) # Only reset the stylesheet of the QComboBox and not of all (child-)widgets, otherwise the programm will crash
+        self.addItems(otype.choices)
 
     @abstractmethod
     def addItems(self, items):
