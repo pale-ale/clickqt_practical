@@ -10,6 +10,7 @@ from typing import Dict, Callable, List, Any, Tuple, Union
 import sys
 from functools import reduce
 import re 
+from clickqt.core.utils import *
 
 class Control:
     def __init__(self, cmd:click.Group|click.Command):
@@ -126,7 +127,7 @@ class Control:
                 short_forms = [opt for opt in param.opts if opt.startswith("-")]
                 short_forms = max(short_forms, key=len) if short_forms else None
                 if longest_long_form:
-                    option_names.append((longest_long_form, param.multiple))
+                    option_names.append((longest_long_form, param.type, param.multiple))
                 else: 
                     option_names.append((short_forms, param.type, param.multiple))
             elif isinstance(param, click.Argument):
@@ -152,14 +153,6 @@ class Control:
         hierarchy_selected_command_name = self.clean_command_string(self.cmd.name, hierarchy_selected_command_name)
         return hierarchy_selected_command_name
     
-    def is_nested_list(lst):
-        if isinstance(lst, list):
-            for item in lst:
-                if isinstance(item, list):
-                    return True
-            return False
-        else:
-            return False
     
     def command_to_string_to_copy(self, hierarchy_selected_name:str, selected_command):
         parameter_list = self.get_option_names(selected_command)
@@ -171,20 +164,25 @@ class Control:
                 widget_values.append(widgets[widget].getWidgetValue())
         parameter_strings = []
         print(widget_values)
-        depth = len(widget_values[0])
-        print(depth)
         for i, param in enumerate(parameter_list):
             if param[0] != "Argument":
-                if type(widget_values[0]) != list:
+                if type(widget_values[i]) != list or param[2] != True:
+                    print(f"Option: {param}")
                     parameter_strings.append(parameter_list[i][0] + " " + str(widget_values[i]))
                 else:
-                    depth = len(widget_values[0])
-                    for j in range(depth):
-                        parameter_strings.append(parameter_list[i][0] + " " + str(widget_values[i][j]))
+                    print(f"Multiple Option: {param}")
+                    if is_nested_list(widget_values[i]):
+                        depth = len(widget_values[i])
+                        for j in range(depth):
+                            parameter_strings.append(parameter_list[i][0] + " " + str(widget_values[i][j]))
+                    else: 
+                        length = len(widget_values[i])
+                        for j in range(length):
+                            parameter_strings.append(parameter_list[i][0] + " " + str(widget_values[i][j]))
             else:
                 parameter_strings.append(str(widget_values[i])) 
         message = hierarchy_selected_name + " " +" ".join(parameter_strings)
-        message = self.clean_command_string(self.cmd.name, message)     
+        message = self.clean_command_string(self.cmd.name, message)
         print(message)  
                         
     def function_call_formatter(self, hierarchy_selected_command_name:str, selected_command_name:str, args):
