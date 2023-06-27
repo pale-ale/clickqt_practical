@@ -1,7 +1,7 @@
 import click
 import pytest
 
-from tests.testutils import ClickAttrs
+from tests.testutils import ClickAttrs, raise_
 import clickqt.widgets
 from clickqt.core.error import ClickQtError
 from typing import Any
@@ -35,9 +35,9 @@ def test_callback(click_attrs:dict, value:Any, expected:Any):
 @pytest.mark.parametrize(
     ("click_attrs", "value", "expected"),
     [
-        (ClickAttrs.checkbox(callback=lambda ctx,param,value: (_ for _ in ()).throw(Exception("..."))), False, None),
-        (ClickAttrs.intfield(callback=lambda a,b,c: (_ for _ in ()).throw(click.BadParameter("..."))), 123, None),
-        (ClickAttrs.nvalue_widget(type=(int, (str, float)), callback=lambda a,b,c: (_ for _ in ()).throw(click.BadParameter("..."))), [[1, ["t", 2.1]]], None),
+        (ClickAttrs.checkbox(callback=lambda ctx,param,value: raise_(Exception("..."))), False, None),
+        (ClickAttrs.intfield(callback=lambda a,b,c: raise_(click.BadParameter("..."))), 123, None),
+        (ClickAttrs.nvalue_widget(type=(int, (str, float)), callback=lambda a,b,c: raise_(click.BadParameter("..."))), [[1, ["t", 2.1]]], None),
     ]
 )
 def test_callback_fail(click_attrs:dict, value:Any, expected:Any):

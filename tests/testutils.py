@@ -1,6 +1,9 @@
 import click
 from typing import Sequence, Type
 
+def raise_(ex:Exception):
+    raise ex
+
 class ClickAttrs():
     @staticmethod
     def unprocessed(**attrs_dict) -> dict:
