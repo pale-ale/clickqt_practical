@@ -10,7 +10,7 @@ class MessageBox(BaseWidget):
     def __init__(self, otype:ParamType, param:Parameter, *args, **kwargs):
         super().__init__(otype, param, *args, **kwargs)
 
-        self.yes:bool
+        self.yes:bool = False
 
         if self.parent_widget is None:
             self.setValue(BaseWidget.getParamDefault(param, False))
