@@ -3,7 +3,6 @@ from abc import ABC, abstractmethod
 from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout
 from clickqt.core.error import ClickQtError
 import clickqt.core # FocusOutValidator
-import clickqt.widgets # TupleWidget
 from click import Context, Parameter, Command, Choice, Option, ParamType, BadParameter, Tuple as click_type_tuple
 from click.exceptions import Abort, Exit
 from gettext import ngettext
@@ -148,7 +147,10 @@ class BaseWidget(ABC):
     
     def handleValid(self, valid: bool):
         if not valid:
-            self.widget.setStyleSheet("border: 1px solid red")
+            if (oname := self.widget.objectName()):
+                self.widget.setStyleSheet(f"QWidget#{oname}{{ border: 1px solid red }}")
+            else:
+                self.widget.setStyleSheet("border: 1px solid red")
         else:
             self.widget.setStyleSheet("")
     
@@ -225,10 +227,7 @@ class MultiWidget(BaseWidget):
 
     def handleValid(self, valid: bool):
         for c in self.children:
-            if not isinstance(c, clickqt.widgets.TupleWidget):
-                BaseWidget.handleValid(c, valid)
-            else:
-                c.handleValid(valid) # Recursive
+            c.handleValid(valid) # Recursive
 
     def isEmpty(self) -> bool:
         if len(self.children) == 0:
