@@ -163,27 +163,38 @@ class Control:
             if type(widget) != ConfirmationWidget and widget != "yes":
                 widget_values.append(widgets[widget].getWidgetValue())
         parameter_strings = []
-        print(widget_values)
         for i, param in enumerate(parameter_list):
             if param[0] != "Argument":
                 if type(widget_values[i]) != list or param[2] != True:
-                    print(f"Option: {param}")
-                    parameter_strings.append(parameter_list[i][0] + " " + str(widget_values[i]))
+                    widget_value = str(widget_values[i])
+                    if not is_file_path(widget_value):
+                        parameter_strings.append(parameter_list[i][0] + " " + re.sub(r'[^a-zA-Z0-9 .-]', ' ', widget_value))
+                    else: 
+                        parameter_strings.append(parameter_list[i][0] + " " + widget_value)
                 else:
-                    print(f"Multiple Option: {param}")
                     if is_nested_list(widget_values[i]):
+                        print(widget_values[i])
                         depth = len(widget_values[i])
                         for j in range(depth):
-                            parameter_strings.append(parameter_list[i][0] + " " + str(widget_values[i][j]))
-                    else: 
+                            widget_value = str(widget_values[i][j])
+                            if not is_file_path(widget_value):
+                                parameter_strings.append(parameter_list[i][0] + " " + re.sub(r'[^a-zA-Z0-9 .-]', ' ', widget_value))
+                            else:
+                                parameter_strings.append(parameter_list[i][0] + " " + widget_value)
+                    else:
                         length = len(widget_values[i])
                         for j in range(length):
-                            parameter_strings.append(parameter_list[i][0] + " " + str(widget_values[i][j]))
+                            widget_value = str(widget_values[i][j])
+                            if not is_file_path(widget_value):
+                                parameter_strings.append(parameter_list[i][0] + " " + re.sub(r'[^a-zA-Z0-9 .-]', ' ', widget_value))
+                            else:
+                                parameter_strings.append(parameter_list[i][0] + " " + widget_value)
             else:
                 parameter_strings.append(str(widget_values[i])) 
-        message = hierarchy_selected_name + " " +" ".join(parameter_strings)
-        message = self.clean_command_string(self.cmd.name, message)
-        print(message)  
+        message = hierarchy_selected_name + " " + " ".join(parameter_strings)
+        message = re.sub(r'\b{}\b'.format(re.escape(self.cmd.name)), '', message)
+        message = message.replace(":", " ")
+        return message
                         
     def function_call_formatter(self, hierarchy_selected_command_name:str, selected_command_name:str, args):
         params = self.get_params(hierarchy_selected_command_name, args)
@@ -236,7 +247,7 @@ class Control:
             return
         """ General hint for the usage of the CLI itself."""
         print(f"For command details, please call '{self.command_to_string(hierarchy_selected_command_name)} --help'")
-        self.command_to_string_to_copy(hierarchy_selected_command_name, selected_command)
+        print(self.command_to_string_to_copy(hierarchy_selected_command_name, selected_command))
         print(f"Current Command: {self.function_call_formatter(hierarchy_selected_command_name, selected_command, kwargs)} \n" + f"Output:")
 
         if len(callback_args := inspect.getfullargspec(selected_command.callback).args) > 0:
