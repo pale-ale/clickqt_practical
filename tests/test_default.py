@@ -61,7 +61,7 @@ def test_set_default(click_attrs:dict, default:Any, expected:Any):
     cli = click.Command("cli", params=[param])
 
     control = clickqt.qtgui_from_click(cli)
-    assert control.widget_registry[cli.name][param.name].getWidgetValue() == expected, "clickqt"
+    assert control.widget_registry[cli.name][param.name].getWidgetValue() == expected
 
 @pytest.mark.parametrize(
     ("click_attrs", "default", "expected"),
@@ -102,4 +102,4 @@ def test_set_default_fail(click_attrs:dict, default:Any, expected:Any):
     with pytest.raises(click.exceptions.BadParameter) as exc_info:
         clickqt.qtgui_from_click(cli).widget_registry[cli.name][param.name]
 
-    assert expected == exc_info.value.message, "clickqt"
+    assert expected == exc_info.value.message

@@ -27,7 +27,7 @@ def test_set_envvar(click_attrs:dict, envvar_values:str|list[str], expected:str|
     cli = click.Command("cli", params=[param])
 
     control = clickqt.qtgui_from_click(cli)
-    assert control.widget_registry[cli.name][param.name].getWidgetValue() == expected, "clickqt"
+    assert control.widget_registry[cli.name][param.name].getWidgetValue() == expected
 
 @pytest.mark.parametrize(
     ("click_attrs", "envvar_values", "expected"),
@@ -49,4 +49,4 @@ def test_set_envvar_fail(click_attrs:dict, envvar_values:str|list[str], expected
     with pytest.raises(click.exceptions.BadParameter) as exc_info:
         clickqt.qtgui_from_click(cli).widget_registry[cli.name][param.name]
 
-    assert expected == exc_info.value.message, "clickqt"
+    assert expected == exc_info.value.message

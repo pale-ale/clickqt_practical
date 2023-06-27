@@ -30,7 +30,7 @@ def test_callback(click_attrs:dict, value:Any, expected:Any):
     control.widget_registry[cli.name][param.name].setValue(value)
     val, err = control.widget_registry[cli.name][param.name].getValue()
 
-    assert val == expected and err.type == ClickQtError.ErrorType.NO_ERROR, "clickqt"
+    assert val == expected and err.type == ClickQtError.ErrorType.NO_ERROR
 
 @pytest.mark.parametrize(
     ("click_attrs", "value", "expected"),
@@ -48,7 +48,7 @@ def test_callback_fail(click_attrs:dict, value:Any, expected:Any):
     control.widget_registry[cli.name][param.name].setValue(value)
     val, err = control.widget_registry[cli.name][param.name].getValue()
 
-    assert val == expected and err.type == ClickQtError.ErrorType.PROCESSING_VALUE_ERROR, "clickqt"
+    assert val == expected and err.type == ClickQtError.ErrorType.PROCESSING_VALUE_ERROR
 
 @pytest.mark.parametrize(
     ("click_attrs", "value", "expected"),
@@ -65,7 +65,7 @@ def test_callback_abort(click_attrs:dict, value:Any, expected:Any):
     control.widget_registry[cli.name][param.name].setValue(value)
     val, err = control.widget_registry[cli.name][param.name].getValue()
 
-    assert val == expected and err.type == ClickQtError.ErrorType.ABORTED_ERROR, "clickqt"
+    assert val == expected and err.type == ClickQtError.ErrorType.ABORTED_ERROR
 
 @pytest.mark.parametrize(
     ("click_attrs", "value", "expected"),
@@ -82,4 +82,4 @@ def test_callback_exit(click_attrs:dict, value:Any, expected:Any):
     control.widget_registry[cli.name][param.name].setValue(value)
     val, err = control.widget_registry[cli.name][param.name].getValue()
 
-    assert val == expected and err.type == ClickQtError.ErrorType.EXIT_ERROR, "clickqt"
+    assert val == expected and err.type == ClickQtError.ErrorType.EXIT_ERROR
