@@ -13,7 +13,11 @@ import re
 from clickqt.core.utils import *
 
 class Control:
+    """ 
+        Control class regulating the widget creation for the seperate parameter types together with the execution logic for the Run button. 
+    """
     def __init__(self, cmd:click.Group|click.Command):
+        """ __init__ function initializing the GUI object and the registries together with the differentiation of a group command and a simple command. """
         self.gui = GUI()
         self.cmd = cmd
 
@@ -34,6 +38,7 @@ class Control:
         self.gui()
     
     def parameter_to_widget(self, command: click.Command, groups_command_name:str, param: click.Parameter) -> QWidget:
+        """ Function to determine the widget type based on the parameter type and returns the container of the widget """
         if param.name:
             assert self.widget_registry[groups_command_name].get(param.name) is None
 
@@ -46,9 +51,11 @@ class Control:
             raise SyntaxError("No parameter name specified")
 
     def concat(self, a: str, b: str) -> str:
+        """ Returns a concatenated string """
         return a + ":" + b
     
     def parse_cmd_group(self, cmdgroup: click.Group, group_names: str) -> QTabWidget:
+        """ Function to parse the information of a grouped click command. """
         group_tab_widget = QTabWidget()
         for group_name, group_cmd in cmdgroup.commands.items():
             if isinstance(group_cmd, click.Group):
@@ -60,6 +67,7 @@ class Control:
         return group_tab_widget
     
     def parse_cmd(self, cmd: click.Command, groups_command_name: str):
+        """ Function to parse the information of a simple command. """
         cmdbox = QWidget()
         cmdbox.setLayout(QVBoxLayout())
 
@@ -99,6 +107,7 @@ class Control:
         return cmd_tab_widget
     
     def check_error(self, err: ClickQtError) -> bool:
+        """ Returns if parameter has Error. """
         if err.type != ClickQtError.ErrorType.NO_ERROR:
             if (message := err.message()): # Don't print on context exit
                 print(message, file=sys.stderr)
@@ -155,6 +164,7 @@ class Control:
     
     
     def command_to_string_to_copy(self, hierarchy_selected_name:str, selected_command):
+        """ Returns a string representing the click command if one actually would actually execute it in the shell"""
         parameter_list = self.get_option_names(selected_command)
         parameter_list = [param for param in parameter_list if param[0] != "--yes"]
         widgets = self.widget_registry[hierarchy_selected_name]
@@ -203,6 +213,7 @@ class Control:
         return message + parameter_message
 
     def run(self):
+        """ Computes the current command displayed on the current tab, if it is a grouped click command and computes the arguments that are used for the execution for the click command. """
         hierarchy_selected_command = self.current_command_hierarchy(self.gui.main_tab.currentWidget(), self.cmd) 
         selected_command = hierarchy_selected_command[-1]
         #parent_group_command = hierarchy_selected_command[-2] if len(hierarchy_selected_command) >= 2 else None
