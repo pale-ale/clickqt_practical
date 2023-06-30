@@ -22,7 +22,7 @@ class TextField(BaseWidget):
         if isinstance(value, str):
             self.widget.setText(value)
         else:
-            self.widget.setText(str(self.type.convert(value=str(value), param=self.click_command, ctx=Context(self.click_command))))
+            self.widget.setText(self.type.convert(value=value, param=self.click_command, ctx=Context(self.click_command)))
 
     def isEmpty(self) -> bool:
         return self.getWidgetValue() == ""
@@ -45,6 +45,9 @@ class PathField(TextField):
         self.browse_btn = QPushButton("Browse")
         self.browse_btn.clicked.connect(self.browse)
         self.layout.addWidget(self.browse_btn)
+
+    def setValue(self, value:Any):
+        self.widget.setText(str(value))
 
     def browse(self):
         """
