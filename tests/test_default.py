@@ -45,7 +45,9 @@ from typing import Any
         (ClickAttrs.datetime(formats=["%d-%m-%Y"]), "23-06-2023", "23-06-2023"),
         (ClickAttrs.datetime(formats=["%d-%m-%Y", "%d-%m-%Y %H:%M:%S"]), "23-06-2023", "23-06-2023 00:00:00"), # Always use the last format
         (ClickAttrs.filefield(), "test.abc", "test.abc"), 
-        (ClickAttrs.filepathfield(), ".", "."), 
+        (ClickAttrs.filefield(), 123.2, "123.2"), 
+        (ClickAttrs.filepathfield(), ".", "."),
+        (ClickAttrs.filepathfield(), 92.3, "92.3"), 
         (ClickAttrs.tuple_widget(types=(str, int)), ["s", "1"], ["s", 1]),
         (ClickAttrs.tuple_widget(types=(str, int, float)), ["t", 1, "-2."], ["t", 1, -2.]),
         (ClickAttrs.multi_value_widget(nargs=3), ["a", "b", "c"], ["a", "b", "c"]),
