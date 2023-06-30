@@ -58,19 +58,12 @@ class BaseWidget(ABC):
             -> Subclasses may need to override this method
         """
         return False
-    
-    #@abstractmethod
-    #def __repr__(self) -> str:
-        """
-            Returns the representation of the widget as string (e.g. IntField -> "int")
-        """
-    #    pass
 
     def getValue(self) -> tuple[Any, ClickQtError]:
         """
             Validates the value of the widget and returns the result\n
             Valid -> (widget value or the value of a callback, ClickQtError.ErrorType.NO_ERROR)\n
-            Invalid -> (None, CClickQtError.ErrorType.CONVERTING_ERROR or ClickQtError.ErrorType.PROCESSING_VALUE_ERROR)
+            Invalid -> (None, ClickQtError.ErrorType.CONVERTING_ERROR or ClickQtError.ErrorType.PROCESSING_VALUE_ERROR)
         """
         value: Any = None
 
