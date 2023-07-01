@@ -9,8 +9,7 @@ class MultiValueWidget(MultiWidget):
     def __init__(self, otype:ParamType, param:Parameter, widgetsource:Callable[[Any], BaseWidget], parent:BaseWidget=None, *args, **kwargs):
         super().__init__(otype, param, parent, *args, **kwargs)
 
-        if param.nargs < 2:
-            raise TypeError(f"param.nargs should be >= 2 when creating a MultiValueWIdget but is {param.nargs}.")
+        assert param.nargs >= 2, f"'param.nargs' should be >= 2, but is '{param.nargs}'."
 
         self.widget.setLayout(QVBoxLayout())
 

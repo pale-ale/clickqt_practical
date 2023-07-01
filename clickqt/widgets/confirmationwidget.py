@@ -10,7 +10,7 @@ class ConfirmationWidget(BaseWidget):
     def __init__(self, otype:ParamType, param:Parameter, widgetsource:Callable[[Any], BaseWidget], *args, **kwargs):
         super().__init__(otype, param, *args, **kwargs)
 
-        assert hasattr(self.param, "confirmation_prompt") and self.param.confirmation_prompt
+        assert hasattr(self.param, "confirmation_prompt") and self.param.confirmation_prompt, "'param.confirmation_prompt' should be True"
         
         self.param.confirmation_prompt = False  # Stop recursion
         self.field: BaseWidget = widgetsource(self.type, param, parent=self, *args, **kwargs)

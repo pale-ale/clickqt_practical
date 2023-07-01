@@ -184,9 +184,9 @@ class NumericField(BaseWidget):
 
 class ComboBoxBase(BaseWidget):
     def __init__(self, otype:ParamType, param:Parameter, *args, **kwargs):
-        if not isinstance(otype, Choice):
-            raise TypeError(f"'param' must be of type 'Choice'.")
         super().__init__(otype, param, *args, **kwargs)
+
+        assert isinstance(otype, Choice), f"'otype' must be of type '{Choice}', but is '{type(otype)}'."
 
         self.addItems(otype.choices)
 

@@ -2,7 +2,7 @@ from PySide6.QtWidgets import QLineEdit, QInputDialog
 from clickqt.widgets.textfield import PathField
 from typing import Tuple, Any
 from clickqt.core.error import ClickQtError
-from click import Parameter, ParamType
+from click import Parameter, ParamType, File
 import sys
 from io import StringIO, BytesIO
 
@@ -11,6 +11,8 @@ class FileField(PathField):
 
     def __init__(self, otype:ParamType, param:Parameter, *args, **kwargs):
         super().__init__(otype, param, *args, **kwargs)
+
+        assert isinstance(otype, File), f"'otype' must be of type '{File}', but is '{type(otype)}'."
 
         self.file_type = PathField.FileType.File
 

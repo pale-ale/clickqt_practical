@@ -1,7 +1,7 @@
 from PySide6.QtWidgets import QDateTimeEdit
 from PySide6.QtCore import QDateTime
 from clickqt.widgets.basewidget import BaseWidget
-from click import Parameter, ParamType, Context
+from click import Parameter, ParamType, Context, DateTime
 from typing import Any
 
 
@@ -10,6 +10,8 @@ class DateTimeEdit(BaseWidget):
 
     def __init__(self, otype:ParamType, param:Parameter, *args, **kwargs):
         super().__init__(otype, param, *args, **kwargs)
+
+        assert isinstance(otype, DateTime), f"'otype' must be of type '{DateTime}', but is '{type(otype)}'."
 
         self.widget.setDisplayFormat("dd.MM.yyyy hh:mm:ss")
 

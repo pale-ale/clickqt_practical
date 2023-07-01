@@ -2,7 +2,7 @@ from typing import Any
 from PySide6.QtWidgets import QComboBox
 from clickqt.widgets.basewidget import ComboBoxBase, BaseWidget
 from clickqt.widgets.core.QCheckableCombobox import QCheckableComboBox
-from click import Parameter, ParamType, Context
+from click import Parameter, ParamType, Context, Choice
 
 class ComboBox(ComboBoxBase):
     widget_type = QComboBox
@@ -28,6 +28,8 @@ class CheckableComboBox(ComboBoxBase):
 
     def __init__(self, otype:ParamType, param:Parameter, *args, **kwargs):
         super().__init__(otype, param, *args, **kwargs)
+
+        assert param.multiple, "'param.multiple' should be True"
 
         if self.parent_widget is None:
             self.setValue(BaseWidget.getParamDefault(param, []))

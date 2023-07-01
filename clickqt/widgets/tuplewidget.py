@@ -8,14 +8,10 @@ class TupleWidget(MultiWidget):
     widget_type = QGroupBox
 
     def __init__(self, otype:ParamType, param:Parameter, widgetsource:Callable[[Any], BaseWidget], *args, parent:BaseWidget|None=None, **kwargs):
-        if not isinstance(otype, ClickTuple):
-            raise TypeError
-        if not otype.is_composite:
-            raise TypeError
-        if not isinstance(otype.types, list):
-            raise TypeError
-        
         super().__init__(otype, param, *args, parent=parent, **kwargs)
+        
+        assert isinstance(otype, ClickTuple), f"'otype' must be of type '{ClickTuple}', but is '{type(otype)}'."
+        assert otype.is_composite, f"otype.is_composite should be True"
 
         self.widget.setLayout(QHBoxLayout())
 

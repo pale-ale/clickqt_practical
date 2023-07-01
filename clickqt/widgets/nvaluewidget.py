@@ -3,7 +3,7 @@ from PySide6.QtCore import Qt
 from clickqt.widgets.basewidget import BaseWidget, MultiWidget
 from typing import Any, Callable, Tuple, List
 from clickqt.core.error import ClickQtError
-from click import Context, Parameter, ParamType
+from click import Context, Parameter, ParamType, Choice
 import os
 
 class NValueWidget(MultiWidget):
@@ -11,6 +11,10 @@ class NValueWidget(MultiWidget):
     
     def __init__(self, otype:ParamType, param:Parameter, widgetsource:Callable[[Any], BaseWidget], parent:BaseWidget=None, *args, **kwargs):
         super().__init__(otype, param, parent, *args, **kwargs)
+
+        assert not isinstance(otype, Choice), f"'otype' is of type '{Choice}', but there is a better version for this type"
+        assert param.multiple, "'param.multiple' should be True"
+
         self.widget.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
         self.optargs = args
         self.optkwargs = kwargs

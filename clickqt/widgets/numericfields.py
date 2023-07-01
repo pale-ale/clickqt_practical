@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QSpinBox, QDoubleSpinBox
 from clickqt.widgets.basewidget import NumericField, BaseWidget
-from click import Parameter, IntRange, FloatRange, ParamType
+from click import Parameter, IntRange, FloatRange, ParamType, INT, FLOAT
 import sys
 
 class IntField(NumericField):
@@ -8,6 +8,8 @@ class IntField(NumericField):
 
     def __init__(self, otype:ParamType, param:Parameter, *args, **kwargs):
         super().__init__(otype, param, *args, **kwargs)
+
+        assert isinstance(otype, IntRange|type(INT)), f"'otype' must be of type '{IntRange}' or '{type(INT)}', but is '{type(otype)}'."
         
         if not isinstance(otype, IntRange):
             # QSpinBox is limited to [-2**31; 2**31 - 1], but sys.maxsize returns 2**63 - 1
@@ -28,6 +30,8 @@ class RealField(NumericField):
 
     def __init__(self, otype:ParamType, param:Parameter, *args, **kwargs):
         super().__init__(otype, param, *args, **kwargs)
+
+        assert isinstance(otype, FloatRange|type(FLOAT)), f"'otype' must be of type '{FloatRange}' or '{type(FLOAT)}', but is '{type(otype)}'."
 
         if not isinstance(otype, FloatRange):
             self.setMinimum(-sys.float_info.max) # Default is 0.0

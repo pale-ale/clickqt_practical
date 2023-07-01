@@ -9,6 +9,8 @@ class PasswordField(TextField):
     def __init__(self, otype:ParamType, param:Parameter, *args, **kwargs):
         super().__init__(otype, param, *args, **kwargs)
 
+        assert hasattr(param, "hide_input") and param.hide_input, "'param.hide_input' should be True"
+
         self.widget.setEchoMode(QLineEdit.EchoMode.Password)
 
         self.show_hide_action = QAction(QIcon('clickqt\\images\\eye-show.png'), 'Show password')
