@@ -63,6 +63,7 @@ write_to = "clickqt/_version.py"
 
 # The following is the configuration for the pytest test suite
 [tool.pytest.ini_options]
+addopts = "-x"            # if a test fails, test execution stops 
 testpaths = [
     "tests",
 ]
