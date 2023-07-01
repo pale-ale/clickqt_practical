@@ -3,7 +3,6 @@ import pytest
 
 from tests.testutils import ClickAttrs
 import clickqt.widgets
-from clickqt.core.gui import GUI
 
 @pytest.mark.parametrize(
     ("click_attrs", "expected_clickqt_type"),
@@ -33,10 +32,10 @@ def test_type_assignment(click_attrs:dict, expected_clickqt_type:clickqt.widgets
     param = click.Option(param_decls=["--test"], **click_attrs)
     cli = click.Command("cli", params=[param])
 
-    gui = GUI()
-    assert type(gui.create_widget(param.type, param, widgetsource=gui.create_widget, com=cli)) is expected_clickqt_type , "directly" # Perfect type match
-
     control = clickqt.qtgui_from_click(cli)
+    gui = control.gui
+    
+    assert type(gui.create_widget(param.type, param, widgetsource=gui.create_widget, com=cli)) is expected_clickqt_type , "directly" # Perfect type match
     assert type(control.widget_registry[cli.name][param.name]) is expected_clickqt_type, "clickqt" # Perfect type match
 
 @pytest.mark.parametrize(
