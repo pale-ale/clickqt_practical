@@ -68,6 +68,7 @@ class ClickAttrs():
     @staticmethod
     def multi_value_widget(nargs:int, **attrs_dict) -> dict:
         assert nargs > 1
+        assert attrs_dict.get("type") is None or not isinstance(attrs_dict["type"], tuple)
         return {"nargs":nargs, **attrs_dict}
     
     @staticmethod
