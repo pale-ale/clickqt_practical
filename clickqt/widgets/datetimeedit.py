@@ -34,7 +34,7 @@ class DateTimeEdit(BaseWidget):
             self.format_group.addAction(action)
 
         self.format_group.setExclusive(True) # Only one format can be checked at the same time
-        self.format_group.triggered.connect(lambda action: self.widget.setDisplayFormat(action.text()))
+        self.format_group.triggered.connect(lambda action: self.widget.setDisplayFormat(action.text()) or self.container.setFocus()) # Update display format and geometry
 
         if self.parent_widget is None and (default := BaseWidget.getParamDefault(param, None)) is not None:
             self.setValue(default)
