@@ -25,8 +25,8 @@ class BaseWidget(ABC):
         self.layout = QHBoxLayout()
         self.label = QLabel(text=f"{kwargs.get('label', '')}{self.widget_name}: ")
         if isinstance(param, Option):
-            self.label.setToolTip(param.help)
-        self.widget = self.createWidget(args, kwargs)
+            self.container.setToolTip(param.help)
+        self.widget = self.createWidget()
         self.layout.addWidget(self.label)
         self.layout.addWidget(self.widget)
         self.container.setLayout(self.layout)
@@ -41,7 +41,7 @@ class BaseWidget(ABC):
         self.focus_out_validator = clickqt.core.FocusOutValidator(self)
         self.widget.installEventFilter(self.focus_out_validator)
     
-    def createWidget(self, *args, **kwargs) -> QWidget:
+    def createWidget(self) -> QWidget:
         return self.widget_type()
 
     @abstractmethod
