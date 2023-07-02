@@ -39,8 +39,6 @@ def test_gui_construction(root_group_command: click.Group|click.Command, expecte
     control = clickqt.qtgui_from_click(root_group_command)
     gui = control.gui
 
-    gui()
-
     def findChildren(object: QWidget, child_type: QWidget) -> Iterable:
         return object.findChildren(child_type, options=Qt.FindChildOption.FindDirectChildrenOnly)
     
