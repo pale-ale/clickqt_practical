@@ -2,25 +2,80 @@ import click
 import pytest
 import clickqt
 
+from tests.testutils import ClickAttrs
 from PySide6.QtWidgets import QTabWidget, QPushButton, QSplitter, QWidget
 from PySide6.QtCore import Qt
 from clickqt.core.output import TerminalOutput
-from typing import Iterable, Any
+from clickqt.core.control import Control
+from typing import Iterable
+import clickqt.widgets
+
+
+def findChildren(object: QWidget, child_type: QWidget) -> Iterable:
+    return object.findChildren(child_type, options=Qt.FindChildOption.FindDirectChildrenOnly)
+
+def checkLen(children: Iterable, expected_len:int) -> Iterable:
+    assert len(children) == expected_len
+    return children
+
+def hasWidgets(tab_widget_content:QWidget, control:Control, group_hierarchy_name:str, params:list[click.Parameter]) -> tuple[bool, str]:
+    for param in params:
+        # Search for the widget of type 'widget_type' and name 'widget_name' recursively
+        children = tab_widget_content.findChildren(control.widget_registry[group_hierarchy_name][param.name].widget_type, (control.widget_registry[group_hierarchy_name][param.name].widget_name))
+
+        if len(children) == 0:
+            return (False, f"Widget is missing in QTabWidget: '{param.name}'")
+        elif isinstance(control.widget_registry[group_hierarchy_name][param.name], clickqt.widgets.ConfirmationWidget):
+            if len(children) != 1+2: # Container widget and the two normal widgets
+                return (False, f"ConfirmationWidget is multiple times in QTabWidget: '{param.name}'")       
+        elif len(children) != 1:
+            return (False, f"Widget is multiple times in QTabWidget: '{param.name}'")
+
+    return (True, "")
+
+def isIncluded(tab_widget:QTabWidget|QWidget, expected_group_command:list[click.Group|click.Command], control:Control, group_hierarchy_name:str) -> tuple[bool, str]:
+    if type(tab_widget) is QWidget: # Group has options
+        tab_widget = checkLen(findChildren(tab_widget, QTabWidget), 1)[0]
+
+    assert tab_widget.count() == len(expected_group_command) # amount of tabs == amount of commands and groups
+
+    for group_command in expected_group_command:
+        # group_command.name is the name of one tab
+        for i in range(tab_widget.count()):
+            tab_widget_name = tab_widget.tabText(i)
+
+            if tab_widget_name == group_command.name:
+                res = hasWidgets(tab_widget.widget(i), control, control.concat(group_hierarchy_name, group_command.name), group_command.params)
+                if not res[0]:
+                    return res  
+
+                break # Skips the else block
+        else:
+            return (False, f"Command-/Group name is missing in QTabWidget: '{group_command.name}'")
+
+        # Recursive call for groups
+        if isinstance(group_command, click.Group):
+            res = isIncluded(next(filter(lambda x: isinstance(x, QTabWidget) or type(x) is QWidget, [tab_widget.widget(i) for i in range(tab_widget.count())])), 
+                              group_command.commands.values(), control, control.concat(group_hierarchy_name, group_command.name))
+            if not res[0]:
+                return res    
+                
+    return (True, "")
 
 
 @pytest.mark.parametrize(
-    ("root_group_command", "expected_groups_commands"),
+    ("root_group_command"),
     [
-        (click.Command("cli", params=[]), ["cli"]),
+        (click.Command("cli", params=[])),
         (click.Group("group", commands=[
             click.Command("cli", params=[])
-            ]), ["group", ["cli"]]),
+            ])),
         (click.Group("root_group", commands=[
             click.Group("sub_group", commands=[
                 click.Command("sub_cli", params=[])
                 ]), 
             click.Command("cli", params=[])
-            ]), ["root_group", ["sub_group", ["sub_cli"], "cli"]]),
+            ])),
         (click.Group("root_group", commands=[
             click.Command("cli1", params=[]),
             click.Command("cli2", params=[]),
@@ -32,47 +87,74 @@ from typing import Iterable, Any
                     click.Command("sub_sub_cli2", params=[]),
                     ]), 
                 ]), 
-            ]), ["root_group", ["cli1", "cli2", "sub_group", ["sub_cli1", "sub_cli2", "sub_sub_group", ["sub_sub_cli1", "sub_sub_cli2"]]]]),
+            ])),
     ]
 )
-def test_gui_construction(root_group_command: click.Group|click.Command, expected_groups_commands:list[Any]):
+def test_gui_construction_no_options(root_group_command: click.Group|click.Command):
     control = clickqt.qtgui_from_click(root_group_command)
     gui = control.gui
 
-    def findChildren(object: QWidget, child_type: QWidget) -> Iterable:
-        return object.findChildren(child_type, options=Qt.FindChildOption.FindDirectChildrenOnly)
-    
-    def checkLen(children: Iterable, expected_len:int) -> Iterable:
-        assert len(children) == expected_len
-        return children
-    
-    def isIncluded(tab_widget:QTabWidget, expected_group_command_names:list[str]):
-        assert tab_widget.count() == sum(1 for y in expected_group_command_names if isinstance(y, str))
-
-        for name in expected_group_command_names:
-            if not isinstance(name, str):
-                if not isIncluded(next(filter(lambda x: isinstance(x, QTabWidget), [tab_widget.widget(i) for i in range(tab_widget.count())])), name):
-                    return False
-                else:
-                    continue
-            else:
-                for i in range(tab_widget.count()):
-                    tab_widget_name = tab_widget.tabText(i)
-
-                    if tab_widget_name == name:
-                        break # Skips the else block
-                else:
-                    return False
-                    
-        return True
-
+    # Base widgets are set correctly
     assert checkLen(findChildren(gui.window, QSplitter), 1)[0] == gui.splitter
     assert checkLen(findChildren(gui.splitter, QPushButton), 1)[0] == gui.run_button
     assert checkLen(findChildren(gui.splitter, TerminalOutput), 1)[0] == gui.terminal_output
 
     parent_tab_widget = checkLen(findChildren(gui.splitter, QTabWidget), 1)[0]
-    assert parent_tab_widget == gui.main_tab and parent_tab_widget.tabText(0) == expected_groups_commands[0]
+    assert parent_tab_widget == gui.main_tab and parent_tab_widget.tabText(0) == root_group_command.name
 
-    if len(expected_groups_commands) > 1:
-        tab_widget = next(filter(lambda x: isinstance(x, QTabWidget), [parent_tab_widget.widget(i) for i in range(parent_tab_widget.count())]))
-        assert isIncluded(tab_widget, expected_groups_commands[1]), "expected name is not included"
+    # Check for right amount of QTabWidgets-instances with correct tab-names
+    if isinstance(root_group_command, click.Group) and len(root_group_command.commands.values()) > 1:
+        tab_widget = next(filter(lambda x: isinstance(x, QTabWidget) or type(x) is QWidget, [parent_tab_widget.widget(i) for i in range(parent_tab_widget.count())]))
+        
+        included, err_message = isIncluded(tab_widget, root_group_command.commands.values(), control, root_group_command.name) 
+
+        assert included, err_message
+
+@pytest.mark.parametrize(
+    ("root_group_command"),
+    [
+        (click.Command("cli", params=[click.Option(param_decls=["--test1"], **ClickAttrs.checkbox()), click.Option(param_decls=["--test2"], **ClickAttrs.intfield())])),
+        (click.Group("group",  params=[click.Option(param_decls=["--abc1"], **ClickAttrs.realfield()), 
+                                       click.Option(param_decls=["--abc2"], **ClickAttrs.textfield())], commands=[
+            click.Command("cli", params=[click.Option(param_decls=["--abc1"], **ClickAttrs.passwordfield()), 
+                                         click.Option(param_decls=["--abc2"], **ClickAttrs.combobox(choices=["A", "B"]))]) # Same option names are allowed
+            ])),
+        (click.Group("root_group", params=[click.Option(param_decls=["--root1"], **ClickAttrs.datetime()), 
+                                       click.Option(param_decls=["--root2"], **ClickAttrs.uuid())], commands=[
+            click.Group("sub_group", params=[click.Option(param_decls=["--group1"], **ClickAttrs.intrange()), 
+                                       click.Option(param_decls=["--group2"], **ClickAttrs.floatrange())], commands=[
+                click.Command("sub_cli", params=[click.Option(param_decls=["--abc1"], **ClickAttrs.tuple_widget(types=(click.types.Path(),int))), 
+                                       click.Option(param_decls=["--abc2"], **ClickAttrs.multi_value_widget(nargs=2))])
+                ]), 
+            click.Command("cli", params=[click.Option(param_decls=["--abc2"], **ClickAttrs.confirmation_widget())])
+            ])),
+        (click.Group("root_group", params=[click.Option(param_decls=["--group1"], **ClickAttrs.datetime())], commands=[
+            click.Command("cli1", params=[click.Option(param_decls=["--group1"], **ClickAttrs.multi_value_widget(nargs=2))]),
+            click.Command("cli2", params=[]),
+            click.Group("sub_group", params=[click.Option(param_decls=["--group1"], **ClickAttrs.filefield()), 
+                                       click.Option(param_decls=["--group2"], **ClickAttrs.filepathfield())], commands=[
+                click.Command("sub_cli1", params=[click.Option(param_decls=["--cli"], **ClickAttrs.nvalue_widget())]),
+                click.Command("sub_cli2", params=[]),
+                click.Group("sub_sub_group", params=[click.Option(param_decls=["--group1"], **ClickAttrs.checkbox()),
+                                       click.Option(param_decls=["--group2"], **ClickAttrs.intrange())], commands=[
+                    click.Command("sub_sub_cli1", params=[]),
+                    click.Command("sub_sub_cli2", params=[click.Option(param_decls=["--cli2"], **ClickAttrs.tuple_widget(types=(click.types.FloatRange(),int)))]),
+                    ]), 
+                ]), 
+            ])),
+    ]
+)
+def test_gui_construction_with_options(root_group_command: click.Group|click.Command):
+    control = clickqt.qtgui_from_click(root_group_command)
+    gui = control.gui
+
+    parent_tab_widget = checkLen(findChildren(gui.splitter, QTabWidget), 1)[0]
+    hasWidgets(parent_tab_widget.widget(0), control, root_group_command.name, root_group_command.params)
+
+    # Check for right amount of QTabWidgets-instances with correct tab-names and correct widget objects
+    if isinstance(root_group_command, click.Group) and len(root_group_command.commands.values()) > 1:
+        tab_widget = next(filter(lambda x: isinstance(x, QTabWidget) or type(x) is QWidget, [parent_tab_widget.widget(i) for i in range(parent_tab_widget.count())]))
+        
+        included, err_message = isIncluded(tab_widget, root_group_command.commands.values(), control, root_group_command.name) 
+
+        assert included, err_message
