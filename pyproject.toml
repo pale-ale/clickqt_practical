@@ -74,3 +74,8 @@ omit = [
     "__init__.py",
     "_version.py", 
 ]
+
+[tool.coverage.report]
+exclude_also = [
+    "def showPassword" # PasswordField.__init__.showPassword is unreachable
+]
