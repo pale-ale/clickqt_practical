@@ -23,7 +23,7 @@ class GUI:
         self.window = QWidget()
         self.window.setLayout(QVBoxLayout())
         self.splitter = QSplitter(Qt.Orientation.Vertical)
-        self.splitter.setChildrenCollapsible(False) # Child widgets can be resized down to size 0
+        self.splitter.setChildrenCollapsible(False) # Child widgets can't be resized down to size 0
         self.window.layout().addWidget(self.splitter)
         
         self.main_tab = QTabWidget()
