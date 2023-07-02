@@ -27,7 +27,7 @@ from typing import Any
         (ClickAttrs.combobox(choices=["A", "B", "C"], case_sensitive=False), "b"),
         (ClickAttrs.checkable_combobox(choices=["A", "B", "C"]), ["B", "C"]), 
         (ClickAttrs.datetime(formats=["%d-%m-%Y"]), "23-06-2023"),
-        (ClickAttrs.filefield(), "readme.md"), 
+        (ClickAttrs.filefield(), ".gitignore"), 
         (ClickAttrs.filefield(type_dict={"mode":"rb"}), "-"), 
         (ClickAttrs.filefield(type_dict={"mode":"w"}), "-"), 
         (ClickAttrs.filefield(type_dict={"mode":"wb"}), "-"), 
