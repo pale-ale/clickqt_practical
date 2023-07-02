@@ -1,6 +1,12 @@
 import pytest
 import re
 
+from click.testing import CliRunner
+
+@pytest.fixture(scope="function")
+def runner(request):
+    return CliRunner()
+
 def pytest_collection_modifyitems(items:list[pytest.Function]):
     """
         Change the default test execution order
