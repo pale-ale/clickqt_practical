@@ -49,7 +49,6 @@ class BaseWidget(ABC):
         """
             Sets the value of the widget
         """
-        pass
 
     def isEmpty(self) -> bool:
         """
@@ -138,19 +137,12 @@ class BaseWidget(ABC):
         """
             Returns the value of the widget without any checks
         """
-        pass
     
     def handleValid(self, valid: bool):
         if not valid:
-            if (oname := self.widget.objectName()):
-                self.widget.setStyleSheet(f"QWidget#{oname}{{ border: 1px solid red }}")
-            else:
-                self.widget.setStyleSheet("border: 1px solid red")
+            self.widget.setStyleSheet(f"QWidget#{self.widget.objectName()}{{ border: 1px solid red }}")
         else:
-            if (oname := self.widget.objectName()):
-                self.widget.setStyleSheet(f"QWidget#{oname}{{ }}")
-            else:
-                self.widget.setStyleSheet("")
+            self.widget.setStyleSheet(f"QWidget#{self.widget.objectName()}{{ }}")
     
     @staticmethod
     def getParamDefault(param:Parameter, alternative=None):
@@ -170,13 +162,7 @@ class NumericField(BaseWidget):
         self.widget.setMinimum(value)
 
     def setMaximum(self, value: int|float):
-         self.widget.setMaximum(value)
-
-    def getMinimum(self) -> int|float:
-        self.widget.minimum()
-
-    def getMaximum(self) -> int|float:
-        self.widget.maximum()
+        self.widget.setMaximum(value)
     
     def getWidgetValue(self) -> int|float:
         return self.widget.value()
@@ -191,8 +177,10 @@ class ComboBoxBase(BaseWidget):
         self.addItems(otype.choices)
 
     @abstractmethod
-    def addItems(self, items):
-        pass
+    def addItems(self, items:list[str]):
+        """
+            Adds items to the combobox
+        """
 
 class MultiWidget(BaseWidget):
     def __init__(self, otype:ParamType, param:Parameter, *args, **kwargs):
