@@ -4,6 +4,7 @@ import pytest
 from tests.testutils import ClickAttrs
 import clickqt.widgets
 from typing import Any
+import datetime
 
 
 @pytest.mark.parametrize(
@@ -40,10 +41,10 @@ from typing import Any
         (ClickAttrs.combobox(choices=["A", "B", "C"], case_sensitive=False), "b", "B"), 
         (ClickAttrs.checkable_combobox(choices=["A", "B", "C"]), ["B", "C"], ["B", "C"]), 
         (ClickAttrs.checkable_combobox(choices=["A", "B", "C"], case_sensitive=False), ["a", "c"], ["A", "C"]), 
-        (ClickAttrs.datetime(), "2023-06-23", "2023-06-23 00:00:00"), # Use the default formats
-        (ClickAttrs.datetime(), "2023-06-23 15:14:20", "2023-06-23 15:14:20"), 
-        (ClickAttrs.datetime(formats=["%d-%m-%Y"]), "23-06-2023", "23-06-2023"),
-        (ClickAttrs.datetime(formats=["%d-%m-%Y", "%d-%m-%Y %H:%M:%S"]), "23-06-2023", "23-06-2023 00:00:00"), # Always use the last format
+        (ClickAttrs.datetime(), "2023-06-23", datetime.datetime.strptime("2023-06-23 00:00:00", "%Y-%m-%d %H:%M:%S")), # Use the default formats
+        (ClickAttrs.datetime(), "2023-06-23 15:14:20", datetime.datetime.strptime("2023-06-23 15:14:20", "%Y-%m-%d %H:%M:%S")), 
+        (ClickAttrs.datetime(formats=["%d-%m-%Y"]), "23-06-2023", datetime.datetime.strptime("23-06-2023", "%d-%m-%Y")),
+        (ClickAttrs.datetime(formats=["%d-%m-%Y %H:%M:%S", "%d-%m-%Y"]), "23-06-2023 12:30:20", datetime.datetime.strptime("23-06-2023", "%d-%m-%Y")), # Default: Use the last format
         (ClickAttrs.filefield(), "test.abc", "test.abc"), 
         (ClickAttrs.filefield(), 123.2, "123.2"), 
         (ClickAttrs.filepathfield(), ".", "."),
