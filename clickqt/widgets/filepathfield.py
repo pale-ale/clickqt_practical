@@ -13,5 +13,4 @@ class FilePathField(PathField):
         self.file_type |= PathField.FileType.File if otype.file_okay else self.file_type
         self.file_type |= PathField.FileType.Directory if otype.dir_okay else self.file_type
 
-        if self.file_type == PathField.FileType.Unknown:
-            raise ValueError(f"Neither 'file_okay' nor 'dir_okay' in argument '{self.widget_name}' is set")
+        assert self.file_type != PathField.FileType.Unknown, f"Neither 'file_okay' nor 'dir_okay' in option '{self.widget_name}' is set"

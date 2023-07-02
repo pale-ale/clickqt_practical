@@ -32,16 +32,14 @@ class Control:
         self.gui()
     
     def parameter_to_widget(self, command: click.Command, groups_command_name:str, param: click.Parameter) -> QWidget:
-        if param.name:
-            assert self.widget_registry[groups_command_name].get(param.name) is None
-            
-            widget = self.gui.create_widget(param.type, param, widgetsource=self.gui.create_widget, com=command)                
-            self.widget_registry[groups_command_name][param.name] = widget
-            self.command_registry[groups_command_name][param.name] = (param.nargs, type(param.type).__name__)
-            
-            return widget.container
-        else:
-            raise SyntaxError("No parameter name specified")
+        assert param.name, "No parameter name specified"
+        assert self.widget_registry[groups_command_name].get(param.name) is None
+        
+        widget = self.gui.create_widget(param.type, param, widgetsource=self.gui.create_widget, com=command)                
+        self.widget_registry[groups_command_name][param.name] = widget
+        self.command_registry[groups_command_name][param.name] = (param.nargs, type(param.type).__name__)
+        
+        return widget.container
 
     def concat(self, a: str, b: str) -> str:
         return a + ":" + b
@@ -61,13 +59,11 @@ class Control:
         cmdbox = QWidget()
         cmdbox.setLayout(QVBoxLayout())
 
-        if self.widget_registry.get(groups_command_name) is None:
-            self.widget_registry[groups_command_name] = {}
-        if self.command_registry.get(groups_command_name) is None:
-            self.command_registry[groups_command_name] = {}
-        else:
-            raise RuntimeError(f"Not a unique group_command_name_concat ({groups_command_name})")    
+        assert self.widget_registry.get(groups_command_name) is None, f"Not a unique group_command_name_concat ({groups_command_name})"
 
+        self.widget_registry[groups_command_name] = {}
+        self.command_registry[groups_command_name] = {}
+  
         # parameter name to flag values
         feature_switches:dict[str, list[click.Parameter]] = {}
 
