@@ -67,3 +67,10 @@ addopts = "-x"            # if a test fails, test execution stops
 testpaths = [
     "tests",
 ]
+
+[tool.coverage.run]
+omit = [
+    "tests/*",
+    "__init__.py",
+    "_version.py", 
+]
