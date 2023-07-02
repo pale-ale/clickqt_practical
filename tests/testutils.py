@@ -1,8 +1,24 @@
 import click
 from typing import Sequence, Type
+import inspect
+from collections import defaultdict
 
 def raise_(ex:Exception):
     raise ex
+
+# Credits to https://stackoverflow.com/questions/15788725/how-to-determine-the-closest-common-ancestor-class
+def clcoancl(*cls_list):
+    mros = [list(inspect.getmro(cls)) for cls in cls_list]
+    track = defaultdict(int)
+    while mros:
+        for mro in mros:
+            cur = mro.pop(0)
+            track[cur] += 1
+            if track[cur] == len(cls_list):
+                return cur
+            if len(mro) == 0:
+                mros.remove(mro)
+    return None # or raise, if that's more appropriate
 
 class ClickAttrs():
     @staticmethod
