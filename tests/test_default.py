@@ -29,6 +29,7 @@ import datetime
         (ClickAttrs.floatrange(max=2.5, clamp=True), 5.2, 2.5),
         (ClickAttrs.floatrange(min=2.5, clamp=True), -1, 2.5),
         (ClickAttrs.textfield(), "test123", "test123"),
+        (ClickAttrs.textfield(), 12.2, "12.2"),
         (ClickAttrs.passwordfield(), "abc", "abc"),
         (ClickAttrs.confirmation_widget(), "test321", "test321"),
         (ClickAttrs.messagebox(prompt="Test"), True, True),

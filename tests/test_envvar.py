@@ -18,9 +18,12 @@ import clickqt.widgets
         (ClickAttrs.multi_value_widget(nargs=2, type=click.types.Path()), ["a", "b"], ["a", "b"]),
         (ClickAttrs.multi_value_widget(nargs=2, type=click.types.File()), ["a", "b"], ["a", "b"]),
         (ClickAttrs.intfield(), "test123", 0), # envvars are only considered for string based widgets
+        (ClickAttrs.multi_value_widget(nargs=2, type=int), ["2", "3"], [2, 3]), # and for multi widgets
+        (ClickAttrs.tuple_widget(types=(float, str)), ["2.3", "3"], [2.3, "3"]),
+        (ClickAttrs.nvalue_widget(), ["2.3", "3", "av"], ["2.3", "3", "av"]),
     ]
 )
-def test_set_envvar(click_attrs:dict, envvar_values:str|list[str], expected:str|list[str]):
+def test_set_envvar(click_attrs:dict, envvar_values:str|list[str], expected:str|list):
     os.environ["TEST_CLICKQT_ENVVAR"] = os.path.pathsep.join(envvar_values if isinstance(envvar_values, list) else [envvar_values])
 
     param = click.Option(param_decls=["--test"], envvar="TEST_CLICKQT_ENVVAR", **click_attrs)
