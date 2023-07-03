@@ -77,5 +77,6 @@ omit = [
 
 [tool.coverage.report]
 exclude_also = [
-    "def showPassword" # PasswordField.__init__.showPassword is unreachable
+    "def __call__", # Control.__call__ and GUI.__call__ cannot be automated
+    "def showPassword", # PasswordField.__init__.showPassword is unreachable
 ]
