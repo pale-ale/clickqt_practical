@@ -3,8 +3,24 @@ import pytest
 
 from tests.testutils import ClickAttrs, raise_
 import clickqt.widgets
-from typing import Any
+from typing import Any, Callable
 from PySide6.QtCore import QEvent
+
+
+def eval(clickqt_widget:clickqt.widgets.BaseWidget, clickqt_child_widget:clickqt.widgets.BaseWidget, invalid_value:Any, valid_value:Any):
+    value = [invalid_value, valid_value]
+    border:list[Callable] = [lambda widget: f"QWidget#{clickqt_widget.widget_name}{{ border: 1px solid red }}" in widget.styleSheet(), # red border 
+                             lambda widget: f"QWidget#{clickqt_widget.widget_name}{{ }}" == widget.styleSheet()] # normal border
+    
+    for i in range(2):
+        clickqt_widget.setValue(value[i])
+        clickqt_child_widget.focus_out_validator.eventFilter(clickqt_child_widget.widget, QEvent(QEvent.Type.FocusOut)) # widget goes out of focus
+        if (clickqt_widget == clickqt_child_widget and isinstance(clickqt_widget, clickqt.widgets.MultiWidget)) or \
+            (clickqt_widget != clickqt_child_widget and isinstance(clickqt_widget, clickqt.widgets.MultiValueWidget|clickqt.widgets.TupleWidget)): # NValueWidget: Every child can be checked individually
+            for child in clickqt_widget.children:
+                assert border[i](child.widget)
+        else:
+            assert border[i](clickqt_child_widget.widget)
 
 
 @pytest.mark.parametrize(
@@ -22,21 +38,26 @@ def test_focus_out_validation(click_attrs:dict, invalid_value:Any, valid_value:A
     cli = click.Command("cli", params=[param])
     
     control = clickqt.qtgui_from_click(cli)
+    clickqt_widget = control.widget_registry[cli.name][param.name]
 
-    control.widget_registry[cli.name][param.name].setValue(invalid_value)
-    control.widget_registry[cli.name][param.name].focus_out_validator.eventFilter(control.widget_registry[cli.name][param.name].widget, QEvent(QEvent.Type.FocusOut))
-    red_border = lambda widget: f"QWidget#{param.name}{{ border: 1px solid red }}" in widget.styleSheet()
-    if isinstance(control.widget_registry[cli.name][param.name], clickqt.widgets.MultiWidget):
-        for child in control.widget_registry[cli.name][param.name].children:
-            assert red_border(child.widget)
-    else:
-        assert red_border(control.widget_registry[cli.name][param.name].widget)
+    eval(clickqt_widget, clickqt_widget, invalid_value, valid_value)
 
-    control.widget_registry[cli.name][param.name].setValue(valid_value)
-    control.widget_registry[cli.name][param.name].focus_out_validator.eventFilter(control.widget_registry[cli.name][param.name].widget, QEvent(QEvent.Type.FocusOut))
-    normal_border = lambda widget: f"QWidget#{param.name}{{ }}" == widget.styleSheet()
-    if isinstance(control.widget_registry[cli.name][param.name], clickqt.widgets.MultiWidget):
-        for child in control.widget_registry[cli.name][param.name].children:
-            assert normal_border(child.widget)
-    else:
-        assert normal_border(control.widget_registry[cli.name][param.name].widget)
+
+@pytest.mark.parametrize(
+    ("click_attrs", "invalid_value", "valid_value"),
+    [
+        (ClickAttrs.tuple_widget(types=(str, click.types.Path(exists=True))), ["a", "invalid_path"], ["abc", "tests"]),
+        (ClickAttrs.multi_value_widget(nargs=2, type=click.types.Path(exists=True)), ["invalid_path", "invalid_path"], ["tests", "tests"]), # Both children have to be valid
+        (ClickAttrs.nvalue_widget(type=click.types.Path(exists=True)), ["invalid_path", "invalid_path"], ["invalid_path", "tests"]), # We check only children[1], so children[0] can be still invalid
+    ]
+)
+def test_focus_out_validation_child(click_attrs:dict, invalid_value:Any, valid_value:Any):
+    param = click.Option(param_decls=["--test"], **click_attrs)
+    cli = click.Command("cli", params=[param])
+    
+    control = clickqt.qtgui_from_click(cli)
+    clickqt_widget = control.widget_registry[cli.name][param.name]
+
+    clickqt_widget.setValue(invalid_value) # Create the children for the NValueWidget-object
+
+    eval(clickqt_widget, list(clickqt_widget.children)[1], invalid_value, valid_value) # We check the first child
