@@ -25,7 +25,7 @@ def test_focus_out_validation(click_attrs:dict, invalid_value:Any, valid_value:A
 
     control.widget_registry[cli.name][param.name].setValue(invalid_value)
     control.widget_registry[cli.name][param.name].focus_out_validator.eventFilter(control.widget_registry[cli.name][param.name].widget, QEvent(QEvent.Type.FocusOut))
-    red_border = lambda widget: "border: 1px solid red" in widget.styleSheet()
+    red_border = lambda widget: f"QWidget#{param.name}{{ border: 1px solid red }}" in widget.styleSheet()
     if isinstance(control.widget_registry[cli.name][param.name], clickqt.widgets.MultiWidget):
         for child in control.widget_registry[cli.name][param.name].children:
             assert red_border(child.widget)
@@ -34,7 +34,7 @@ def test_focus_out_validation(click_attrs:dict, invalid_value:Any, valid_value:A
 
     control.widget_registry[cli.name][param.name].setValue(valid_value)
     control.widget_registry[cli.name][param.name].focus_out_validator.eventFilter(control.widget_registry[cli.name][param.name].widget, QEvent(QEvent.Type.FocusOut))
-    normal_border = lambda widget: "" == widget.styleSheet() or f"QWidget#{param.name}{{ }}" == widget.styleSheet()
+    normal_border = lambda widget: f"QWidget#{param.name}{{ }}" == widget.styleSheet()
     if isinstance(control.widget_registry[cli.name][param.name], clickqt.widgets.MultiWidget):
         for child in control.widget_registry[cli.name][param.name].children:
             assert normal_border(child.widget)
