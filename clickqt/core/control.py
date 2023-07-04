@@ -128,6 +128,7 @@ class Control:
             return [group]
         
     def get_option_names(self,cmd):
+        """ Returns an array of all the parameters used for the current command togeter with their properties."""
         option_names = []
         for param in cmd.params:
             if isinstance(param, click.Option):
@@ -144,6 +145,7 @@ class Control:
         return option_names
         
     def get_params(self, selected_command_name:str, args):
+        """ Returns an array of strings that are used for the output field."""
         params = [k for k, v in self.widget_registry[selected_command_name].items()]
         if "yes" in params: 
             params.remove("yes")
@@ -154,11 +156,13 @@ class Control:
         return params
     
     def clean_command_string(self, word, text):
+        """ Returns a string without any special characters using regex."""
         text = re.sub(r'\b{}\b'.format(re.escape(word)), '', text)
         text = re.sub(r'[^a-zA-Z0-9 .-]', ' ', text)
         return text
     
     def command_to_string(self, hierarchy_selected_command_name: str):
+        """ Returns the current command name. """
         hierarchy_selected_command_name = self.clean_command_string(self.cmd.name, hierarchy_selected_command_name)
         return hierarchy_selected_command_name
     
@@ -256,7 +260,7 @@ class Control:
              
         if has_error:
             return
-        """ General hint for the usage of the CLI itself."""
+        
         print(f"For command details, please call '{self.command_to_string(hierarchy_selected_command_name)} --help'")
         print(self.command_to_string_to_copy(hierarchy_selected_command_name, selected_command))
         print(f"Current Command: {self.function_call_formatter(hierarchy_selected_command_name, selected_command, kwargs)} \n" + f"Output:")
