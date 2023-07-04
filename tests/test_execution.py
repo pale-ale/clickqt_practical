@@ -10,17 +10,17 @@ from clickqt.core.error import ClickQtError
 from typing import Any
 
 
-def prepare_execution(monkeypatch:MonkeyPatch, value:Any, widget:clickqt.widgets.BaseWidget, param:click.Parameter) -> tuple[str, str|None]:
+def prepare_execution(monkeypatch:MonkeyPatch, value:Any, widget:clickqt.widgets.BaseWidget) -> tuple[str, str|None]:
     if isinstance(widget, clickqt.widgets.MessageBox):
         # Mock the QMessageBox.information-function
         # User clicked on button "Yes" or "No"
         monkeypatch.setattr(QMessageBox, "information", lambda *args: QMessageBox.Yes if value else QMessageBox.No)
-    elif isinstance(widget, clickqt.widgets.FileField) and value == "-" and "r" in param.type.mode:
+    elif isinstance(widget, clickqt.widgets.FileField) and value == "-" and "r" in widget.type.mode:
         monkeypatch.setattr(QInputDialog, "getMultiLineText", lambda *args: (value, True)) # value, ok
 
     args:str = ""
 
-    if param.multiple:
+    if widget.param.multiple:
         def reduce(value) -> str:
             arg_str = "--p="
             for v in value:
@@ -132,7 +132,7 @@ def test_execution(monkeypatch:MonkeyPatch, runner:CliRunner, click_attrs:dict, 
 
     widget.setValue(value)
 
-    args, input = prepare_execution(monkeypatch, value, widget, param)
+    args, input = prepare_execution(monkeypatch, value, widget)
     click_res = runner.invoke(cli, args, input, standalone_mode=False if error.type != ClickQtError.ErrorType.EXIT_ERROR else True) # See click/core.py#1082
     val, err = widget.getValue()
 
