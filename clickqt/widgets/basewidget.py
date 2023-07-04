@@ -74,12 +74,13 @@ class BaseWidget(ABC):
                 value_missing = False
                 widget_values: list = self.getWidgetValue()
 
-                if len(widget_values) == 0:
+                if len(widget_values) == 0: # Checkable combobox
                     if self.param.required and default is None:
                         self.handleValid(False)
                         return (None, ClickQtError(ClickQtError.ErrorType.REQUIRED_ERROR, self.widget_name, self.param.param_type_name))
                     elif default is not None:
                         self.setValue(default)
+                        widget_values = self.getWidgetValue()
                     else: # param is not required and there is no default -> value is None
                         value_missing = True # But callback should be considered
                 
