@@ -1,6 +1,7 @@
 import click
 import pytest
 
+from PySide6.QtWidgets import QLineEdit
 from tests.testutils import ClickAttrs
 import clickqt.widgets
 
@@ -89,3 +90,20 @@ def test_type_assignment_multiple_commands(click_attrs_list:list[list[dict]], ex
     for i, cli_name in enumerate(control.widget_registry.keys()):
         for j, v in enumerate(control.widget_registry[cli_name].values()):
             assert type(v) is expected_clickqt_type_list[i][j] # Perfect type match
+
+def test_passwordfield_showPassword():
+    param = click.Option(param_decls=["--p"], **ClickAttrs.passwordfield()) 
+    cli = click.Command("cli", params=[param])
+    
+    control = clickqt.qtgui_from_click(cli)
+    passwordfield_widget:clickqt.widgets.PasswordField = control.widget_registry[cli.name][param.name]
+
+    for _ in range(3):
+        assert passwordfield_widget.widget.echoMode() == QLineEdit.EchoMode.Normal if passwordfield_widget.show_hide_action.isChecked() else QLineEdit.EchoMode.Password
+        # QIcons cannot be compared, but QImages can
+        icon = passwordfield_widget.show_hide_action.icon()
+        expected_icon = passwordfield_widget.icon_text[passwordfield_widget.show_hide_action.isChecked()][0]
+        assert icon.pixmap(icon.availableSizes()[0]).toImage() == expected_icon.pixmap(expected_icon.availableSizes()[0]).toImage()
+        assert passwordfield_widget.show_hide_action.text() == passwordfield_widget.icon_text[passwordfield_widget.show_hide_action.isChecked()][1]
+
+        passwordfield_widget.show_hide_action.setChecked(not passwordfield_widget.show_hide_action.isChecked())
