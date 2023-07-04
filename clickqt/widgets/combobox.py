@@ -1,45 +1,52 @@
-from typing import List
+from typing import Any
 from PySide6.QtWidgets import QComboBox
-from PySide6.QtCore import Qt
-from clickqt.widgets.base_widget import ComboBoxBase, BaseWidget
+from clickqt.widgets.basewidget import ComboBoxBase, BaseWidget
 from clickqt.widgets.core.QCheckableCombobox import QCheckableComboBox
-from click import Parameter
+from click import Parameter, ParamType, Context, Choice
 
 class ComboBox(ComboBoxBase):
     widget_type = QComboBox
 
-    def __init__(self, param:Parameter, *args, **kwargs):
-        super().__init__(param, *args, **kwargs)
-        self.setValue(BaseWidget.getParamDefault(param, None)) # Ignore, if there is no default
+    def __init__(self, otype:ParamType, param:Parameter, *args, **kwargs):
+        super().__init__(otype, param, *args, **kwargs)
+        
+        if self.parent_widget is None and (default := BaseWidget.getParamDefault(param, None)) is not None:
+            self.setValue(default)
 
-    def setValue(self, value: str):
-        if isinstance(value, str):
-            if (index := self.widget.findText(value, Qt.MatchFlag.MatchCaseSensitive if self.param.type.case_sensitive 
-                                              else Qt.MatchFlag.MatchFixedString)) >= 0:
-                self.widget.setCurrentIndex(index)
+    def setValue(self, value: Any):
+        self.widget.setCurrentText(str(self.type.convert(str(value), self.click_command, Context(self.click_command))))
 
-    def addItems(self, items: List[str]):
+    def addItems(self, items: list[str]):
         self.widget.addItems(items)
     
     def getWidgetValue(self) -> str:
         return self.widget.currentText()
+    
    
 class CheckableComboBox(ComboBoxBase):
     widget_type = QCheckableComboBox
 
-    def __init__(self, param:Parameter, *args, **kwargs):
-        super().__init__(param, *args, **kwargs)
-        self.setValue(BaseWidget.getParamDefault(param, []))
+    def __init__(self, otype:ParamType, param:Parameter, *args, **kwargs):
+        super().__init__(otype, param, *args, **kwargs)
 
-    def setValue(self, value: list[str]):
-        if isinstance(value, list):
-            self.widget.checkItems(value, self.param.type.case_sensitive)
+        assert param.multiple, "'param.multiple' should be True"
 
-    def addItems(self, items: List[str]):
+        if self.parent_widget is None:
+            self.setValue(BaseWidget.getParamDefault(param, []))
+
+    def setValue(self, value: list[Any]):
+        check_values: list[str] = []
+        for v in value:
+            check_values.append(str(self.type.convert(str(v), self.click_command, Context(self.click_command))))
+        
+        self.widget.checkItems(check_values)
+
+    def addItems(self, items: list[str]):
         self.widget.addItems(items)
 
     def isEmpty(self) -> bool:
         return len(self.getWidgetValue()) == 0
 
-    def getWidgetValue(self) -> List[str]:
+    def getWidgetValue(self) -> list[str]:
         return self.widget.getData()
+    

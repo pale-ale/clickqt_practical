@@ -8,6 +8,7 @@ class ClickQtError():
         PROCESSING_VALUE_ERROR = 3
         CONVERTING_ERROR = 4
         REQUIRED_ERROR = 5
+        EXIT_ERROR = 6
 
     def __init__(self, type: ErrorType=ErrorType.NO_ERROR, trigger: str="", click_error_message: str=""):
          self.type = type
@@ -22,5 +23,6 @@ class ClickQtError():
             case ClickQtError.ErrorType.PROCESSING_VALUE_ERROR: return f"Processing value error ({self.trigger}): {self.click_error_message}"
             case ClickQtError.ErrorType.CONVERTING_ERROR: return f"Converting error ({self.trigger}): {self.click_error_message}"
             case ClickQtError.ErrorType.REQUIRED_ERROR: return f"Required error ({self.trigger}): {self.click_error_message} is empty" #Argument/Option
-       
-        return "Unknown"
+            case ClickQtError.ErrorType.EXIT_ERROR: return "" # Don't print an error (click behaviour)
+
+        raise NotImplementedError(f"Message for this error ({self.type.value}) not implemented yet")

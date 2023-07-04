@@ -45,6 +45,9 @@ class QCheckableComboBox(QComboBox):
                 else:
                     self.showPopup()
                 return True
+            elif event.type() == QEvent.Type.Wheel:
+                return True # Disable wheel event
+            
             return False
 
         if object == self.view().viewport():
@@ -107,8 +110,7 @@ class QCheckableComboBox(QComboBox):
                 data = None
             self.addItem(text, data)
 
-    def checkItems(self, texts: list[str], case_sensitive=True):
-        texts = [text.upper() for text in texts] if not case_sensitive else texts
+    def checkItems(self, texts: list[str]):
         for i in range(self.model().rowCount()):
             if self.model().item(i).data().upper() in texts:
                 self.model().item(i).setCheckState(Qt.CheckState.Checked)

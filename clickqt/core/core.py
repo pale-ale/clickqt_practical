@@ -11,5 +11,4 @@ def qtgui_from_click(cmd):
                         color: white; 
                         border: white solid 1px
                         }""")
-
     return Control(cmd)

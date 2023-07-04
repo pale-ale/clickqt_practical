@@ -19,7 +19,7 @@ maintainers = [
     { name = "Dominic Kempf", email = "ssc@iwr.uni-heidelberg.de" },
 ]
 dynamic = ["version"]
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 license = { text = "MIT" }
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -34,12 +34,13 @@ dependencies = [
 [project.optional-dependencies]
 tests = [
     "pytest",
+    "pytest-xvfb",
     "pytest-cov",
     "pytest-qt",
 ]
 docs = [
-    "m2r2",
     "sphinx",
+    "sphinx_mdinclude",
     "sphinx_rtd_theme",
 ]
 
@@ -65,6 +66,20 @@ write_to = "clickqt/_version.py"
 
 # The following is the configuration for the pytest test suite
 [tool.pytest.ini_options]
+addopts = "-x"            # if a test fails, test execution stops 
 testpaths = [
     "tests",
+]
+
+[tool.coverage.run]
+omit = [
+    "tests/*",
+    "__init__.py",
+    "_version.py", 
+]
+
+[tool.coverage.report]
+exclude_also = [
+    "def __call__", # Control.__call__ and GUI.__call__ cannot be automated
+    "raise NotImplementedError", # Error.message: Message for an specific error type not implemented
 ]

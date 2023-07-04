@@ -6,6 +6,7 @@ on:
     branches:
       - main
       - dev
+      - 69-add-more-tests
   # and on all pull requests to the main branch
   pull_request:
     branches:
@@ -20,9 +21,8 @@ jobs:
     runs-on: ${{matrix.os}}
     strategy:
       matrix:
-        os: [macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
         python-version: ["3.10", "3.11"]
-
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
@@ -34,16 +34,18 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
+      
+      # See https://bugreports.qt.io/browse/PYSIDE-1461
+      # and https://pytest-qt.readthedocs.io/en/latest/troubleshooting.html#github-actions
+      # Only executed on linux  
+    - name: Install Qt libraries for Github CI
+      uses: tlambert03/setup-qt-libs@v1
 
-    - name: Install openGL package
-      if: ${{matrix.os == 'ubuntu-latest'}}
-      run: |
-        sudo apt install freeglut3 freeglut3-dev
-        sudo apt install libopengl0 -y  
+    #- name: Install Qt
+    #  uses: jurplel/install-qt-action@v3
 
     - name: Install Python package
-      run: python -m pip install .[tests]
+      run: python -m pip install --no-cache-dir .[tests]
     
     - name: Run Python tests
-      run: |
-        python -m pytest
+      run: python -m pytest
