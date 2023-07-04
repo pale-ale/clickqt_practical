@@ -55,7 +55,7 @@ class PathField(TextField):
         """
         assert self.file_type != PathField.FileType.Unknown
 
-        if self.file_type & PathField.FileType.File and self.file_type & PathField.FileType.Directory:
+        if (self.file_type & PathField.FileType.File and self.file_type & PathField.FileType.Directory) or (hasattr(self.type, "exists") and not self.type.exists):
             dialog = QPathDialog(None, self.type.exists)
             if dialog.exec():
                 self.handleValid(True)
