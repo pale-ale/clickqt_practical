@@ -35,9 +35,13 @@ def prepare_execution(monkeypatch:MonkeyPatch, value:Any, widget:clickqt.widgets
             else:
                 args += f"--p={str(v)} "
     elif isinstance(widget, clickqt.widgets.MultiWidget):
-        args = "--p="
+        args = "--p=" if len(value) > 0 else ""
         for v in value:
-            args += str(v) + " "
+            if str(v) != "":
+                args += str(v) + " "
+            else: # Don't pass an argument string if any child is empty
+               args = ""
+               break 
     elif not isinstance(widget, clickqt.widgets.MessageBox):
         if isinstance(value, str) and value == "":
             args = ""
@@ -65,6 +69,7 @@ def prepare_execution(monkeypatch:MonkeyPatch, value:Any, widget:clickqt.widgets
         (ClickAttrs.passwordfield(), "abc", ClickQtError()),
         (ClickAttrs.confirmation_widget(), "test321", ClickQtError()),
         (ClickAttrs.combobox(choices=["A", "B", "C"], case_sensitive=False), "b", ClickQtError()),
+        (ClickAttrs.checkable_combobox(choices=["A", "B", "C"]), [], ClickQtError()),
         (ClickAttrs.checkable_combobox(choices=["A", "B", "C"]), ["B", "C"], ClickQtError()), 
         (ClickAttrs.datetime(formats=["%d-%m-%Y"]), "23-06-2023", ClickQtError()),
         (ClickAttrs.filefield(), ".gitignore", ClickQtError()), 
@@ -72,10 +77,13 @@ def prepare_execution(monkeypatch:MonkeyPatch, value:Any, widget:clickqt.widgets
         (ClickAttrs.filefield(type_dict={"mode":"w"}), "-", ClickQtError()), 
         (ClickAttrs.filefield(type_dict={"mode":"wb"}), "-", ClickQtError()), 
         (ClickAttrs.filepathfield(), ".", ClickQtError()),
+        (ClickAttrs.tuple_widget(types=()), [], ClickQtError()),
         (ClickAttrs.tuple_widget(types=(str, int, float)), ("t", 1, -2.), ClickQtError()),
         (ClickAttrs.multi_value_widget(nargs=3, type=float), [1.2, "-3.5", -2], ClickQtError()),
+        (ClickAttrs.multi_value_widget(nargs=2), ["", ""], ClickQtError()),
         (ClickAttrs.nvalue_widget(type=(str, int)), [["a", 12], ["c", -1]], ClickQtError()),
         (ClickAttrs.nvalue_widget(type=(str, int)), [], ClickQtError()),
+
         # Aborted error
         (ClickAttrs.messagebox(prompt="Test", callback=lambda ctx, param, value: ctx.abort()), False, 
             ClickQtError(ClickQtError.ErrorType.ABORTED_ERROR)),
@@ -96,7 +104,15 @@ def prepare_execution(monkeypatch:MonkeyPatch, value:Any, widget:clickqt.widgets
             [[11, "test"], [231, "abc"]], ClickQtError(ClickQtError.ErrorType.PROCESSING_VALUE_ERROR)), 
         # Required error (Required param not provided)
         (ClickAttrs.textfield(required=True), "", ClickQtError(ClickQtError.ErrorType.REQUIRED_ERROR)),
+        (ClickAttrs.checkable_combobox(choices=["A", "B", "C"], required=True), [], ClickQtError(ClickQtError.ErrorType.REQUIRED_ERROR)),
+        (ClickAttrs.multi_value_widget(nargs=2, required=True), ["", ""], ClickQtError(ClickQtError.ErrorType.REQUIRED_ERROR)),
         (ClickAttrs.nvalue_widget(type=(str, str), required=True), [["", ""]], ClickQtError(ClickQtError.ErrorType.REQUIRED_ERROR)),
+        (ClickAttrs.nvalue_widget(type=(str, str), required=True), [], ClickQtError(ClickQtError.ErrorType.REQUIRED_ERROR)),
+
+        # With default
+        (ClickAttrs.textfield(default=""), "", ClickQtError()), # Empty string is accepted
+        (ClickAttrs.checkable_combobox(choices=["A", "B", "C"], default=["B"]), [], ClickQtError()),
+        (ClickAttrs.multi_value_widget(nargs=2, default=["A", "B"]), ["", ""], ClickQtError()),
     ]
 )
 def test_execution(monkeypatch:MonkeyPatch, runner:CliRunner, click_attrs:dict, value:Any, error:ClickQtError):
