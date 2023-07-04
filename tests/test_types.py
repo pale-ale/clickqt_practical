@@ -103,7 +103,7 @@ def test_passwordfield_showPassword():
         # QIcons cannot be compared, but QImages can
         icon = passwordfield_widget.show_hide_action.icon()
         expected_icon = passwordfield_widget.icon_text[passwordfield_widget.show_hide_action.isChecked()][0]
-        assert icon.pixmap(icon.availableSizes()[0]).toImage() == expected_icon.pixmap(expected_icon.availableSizes()[0]).toImage()
+        assert icon.pixmap(176, 176).toImage() == expected_icon.pixmap(176, 176).toImage()
         assert passwordfield_widget.show_hide_action.text() == passwordfield_widget.icon_text[passwordfield_widget.show_hide_action.isChecked()][1]
 
         passwordfield_widget.show_hide_action.setChecked(not passwordfield_widget.show_hide_action.isChecked())
