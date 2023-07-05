@@ -8,6 +8,7 @@ from PySide6.QtTest import QSignalSpy
 from tests.testutils import ClickAttrs
 import clickqt.widgets
 from clickqt.widgets.core.QPathDialog import QPathDialog
+import sys
 
 @pytest.mark.parametrize(
     ("click_attrs", "expected_clickqt_type"),
@@ -112,17 +113,17 @@ def test_passwordfield_showPassword():
 
         passwordfield_widget.show_hide_action.setChecked(not passwordfield_widget.show_hide_action.isChecked())
 
-@pytest.mark.xfail(reason="Fails on GitHubs VMs, locally it doesn't fail")
+@pytest.mark.skipif(sys.platform == "darwin", reason="Not runnable on GitHubs MacOS-VMs")
 @pytest.mark.parametrize(
     ("click_attrs", "value", "expected"),
     [
-        (ClickAttrs.filefield(type_dict={"mode":"r"}), ".gitignore", ".gitignore"),
+        pytest.param(ClickAttrs.filefield(type_dict={"mode":"r"}), "README.md", "README.md", marks=pytest.mark.skipif(sys.platform == "linux", reason="Does not work under linux")),
         (ClickAttrs.filefield(type_dict={"mode":"r"}), "invalid_file.txt", ""),
         (ClickAttrs.filefield(type_dict={"mode":"w"}), ".gitignore", ".gitignore"),
         (ClickAttrs.filefield(type_dict={"mode":"w"}), "invalid_file.txt", "invalid_file.txt"),
         (ClickAttrs.filepathfield(type_dict={"exists":True}), "invalid_path", ""),
         (ClickAttrs.filepathfield(type_dict={"exists":True}), "tests", "tests"), # valid folder
-        (ClickAttrs.filepathfield(type_dict={"exists":True}), ".gitignore", ".gitignore"), # valid file
+        pytest.param(ClickAttrs.filepathfield(type_dict={"exists":True}), "README.md", "README.md", marks=pytest.mark.skipif(sys.platform == "linux", reason="Does not work under linux")), # valid file
         (ClickAttrs.filepathfield(type_dict={"exists":False}), "invalid_path", "invalid_path"), # Exists==False: Accept any file
         (ClickAttrs.filepathfield(type_dict={"exists":True, "dir_okay":False}), "tests", ""),
         #(ClickAttrs.filepathfield(type_dict={"exists":True, "dir_okay":False}), ".gitignore", ".gitignore"), # Test does not work, but manually it does
