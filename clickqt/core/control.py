@@ -270,10 +270,6 @@ class Control:
                 if has_error:
                     return None
             
-            # print(f"For command details, please call '{self.command_to_string(hierarchy_selected_command_name)} --help'")
-            # print(self.command_to_string_to_copy(hierarchy_selected_command_name, selected_command))
-            # print(f"Current Command: {self.function_call_formatter(hierarchy_selected_command_name, selected_command, kwargs)} \n" + f"Output:")
-            
             if len(callback_args := inspect.getfullargspec(command.callback).args) > 0:
                 args: list[Any] = []
                 for ca in callback_args: # Bring the args in the correct order
@@ -285,9 +281,6 @@ class Control:
             else:
                 return lambda: command.callback(**kwargs)
             
-            
-
-
         callables:list[Callable] = []
         for i, command in enumerate(hierarchy_selected_command, 1):    
             if (c := run_command(command, reduce(self.concat, [g.name for g in hierarchy_selected_command[:i]]))) is not None:
