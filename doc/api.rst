@@ -3,7 +3,8 @@ User API
 
 .. toctree::
 
-This is an example function:
+.. automodule:: clickqt.core.core
+    :members:
 
-.. automodule:: clickqt
+.. automodule:: clickqt.core.control
     :members:
