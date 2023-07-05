@@ -2,20 +2,22 @@ from PySide6.QtWidgets import QLineEdit, QInputDialog
 from clickqt.widgets.textfield import PathField
 from typing import Tuple, Any
 from clickqt.core.error import ClickQtError
-from click import Parameter
+from click import Parameter, ParamType, File
 import sys
 from io import StringIO, BytesIO
 
-class FileFild(PathField):
+class FileField(PathField):
     widget_type = QLineEdit
 
-    def __init__(self, param:Parameter, *args, **kwargs):
-        super().__init__(param, *args, **kwargs)
+    def __init__(self, otype:ParamType, param:Parameter, *args, **kwargs):
+        super().__init__(otype, param, *args, **kwargs)
+
+        assert isinstance(otype, File), f"'otype' must be of type '{File}', but is '{type(otype)}'."
 
         self.file_type = PathField.FileType.File
 
     def getValue(self) -> Tuple[Any, ClickQtError]:
-        if "r" in self.param.type.mode and self.widget.text() == "-":
+        if "r" in self.type.mode and self.widget.text() == "-":
             self.handleValid(True)
 
             def ret():
@@ -24,8 +26,8 @@ class FileFild(PathField):
                     return (None, ClickQtError(ClickQtError.ErrorType.ABORTED_ERROR))
                 
                 old_stdin = sys.stdin
-                sys.stdin = BytesIO(user_input.encode(sys.stdin.encoding)) if "b" in self.param.type.mode else StringIO(user_input)
-                val = super(FileFild, self).getValue()
+                sys.stdin = BytesIO(user_input.encode(sys.stdin.encoding)) if "b" in self.type.mode else StringIO(user_input)
+                val = super(FileField, self).getValue()
                 sys.stdin = old_stdin
                 return val
             

@@ -1,4 +1,5 @@
 import click
+from typing import Any
 from clickqt.widgets.multivaluewidget import MultiValueWidget
 from PySide6.QtWidgets import QApplication, QSplitter, QWidget, QVBoxLayout, QPushButton, QTabWidget
 from PySide6.QtGui import QColor, Qt
@@ -10,7 +11,7 @@ from clickqt.widgets.combobox import ComboBox, CheckableComboBox
 from clickqt.widgets.datetimeedit import DateTimeEdit
 from clickqt.widgets.tuplewidget import TupleWidget
 from clickqt.widgets.filepathfield import FilePathField
-from clickqt.widgets.filefield import FileFild
+from clickqt.widgets.filefield import FileField
 from clickqt.widgets.nvaluewidget import NValueWidget
 from clickqt.widgets.confirmationwidget import ConfirmationWidget
 from clickqt.widgets.messagebox import MessageBox
@@ -22,7 +23,7 @@ class GUI:
         self.window = QWidget()
         self.window.setLayout(QVBoxLayout())
         self.splitter = QSplitter(Qt.Orientation.Vertical)
-        self.splitter.setChildrenCollapsible(False) # Child widgets can be resized down to size 0
+        self.splitter.setChildrenCollapsible(False) # Child widgets can't be resized down to size 0
         self.window.layout().addWidget(self.splitter)
         
         self.main_tab = QTabWidget()
@@ -54,25 +55,25 @@ class GUI:
             click.types.Tuple: TupleWidget,
             click.types.Choice: ComboBox,
             click.types.Path: FilePathField,
-            click.types.File: FileFild
+            click.types.File: FileField
         }
 
         def get_multiarg_version(otype:click.ParamType):
             if isinstance(otype, click.types.Choice):
                 return CheckableComboBox
             return NValueWidget
-        
+
         if hasattr(param, "confirmation_prompt") and param.confirmation_prompt:
-            return ConfirmationWidget(param, *args, **kwargs)
+            return ConfirmationWidget(otype, param, *args, **kwargs)
         if param.multiple:
-            return get_multiarg_version(otype)(param, *args, **kwargs)
+            return get_multiarg_version(otype)(otype, param, *args, **kwargs)
         if param.nargs > 1:
             if isinstance(otype, click.types.Tuple):
-                return TupleWidget(param, *args, **kwargs)
-            return MultiValueWidget(param, *args, **kwargs)
+                return TupleWidget(otype, param, *args, **kwargs)
+            return MultiValueWidget(otype, param, *args, **kwargs)
 
-        for t,widgetclass in typedict.items():
+        for t, widgetclass in typedict.items():
             if isinstance(otype, t):
-                return widgetclass(param, *args, **kwargs)
+                return widgetclass(otype, param, *args, **kwargs)
             
-        return TextField(param, *args, **kwargs) # Custom types are mapped to TextField
+        return TextField(otype, param, *args, **kwargs) # Custom types are mapped to TextField
