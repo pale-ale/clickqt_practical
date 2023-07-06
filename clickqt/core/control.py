@@ -4,14 +4,9 @@ from clickqt.core.gui import GUI
 from PySide6.QtWidgets import QWidget, QFrame, QVBoxLayout, QTabWidget, QScrollArea
 from PySide6.QtGui import QPalette
 from clickqt.core.error import ClickQtError
-
-# from clickqt.widgets.base_widget import BaseWidget
 from clickqt.widgets.confirmationwidget import ConfirmationWidget
-# from typing import Dict, Callable, List, Any, Tuple, Union
-
 from clickqt.widgets.basewidget import BaseWidget
 from typing import Dict, Callable, List, Any, Tuple
-
 import sys
 from functools import reduce
 import re 
@@ -25,6 +20,7 @@ class Control:
         # Groups-Command-name concatinated with ":" to command-option-names to BaseWidget
         self.widget_registry: Dict[str, Dict[str, BaseWidget]] = {}
         self.command_registry: Dict[str, Dict[str, Tuple[int, Callable]]] = {}
+        #self.entry_point = entrypoint
 
         # Add all widgets
         if isinstance(cmd, click.Group):
@@ -273,7 +269,9 @@ class Control:
             if len(callback_args := inspect.getfullargspec(command.callback).args) > 0:
                 args: list[Any] = []
                 for ca in callback_args: # Bring the args in the correct order
-                    args.append(kwargs.pop(ca)) # Remove explicitly mentioned args from kwargs dict
+                    args.append(kwargs.pop(ca)) # Remove explicitly mentioned args from kwargs
+
+                #print(self.entry_point)
                 print(f"For command details, please call '{self.command_to_string(hierarchy_selected_command_name)} --help'")
                 print(self.command_to_string_to_copy(hierarchy_selected_command_name, selected_command))
                 print(f"Current Command: {self.function_call_formatter(hierarchy_selected_command_name, selected_command, kwargs)} \n" + f"Output:")
