@@ -1,7 +1,6 @@
 import click
 import pytest
 
-from PySide6.QtWidgets import QLineEdit
 from PySide6.QtWidgets import QLineEdit, QFileDialog, QApplication, QPushButton, QMessageBox
 from PySide6.QtCore import QTimer, SIGNAL, Signal, QObject
 from PySide6.QtTest import QSignalSpy
@@ -9,6 +8,7 @@ from tests.testutils import ClickAttrs
 import clickqt.widgets
 from clickqt.widgets.core.QPathDialog import QPathDialog
 import sys
+import time
 
 @pytest.mark.parametrize(
     ("click_attrs", "expected_clickqt_type"),
@@ -113,7 +113,7 @@ def test_passwordfield_showPassword():
 
         passwordfield_widget.show_hide_action.setChecked(not passwordfield_widget.show_hide_action.isChecked())
 
-@pytest.mark.skipif(sys.platform == "darwin", reason="Not runnable on GitHubs MacOS-VMs")
+#@pytest.mark.skipif(sys.platform == "darwin", reason="Not runnable on GitHubs MacOS-VMs")
 @pytest.mark.parametrize(
     ("click_attrs", "value", "expected"),
     [
@@ -147,9 +147,12 @@ def test_pathfield(click_attrs:dict, value:str, expected:str):
         messagebox:QMessageBox = QApplication.activeModalWidget()
 
         # Wait, until we have the QMessageBox- or QFileDialog-object
-        while messagebox is not None and not isinstance(messagebox, QFileDialog|QPathDialog|QMessageBox):
+        tries = 0
+        while messagebox is not None and not isinstance(messagebox, QFileDialog|QPathDialog|QMessageBox) and tries < 3:
             QApplication.processEvents()
             messagebox = QApplication.activeModalWidget()
+            tries += 1
+            time.sleep(0.0001)
 
         if messagebox is not None:
             messagebox.close()
@@ -161,25 +164,35 @@ def test_pathfield(click_attrs:dict, value:str, expected:str):
         messageBoxClosed = Finished()
 
         # Wait, until we have the QFileDialog object
-        while file_dialog is None or not isinstance(file_dialog, QFileDialog|QPathDialog): # See also https://github.com/pytest-dev/pytest-qt/issues/256
+        tries = 0
+        while file_dialog is None or not isinstance(file_dialog, QFileDialog|QPathDialog) and tries < 3: # See also https://github.com/pytest-dev/pytest-qt/issues/256
             QApplication.processEvents()
             file_dialog = QApplication.activeModalWidget()
+            tries += 1
+            time.sleep(0.0001)
+        
+        if file_dialog is not None:
+            file_dialog.findChild(QLineEdit, "fileNameEdit").setText(value) # = file_dialog.selectFile(value)
 
-        file_dialog.findChild(QLineEdit, "fileNameEdit").setText(value) # = file_dialog.selectFile(value)
+            # Search Open/Choose btn and click it
+            for btn in file_dialog.findChildren(QPushButton):
+                text = btn.text().lower()
+                if "open" in text or "choose" in text:
+                    spy = QSignalSpy(messageBoxClosed, SIGNAL("finished()"))
+                    QTimer.singleShot(5, lambda: closeMessagebox(messageBoxClosed))
+                    btn.click() 
 
-        # Search Open/Choose btn and click it
-        for btn in file_dialog.findChildren(QPushButton):
-            text = btn.text().lower()
-            if "open" in text or "choose" in text:
-                spy = QSignalSpy(messageBoxClosed, SIGNAL("finished()"))
-                QTimer.singleShot(10, lambda: closeMessagebox(messageBoxClosed))
-                btn.click() 
-                spy.wait(50)    # wait for function closeMessagebox to finish
-                break
+                    for _ in range(3):  # wait for stopping the worker
+                        if not spy.wait(20):  # wait for function closeMessagebox to finish   
+                            QApplication.processEvents()
+                        else:
+                            break
+                        
+                    break
 
-        file_dialog.close()
+            file_dialog.close()
     
-    QTimer.singleShot(10, selectFile)
+    QTimer.singleShot(5, selectFile)
     widget.browse()
 
     assert widget.getWidgetValue() == expected
