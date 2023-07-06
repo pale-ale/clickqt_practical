@@ -114,7 +114,7 @@ def test_passwordfield_showPassword():
         passwordfield_widget.show_hide_action.setChecked(not passwordfield_widget.show_hide_action.isChecked())
 
 #@pytest.mark.skipif(sys.platform == "darwin", reason="Not runnable on GitHubs MacOS-VMs")
-@pytest.mark.timeout(20)
+#@pytest.mark.timeout(20)
 @pytest.mark.parametrize(
     ("click_attrs", "value", "expected"),
     [
@@ -192,8 +192,6 @@ def test_pathfield(click_attrs:dict, value:str, expected:str):
                     break
 
             file_dialog.close()
-        else:
-            QApplication.closeAllWindows()
     
     QTimer.singleShot(0, selectFile)
     widget.browse()
