@@ -11,8 +11,8 @@ from typing import Iterable
 import clickqt.widgets
 
 
-def findChildren(object: QWidget, child_type: QWidget) -> Iterable:
-    return object.findChildren(child_type, options=Qt.FindChildOption.FindDirectChildrenOnly)
+def findChildren(object: QWidget, child_type: QWidget, options=Qt.FindChildOption.FindDirectChildrenOnly) -> Iterable:
+    return object.findChildren(child_type, options=options)
 
 def checkLen(children: Iterable, expected_len:int) -> Iterable:
     assert len(children) == expected_len
@@ -96,7 +96,8 @@ def test_gui_construction_no_options(root_group_command: click.Group|click.Comma
 
     # Base widgets are set correctly
     assert checkLen(findChildren(gui.window, QSplitter), 1)[0] == gui.splitter
-    assert checkLen(findChildren(gui.splitter, QPushButton), 1)[0] == gui.run_button
+    buttons = checkLen(findChildren(gui.splitter, QPushButton, Qt.FindChildOption.FindChildrenRecursively), 2)
+    assert gui.run_button in buttons and gui.stop_button in buttons
     assert checkLen(findChildren(gui.splitter, TerminalOutput), 1)[0] == gui.terminal_output
 
     parent_tab_widget = checkLen(findChildren(gui.splitter, QTabWidget), 1)[0]
@@ -158,3 +159,6 @@ def test_gui_construction_with_options(root_group_command: click.Group|click.Com
         included, err_message = isIncluded(tab_widget, root_group_command.commands.values(), control, root_group_command.name) 
 
         assert included, err_message
+
+def test_gui_btn_stop():
+    pass

@@ -3,11 +3,12 @@ from click.testing import CliRunner
 import pytest
 
 from tests.testutils import ClickAttrs, clcoancl, raise_
-from PySide6.QtWidgets import QMessageBox, QInputDialog
+from PySide6.QtWidgets import QMessageBox, QInputDialog, QApplication
 from pytest import MonkeyPatch
 import clickqt.widgets
 from clickqt.core.error import ClickQtError
 from typing import Any
+import time
 
 
 def prepare_execution(monkeypatch:MonkeyPatch, value:Any, widget:clickqt.widgets.BaseWidget) -> tuple[str, str|None]:
@@ -165,5 +166,8 @@ def test_execution(monkeypatch:MonkeyPatch, runner:CliRunner, click_attrs:dict, 
 
             clickqt_res = None # Reset the stored click result
             control.gui.run_button.click()
+            for i in range(10):  # Wait for worker thread to finish the execution
+                QApplication.processEvents()
+                time.sleep(0.001)
             val = clickqt_res
     
