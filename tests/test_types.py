@@ -2,7 +2,7 @@ import click
 import pytest
 
 from PySide6.QtWidgets import QLineEdit, QFileDialog, QApplication, QPushButton, QMessageBox
-from PySide6.QtCore import QTimer, SIGNAL, Signal, QObject
+from PySide6.QtCore import QTimer, SIGNAL, Signal, QObject, QEventLoop
 from PySide6.QtTest import QSignalSpy
 from tests.testutils import ClickAttrs
 import clickqt.widgets
@@ -114,7 +114,7 @@ def test_passwordfield_showPassword():
         passwordfield_widget.show_hide_action.setChecked(not passwordfield_widget.show_hide_action.isChecked())
 
 #@pytest.mark.skipif(sys.platform == "darwin", reason="Not runnable on GitHubs MacOS-VMs")
-@pytest.mark.timeout(30)
+@pytest.mark.timeout(2)
 @pytest.mark.parametrize(
     ("click_attrs", "value", "expected"),
     [
@@ -150,7 +150,7 @@ def test_pathfield(click_attrs:dict, value:str, expected:str):
         # Wait, until we have the QMessageBox- or QFileDialog-object
         tries = 0
         while messagebox is not None and not isinstance(messagebox, QFileDialog|QPathDialog|QMessageBox) and tries < 10:
-            QApplication.processEvents()
+            QApplication.processEvents(QEventLoop.ProcessEventsFlag.AllEvents, 10)
             messagebox = QApplication.activeModalWidget()
             tries += 1
             time.sleep(0.001)
@@ -167,7 +167,7 @@ def test_pathfield(click_attrs:dict, value:str, expected:str):
         # Wait, until we have the QFileDialog object
         tries = 0
         while file_dialog is None or not isinstance(file_dialog, QFileDialog|QPathDialog) and tries < 10: # See also https://github.com/pytest-dev/pytest-qt/issues/256
-            QApplication.processEvents()
+            QApplication.processEvents(QEventLoop.ProcessEventsFlag.AllEvents, 10)
             file_dialog = QApplication.activeModalWidget()
             tries += 1
             time.sleep(0.001)
@@ -185,7 +185,7 @@ def test_pathfield(click_attrs:dict, value:str, expected:str):
 
                     for _ in range(5):
                         if not spy.wait(20):  # wait for function closeMessagebox to finish   
-                            QApplication.processEvents()
+                            QApplication.processEvents(QEventLoop.ProcessEventsFlag.AllEvents, 10)
                         else:
                             break
                         
