@@ -153,7 +153,7 @@ def test_pathfield(click_attrs:dict, value:str, expected:str):
             QApplication.processEvents()
             messagebox = QApplication.activeModalWidget()
             tries += 1
-            time.sleep(0.001)
+            #time.sleep(0.001)
 
         if messagebox is not None:
             messagebox.close()
@@ -170,7 +170,7 @@ def test_pathfield(click_attrs:dict, value:str, expected:str):
             QApplication.processEvents()
             file_dialog = QApplication.activeModalWidget()
             tries += 1
-            time.sleep(0.001)
+            #time.sleep(0.001)
         
         if file_dialog is not None:
             file_dialog.findChild(QLineEdit, "fileNameEdit").setText(value) # = file_dialog.selectFile(value)
@@ -185,7 +185,7 @@ def test_pathfield(click_attrs:dict, value:str, expected:str):
 
                     for _ in range(5):
                         if not spy.wait(20):  # wait for function closeMessagebox to finish   
-                            QApplication.processEvents(QEventLoop.ProcessEventsFlag.AllEvents, 10)
+                            QApplication.processEvents()
                         else:
                             break
                         
