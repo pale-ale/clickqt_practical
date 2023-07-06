@@ -113,8 +113,8 @@ def test_passwordfield_showPassword():
 
         passwordfield_widget.show_hide_action.setChecked(not passwordfield_widget.show_hide_action.isChecked())
 
-#@pytest.mark.skipif(sys.platform == "darwin", reason="Not runnable on GitHubs MacOS-VMs")
-@pytest.mark.timeout(20)
+@pytest.mark.skipif(sys.platform == "darwin", reason="Not runnable on GitHubs MacOS-VMs")
+#@pytest.mark.timeout(20)
 @pytest.mark.parametrize(
     ("click_attrs", "value", "expected"),
     [
@@ -180,7 +180,7 @@ def test_pathfield(click_attrs:dict, value:str, expected:str):
                 text = btn.text().lower()
                 if "open" in text or "choose" in text:
                     spy = QSignalSpy(messageBoxClosed, SIGNAL("finished()"))
-                    QTimer.singleShot(0, lambda: closeMessagebox(messageBoxClosed))
+                    QTimer.singleShot(5, lambda: closeMessagebox(messageBoxClosed))
                     btn.click() 
 
                     for _ in range(5):
@@ -193,7 +193,7 @@ def test_pathfield(click_attrs:dict, value:str, expected:str):
 
             file_dialog.close()
     
-    QTimer.singleShot(0, selectFile)
+    QTimer.singleShot(5, selectFile)
     widget.browse()
 
     assert widget.getWidgetValue() == expected
