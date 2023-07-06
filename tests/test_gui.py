@@ -3,12 +3,13 @@ import pytest
 import clickqt
 
 from tests.testutils import ClickAttrs
-from PySide6.QtWidgets import QTabWidget, QPushButton, QSplitter, QWidget
+from PySide6.QtWidgets import QTabWidget, QPushButton, QSplitter, QWidget, QApplication
 from PySide6.QtCore import Qt
 from clickqt.core.output import TerminalOutput
 from clickqt.core.control import Control
 from typing import Iterable
 import clickqt.widgets
+import time
 
 
 def findChildren(object: QWidget, child_type: QWidget, options=Qt.FindChildOption.FindDirectChildrenOnly) -> Iterable:
@@ -160,5 +161,28 @@ def test_gui_construction_with_options(root_group_command: click.Group|click.Com
 
         assert included, err_message
 
-def test_gui_btn_stop():
-    pass
+def test_gui_stop_execution():
+    param = click.Option(param_decls=["--p"], **ClickAttrs.checkbox())
+    cli = click.Command("cli", params=[param], callback=lambda p: time.sleep(10))
+
+    control = clickqt.qtgui_from_click(cli)
+    run_button = control.gui.run_button
+    stop_button = control.gui.stop_button
+
+    assert run_button.isEnabled() and not stop_button.isEnabled()
+    assert control.worker is None and control.worker_thread is None
+
+    run_button.click() # Start execution
+
+    assert not run_button.isEnabled() and stop_button.isEnabled()
+    assert control.worker is not None and control.worker_thread is not None
+
+    stop_button.click() # Stop execution
+
+    for i in range(10):  # Wait for stopping the worker
+        QApplication.processEvents()
+        time.sleep(0.0001)
+
+    assert run_button.isEnabled() and not stop_button.isEnabled()
+    assert control.worker is None and control.worker_thread is None
+    assert "Execution stopped!\n" in control.gui.terminal_output.toPlainText()
