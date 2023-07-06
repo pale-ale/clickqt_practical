@@ -35,6 +35,7 @@ dependencies = [
 tests = [
     "pytest",
     "pytest-xvfb",
+    "pytest-timeout",
     "pytest-cov",
     "pytest-qt",
 ]
