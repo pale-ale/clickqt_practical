@@ -38,7 +38,7 @@ def test_type_assignment(click_attrs:dict, expected_clickqt_type:clickqt.widgets
     param = click.Option(param_decls=["--test"], **click_attrs)
     cli = click.Command("cli", params=[param])
 
-    control = clickqt.qtgui_from_click(cli)
+    control = clickqt.qtgui_from_click(cli, True, " ")
     gui = control.gui
     
     assert type(gui.create_widget(param.type, param, widgetsource=gui.create_widget, com=cli)) is expected_clickqt_type , "directly" # Perfect type match
@@ -63,7 +63,7 @@ def test_type_assignment_multiple_options(click_attrs_list:list[dict], expected_
 
     cli = click.Command("cli", params=params)
 
-    control = clickqt.qtgui_from_click(cli)
+    control = clickqt.qtgui_from_click(cli, True, " ")
     for i, v in enumerate(control.widget_registry[cli.name].values()):
         assert type(v) is expected_clickqt_type_list[i] # Perfect type match
 
@@ -91,7 +91,7 @@ def test_type_assignment_multiple_commands(click_attrs_list:list[list[dict]], ex
 
     group = click.Group("group", commands=clis)
 
-    control = clickqt.qtgui_from_click(group)
+    control = clickqt.qtgui_from_click(group, True, " ")
     for i, cli_name in enumerate(control.widget_registry.keys()):
         for j, v in enumerate(control.widget_registry[cli_name].values()):
             assert type(v) is expected_clickqt_type_list[i][j] # Perfect type match
@@ -100,7 +100,7 @@ def test_passwordfield_showPassword():
     param = click.Option(param_decls=["--p"], **ClickAttrs.passwordfield()) 
     cli = click.Command("cli", params=[param])
     
-    control = clickqt.qtgui_from_click(cli)
+    control = clickqt.qtgui_from_click(cli, True, " ")
     passwordfield_widget:clickqt.widgets.PasswordField = control.widget_registry[cli.name][param.name]
 
     for _ in range(3):
@@ -136,7 +136,7 @@ def test_pathfield(monkeypatch:MonkeyPatch, click_attrs:dict, value:str, expecte
     param = click.Option(param_decls=["--p"], **click_attrs) 
     cli = click.Command("cli", params=[param])
 
-    control = clickqt.qtgui_from_click(cli)
+    control = clickqt.qtgui_from_click(cli, True, " ")
     widget:clickqt.widgets.PathField = control.widget_registry[cli.name][param.name]
 
     class Finished(QObject):

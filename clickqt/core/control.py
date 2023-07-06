@@ -13,14 +13,15 @@ import re
 from clickqt.core.utils import *
 
 class Control:
-    def __init__(self, cmd:click.Group|click.Command):
+    def __init__(self, cmd:click.Group|click.Command, is_ep:bool=None, ep_or_eppath:str=None):
         self.gui = GUI()
         self.cmd = cmd
 
         # Groups-Command-name concatinated with ":" to command-option-names to BaseWidget
         self.widget_registry: Dict[str, Dict[str, BaseWidget]] = {}
         self.command_registry: Dict[str, Dict[str, Tuple[int, Callable]]] = {}
-        #self.entry_point = entrypoint
+        self.ep_or_path = ep_or_eppath
+        self.is_entrypoint = is_ep
 
         # Add all widgets
         if isinstance(cmd, click.Group):
@@ -271,11 +272,16 @@ class Control:
                 for ca in callback_args: # Bring the args in the correct order
                     args.append(kwargs.pop(ca)) # Remove explicitly mentioned args from kwargs
 
-                #print(self.entry_point)
-                print(f"For command details, please call '{self.command_to_string(hierarchy_selected_command_name)} --help'")
-                print(self.command_to_string_to_copy(hierarchy_selected_command_name, selected_command))
-                print(f"Current Command: {self.function_call_formatter(hierarchy_selected_command_name, selected_command, kwargs)} \n" + f"Output:")
-                return lambda: command.callback(*args, **kwargs)
+                if self.is_entrypoint:
+                    print(f"For command details, please call '{self.command_to_string(hierarchy_selected_command_name)} --help'")
+                    print(f"{self.ep_or_path} {self.command_to_string_to_copy(hierarchy_selected_command_name, selected_command)}")
+                    print(f"Current Command: {self.function_call_formatter(hierarchy_selected_command_name, selected_command, kwargs)} \n" + f"Output:")
+                    return lambda: command.callback(*args, **kwargs)
+                else:
+                    print(f"For command details, please call '{self.command_to_string(hierarchy_selected_command_name)} --help'")
+                    print(f"python ~/{self.ep_or_path} {self.command_to_string_to_copy(hierarchy_selected_command_name, selected_command)}")
+                    print(f"Current Command: {self.function_call_formatter(hierarchy_selected_command_name, selected_command, kwargs)} \n" + f"Output:") 
+                    return lambda: command.callback(*args, **kwargs)
             else:
                 return lambda: command.callback(**kwargs)
             

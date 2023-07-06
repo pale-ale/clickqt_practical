@@ -127,7 +127,7 @@ def test_execution(monkeypatch:MonkeyPatch, runner:CliRunner, click_attrs:dict, 
     param = click.Option(param_decls=["--p"], **click_attrs)
     cli = click.Command("cli", params=[param], callback=callback)
     
-    control = clickqt.qtgui_from_click(cli)
+    control = clickqt.qtgui_from_click(cli, True, " ")
     widget = control.widget_registry[cli.name][param.name]
 
     widget.setValue(value)

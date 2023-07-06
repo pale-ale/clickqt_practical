@@ -127,7 +127,7 @@ def validate_spatial_reference(ctx, param, crs):
 def main(**args):
     print("main executed")
 
-gui = clickqt.qtgui_from_click(main)
+gui = clickqt.qtgui_from_click(main, True, " ")
     
 if __name__ == "__main__":
     gui()

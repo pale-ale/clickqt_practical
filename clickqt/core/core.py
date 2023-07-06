@@ -1,7 +1,7 @@
 from clickqt.core.control import Control
 from PySide6.QtWidgets import QApplication
 
-def qtgui_from_click(cmd):
+def qtgui_from_click(cmd, is_ep, ep_or_eppath=None):
     # Testing: The testing suite creates a QApplication instance
     if QApplication.instance() is None:
         app = QApplication([])
@@ -11,4 +11,4 @@ def qtgui_from_click(cmd):
                         color: white; 
                         border: white solid 1px
                         }""")
-    return Control(cmd)
+    return Control(cmd, is_ep, ep_or_eppath)
