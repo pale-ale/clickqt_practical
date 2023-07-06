@@ -180,7 +180,7 @@ def test_pathfield(click_attrs:dict, value:str, expected:str):
                 text = btn.text().lower()
                 if "open" in text or "choose" in text:
                     spy = QSignalSpy(messageBoxClosed, SIGNAL("finished()"))
-                    QTimer.singleShot(10, lambda: closeMessagebox(messageBoxClosed))
+                    QTimer.singleShot(0, lambda: closeMessagebox(messageBoxClosed))
                     btn.click() 
 
                     for _ in range(5):
@@ -193,9 +193,9 @@ def test_pathfield(click_attrs:dict, value:str, expected:str):
 
             file_dialog.close()
         else:
-            QApplication.activeModalWidget().close()
+            QApplication.closeAllWindows()
     
-    QTimer.singleShot(10, selectFile)
+    QTimer.singleShot(0, selectFile)
     widget.browse()
 
     assert widget.getWidgetValue() == expected
