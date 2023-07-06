@@ -114,6 +114,7 @@ def test_passwordfield_showPassword():
         passwordfield_widget.show_hide_action.setChecked(not passwordfield_widget.show_hide_action.isChecked())
 
 #@pytest.mark.skipif(sys.platform == "darwin", reason="Not runnable on GitHubs MacOS-VMs")
+@pytest.mark.timeout(30)
 @pytest.mark.parametrize(
     ("click_attrs", "value", "expected"),
     [
@@ -148,11 +149,11 @@ def test_pathfield(click_attrs:dict, value:str, expected:str):
 
         # Wait, until we have the QMessageBox- or QFileDialog-object
         tries = 0
-        while messagebox is not None and not isinstance(messagebox, QFileDialog|QPathDialog|QMessageBox) and tries < 3:
+        while messagebox is not None and not isinstance(messagebox, QFileDialog|QPathDialog|QMessageBox) and tries < 10:
             QApplication.processEvents()
             messagebox = QApplication.activeModalWidget()
             tries += 1
-            time.sleep(0.0001)
+            time.sleep(0.001)
 
         if messagebox is not None:
             messagebox.close()
@@ -165,11 +166,11 @@ def test_pathfield(click_attrs:dict, value:str, expected:str):
 
         # Wait, until we have the QFileDialog object
         tries = 0
-        while file_dialog is None or not isinstance(file_dialog, QFileDialog|QPathDialog) and tries < 3: # See also https://github.com/pytest-dev/pytest-qt/issues/256
+        while file_dialog is None or not isinstance(file_dialog, QFileDialog|QPathDialog) and tries < 10: # See also https://github.com/pytest-dev/pytest-qt/issues/256
             QApplication.processEvents()
             file_dialog = QApplication.activeModalWidget()
             tries += 1
-            time.sleep(0.0001)
+            time.sleep(0.001)
         
         if file_dialog is not None:
             file_dialog.findChild(QLineEdit, "fileNameEdit").setText(value) # = file_dialog.selectFile(value)
@@ -179,10 +180,10 @@ def test_pathfield(click_attrs:dict, value:str, expected:str):
                 text = btn.text().lower()
                 if "open" in text or "choose" in text:
                     spy = QSignalSpy(messageBoxClosed, SIGNAL("finished()"))
-                    QTimer.singleShot(5, lambda: closeMessagebox(messageBoxClosed))
+                    QTimer.singleShot(10, lambda: closeMessagebox(messageBoxClosed))
                     btn.click() 
 
-                    for _ in range(3):  # wait for stopping the worker
+                    for _ in range(5):
                         if not spy.wait(20):  # wait for function closeMessagebox to finish   
                             QApplication.processEvents()
                         else:
@@ -191,8 +192,10 @@ def test_pathfield(click_attrs:dict, value:str, expected:str):
                     break
 
             file_dialog.close()
+        else:
+            QApplication.activeModalWidget().close()
     
-    QTimer.singleShot(5, selectFile)
+    QTimer.singleShot(10, selectFile)
     widget.browse()
 
     assert widget.getWidgetValue() == expected
