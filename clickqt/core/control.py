@@ -1,7 +1,9 @@
 import click
 import inspect
 from clickqt.core.gui import GUI
+from clickqt.core.commandexecutor import CommandExecutor
 from PySide6.QtWidgets import QWidget, QFrame, QVBoxLayout, QTabWidget, QScrollArea
+from PySide6.QtCore import QThread, QObject, Signal, Slot
 from PySide6.QtGui import QPalette
 from clickqt.core.error import ClickQtError
 from clickqt.widgets.basewidget import BaseWidget
@@ -10,10 +12,24 @@ import sys
 from functools import reduce
 import re 
 
-class Control:
+class Control(QObject):
+    requestExecution = Signal(list) # Generics do not work here
+
     def __init__(self, cmd:click.Group|click.Command):
+        super().__init__()
+
         self.gui = GUI()
         self.cmd = cmd
+
+        # Create a worker in another thread when the user clicks the run button
+        # Don't destroy a thread when no command is running and the user closes the application
+        # Otherwise "QThread: Destroyed while thread is still running" would be appear
+        self.worker_thread: QThread = None
+        self.worker: CommandExecutor = None
+
+        # Connect GUI buttons with slots
+        self.gui.run_button.clicked.connect(self.startExecution)
+        self.gui.stop_button.clicked.connect(self.stopExecution)
 
         # Groups-Command-name concatinated with ":" to command-option-names to BaseWidget
         self.widget_registry: Dict[str, Dict[str, BaseWidget]] = {}
@@ -33,9 +49,6 @@ class Control:
             self.gui.main_tab.addTab(child_tabs, cmd.name)
         else:
             self.gui.main_tab.addTab(self.parse_cmd(cmd, cmd.name), cmd.name)
-
-        # Connect GUI Run-Button with run method
-        self.gui.run_button.clicked.connect(self.run)
 
     def __call__(self):
         self.gui()
@@ -183,8 +196,26 @@ class Control:
         message = f"{selected_command_name} \n"
         parameter_message =  f"Current Command parameters: \n" + "\n".join(params)
         return message + parameter_message
+    
+    @Slot()
+    def stopExecution(self):
+        print("Execution stopped!", file=sys.stderr)
+        self.worker_thread.terminate()
+        self.executionFinished()
 
-    def run(self):
+    @Slot()
+    def executionFinished(self):
+        self.worker_thread.deleteLater()
+        self.worker.deleteLater()
+
+        self.worker_thread = None
+        self.worker = None
+
+        self.gui.run_button.setEnabled(True)
+        self.gui.stop_button.setEnabled(False)
+
+    @Slot()
+    def startExecution(self):
         hierarchy_selected_command = self.current_command_hierarchy(self.gui.main_tab.currentWidget(), self.cmd)
 
         # Push context of selected command, needed for @click.pass_context and @click.pass_obj
@@ -247,5 +278,16 @@ class Control:
                 callables.append(c)
   
         if len(callables) == len(hierarchy_selected_command):
-            for c in callables:
-                c()
+            self.gui.run_button.setEnabled(False)
+            self.gui.stop_button.setEnabled(True)
+
+            self.worker_thread = QThread()
+            self.worker_thread.start()
+            self.worker = CommandExecutor()
+            self.worker.moveToThread(self.worker_thread)
+            self.worker.finished.connect(self.worker_thread.quit)
+            self.worker.finished.connect(self.executionFinished)
+            self.requestExecution.connect(self.worker.run)
+
+            self.requestExecution.emit(callables)
+        

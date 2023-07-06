@@ -1,7 +1,6 @@
 import click
-from typing import Any
 from clickqt.widgets.multivaluewidget import MultiValueWidget
-from PySide6.QtWidgets import QApplication, QSplitter, QWidget, QVBoxLayout, QPushButton, QTabWidget
+from PySide6.QtWidgets import QApplication, QSplitter, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QTabWidget, QSizePolicy
 from PySide6.QtGui import QColor, Qt
 from clickqt.widgets.checkbox import CheckBox
 from clickqt.widgets.textfield import TextField
@@ -29,12 +28,21 @@ class GUI:
         self.main_tab = QTabWidget()
         self.splitter.addWidget(self.main_tab)
  
+        buttons_container = QWidget()
+        buttons_container.setLayout(QHBoxLayout())
+        buttons_container.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed) # Not resizable in vertical direction
         self.run_button = QPushButton("&Run")  # Shortcut Alt+R
-        self.splitter.addWidget(self.run_button)
+        self.stop_button = QPushButton("&Stop")  # Shortcut Alt+S
+        self.stop_button.setEnabled(False)
+        buttons_container.layout().addWidget(self.run_button)
+        buttons_container.layout().addWidget(self.stop_button)
+        self.splitter.addWidget(buttons_container)
 
         self.terminal_output = TerminalOutput()
         self.terminal_output.setReadOnly(True)
         self.terminal_output.setToolTip("Terminal output")
+        self.terminal_output.newHtmlMessage.connect(self.terminal_output.writeHtml)
+
         self.splitter.addWidget(self.terminal_output)
         sys.stdout = OutputStream(self.terminal_output, sys.stdout)
         sys.stderr = OutputStream(self.terminal_output, sys.stderr, QColor("red"))
