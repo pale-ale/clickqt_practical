@@ -2,7 +2,7 @@ import click
 import pytest
 
 from PySide6.QtWidgets import QLineEdit, QFileDialog, QApplication, QPushButton, QMessageBox
-from PySide6.QtCore import QTimer, SIGNAL, Signal, QObject, QEventLoop
+from PySide6.QtCore import QTimer, SIGNAL, Signal, QObject
 from PySide6.QtTest import QSignalSpy
 from tests.testutils import ClickAttrs
 import clickqt.widgets
