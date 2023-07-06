@@ -16,10 +16,11 @@ def prepare_execution(monkeypatch:MonkeyPatch, value:Any, widget:clickqt.widgets
         # Mock the QMessageBox.information-function
         # User clicked on button "Yes" or "No"
         monkeypatch.setattr(QMessageBox, "information", lambda *args: QMessageBox.Yes if value else QMessageBox.No)
-    elif isinstance(widget, clickqt.widgets.FileField) and value == "-" and "r" in widget.type.mode:
-        monkeypatch.setattr(QInputDialog, "getMultiLineText", lambda *args: (value, True)) # value, ok
+    elif isinstance(widget, clickqt.widgets.FileField) and value in {"-", "--"} and "r" in widget.type.mode: # "-" -> True; "--" -> False
+        monkeypatch.setattr(QInputDialog, "getMultiLineText", lambda *args: (value, True if value == "-" else False)) # value, ok
 
     args:str = ""
+    input = None
 
     if widget.param.multiple:
         def reduce(value) -> str:
@@ -35,6 +36,9 @@ def prepare_execution(monkeypatch:MonkeyPatch, value:Any, widget:clickqt.widgets
                 args += reduce(v)
             else:
                 args += f"--p={str(v)} "
+    elif isinstance(widget, clickqt.widgets.ConfirmationWidget):
+        values = value.split(";")
+        args = "--p=" + values[0]
     elif isinstance(widget, clickqt.widgets.MultiWidget):
         args = "--p=" if len(value) > 0 else ""
         for v in value:
@@ -48,9 +52,9 @@ def prepare_execution(monkeypatch:MonkeyPatch, value:Any, widget:clickqt.widgets
             args = ""
         else:
             args = f"--p={str(value)}"
+    else: # widget is MessageBox
+        input = "y" if value else "n"
 
-    input = None if not isinstance(widget, clickqt.widgets.MessageBox) else \
-            "y" if value else "n"
     
     return (args, input)
 
@@ -68,7 +72,7 @@ def prepare_execution(monkeypatch:MonkeyPatch, value:Any, widget:clickqt.widgets
         (ClickAttrs.floatrange(min=2.5, clamp=True), -1, ClickQtError()),
         (ClickAttrs.textfield(), "test123", ClickQtError()),
         (ClickAttrs.passwordfield(), "abc", ClickQtError()),
-        (ClickAttrs.confirmation_widget(), "test321", ClickQtError()),
+        (ClickAttrs.confirmation_widget(), "test;test", ClickQtError()), # Testing: split on ';'
         (ClickAttrs.combobox(choices=["A", "B", "C"], case_sensitive=False), "b", ClickQtError()),
         (ClickAttrs.checkable_combobox(choices=["A", "B", "C"]), [], ClickQtError()),
         (ClickAttrs.checkable_combobox(choices=["A", "B", "C"]), ["B", "C"], ClickQtError()), 
@@ -88,6 +92,7 @@ def prepare_execution(monkeypatch:MonkeyPatch, value:Any, widget:clickqt.widgets
         # Aborted error
         (ClickAttrs.messagebox(prompt="Test", callback=lambda ctx, param, value: ctx.abort()), False, 
             ClickQtError(ClickQtError.ErrorType.ABORTED_ERROR)),
+        (ClickAttrs.filefield(), "--", ClickQtError(ClickQtError.ErrorType.ABORTED_ERROR)), # Testing: User wants to input an own message (not from a file) but quits the dialog
         (ClickAttrs.nvalue_widget(type=(str, int), callback=lambda ctx, param, value: ctx.abort()), [["ab", 12]], 
             ClickQtError(ClickQtError.ErrorType.ABORTED_ERROR)), 
         # Exit error
@@ -102,7 +107,9 @@ def prepare_execution(monkeypatch:MonkeyPatch, value:Any, widget:clickqt.widgets
         (ClickAttrs.intfield(callback=lambda ctx,param,value: raise_(click.exceptions.BadParameter("..."))), -3, 
             ClickQtError(ClickQtError.ErrorType.PROCESSING_VALUE_ERROR)), 
         (ClickAttrs.nvalue_widget(type=(int, str), callback=lambda ctx,param,value: raise_(click.exceptions.BadParameter("...")) if value[0] != (12, "test") else value), 
-            [[11, "test"], [231, "abc"]], ClickQtError(ClickQtError.ErrorType.PROCESSING_VALUE_ERROR)), 
+            [[11, "test"], [231, "abc"]], ClickQtError(ClickQtError.ErrorType.PROCESSING_VALUE_ERROR)),
+        # Confirmation error (input not equal)
+        (ClickAttrs.confirmation_widget(), "a;b", ClickQtError(ClickQtError.ErrorType.CONFIRMATION_INPUT_NOT_EQUAL_ERROR)), # Testing: split on ';' 
         # Required error (Required param not provided)
         (ClickAttrs.textfield(required=True), "", ClickQtError(ClickQtError.ErrorType.REQUIRED_ERROR)),
         (ClickAttrs.checkable_combobox(choices=["A", "B", "C"], required=True), [], ClickQtError(ClickQtError.ErrorType.REQUIRED_ERROR)),
@@ -131,13 +138,23 @@ def test_execution(monkeypatch:MonkeyPatch, runner:CliRunner, click_attrs:dict, 
     control = clickqt.qtgui_from_click(cli)
     widget = control.widget_registry[cli.name][param.name]
 
-    widget.setValue(value)
+    if isinstance(widget, clickqt.widgets.FileField) and value == "--" and "r" in widget.type.mode:
+        widget.setValue("-")
+    elif not isinstance(widget, clickqt.widgets.ConfirmationWidget):
+        widget.setValue(value)
+    else:
+        values = value.split(";")
+        widget.field.setValue(values[0])
+        widget.confirmation_field.setValue(values[1])
 
     args, input = prepare_execution(monkeypatch, value, widget)
-    click_res = runner.invoke(cli, args, input, standalone_mode=False if error.type != ClickQtError.ErrorType.EXIT_ERROR else True) # See click/core.py#1082
+    standalone_mode = False
+    # See click/core.py#1082 for first condition
+    if error.type == ClickQtError.ErrorType.EXIT_ERROR or \
+        (error.type == ClickQtError.ErrorType.CONFIRMATION_INPUT_NOT_EQUAL_ERROR and isinstance(widget, clickqt.widgets.ConfirmationWidget)):
+        standalone_mode = True
+    click_res = runner.invoke(cli, args, input, standalone_mode=standalone_mode)
     val, err = widget.getValue()
-
-    assert err.type == error.type
 
     if callable(val):
         val, err = val()
@@ -154,7 +171,10 @@ def test_execution(monkeypatch:MonkeyPatch, runner:CliRunner, click_attrs:dict, 
         if i == 0:
             assert err.type == error.type
             if error.type == ClickQtError.ErrorType.ABORTED_ERROR:
-                assert type(click_res.exception) is click.exceptions.Abort
+                if isinstance(widget, clickqt.widgets.FileField) and value == "--" and "r" in widget.type.mode:
+                    assert type(click_res.exception) is click.exceptions.BadParameter and "'--': No such file or directory" in click_res.exception.message
+                else:
+                    assert type(click_res.exception) is click.exceptions.Abort
             elif error.type == ClickQtError.ErrorType.EXIT_ERROR:
                 assert type(click_res.exception) is SystemExit # Not click.exceptions.Exit, see click/core.py#1082
             elif error.type == ClickQtError.ErrorType.REQUIRED_ERROR:
