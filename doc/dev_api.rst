@@ -1,7 +1,7 @@
 Developer API
 =============
 
-.. toctree:: 
+.. toctree::
 
-.. automodule:: clickqt.core.control
-    ::members:
+.. autoclass:: clickqt.core.control.Control
+    :members:
