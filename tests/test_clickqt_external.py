@@ -7,7 +7,7 @@ def test_clickqt_external():
   with pytest.raises(ImportError):
     get_command_from_entrypoint("example")
   with pytest.raises(TypeError):
-    get_command_from_entrypoint("example_cli")
+    get_command_from_entrypoint("example_gui")
   assert isinstance(get_command_from_entrypoint("example_cli"), Command)
 
   # test with file
