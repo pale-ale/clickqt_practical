@@ -279,7 +279,7 @@ class Control:
                     return lambda: command.callback(*args, **kwargs)
                 else:
                     print(f"For command details, please call '{self.command_to_string(hierarchy_selected_command_name)} --help'")
-                    print(f"python ~/{self.ep_or_path} {self.command_to_string_to_copy(hierarchy_selected_command_name, selected_command)}")
+                    print(f"python {self.ep_or_path} {self.command_to_string_to_copy(hierarchy_selected_command_name, selected_command)}")
                     print(f"Current Command: {self.function_call_formatter(hierarchy_selected_command_name, selected_command, kwargs)} \n" + f"Output:") 
                     return lambda: command.callback(*args, **kwargs)
             else:
