@@ -14,6 +14,8 @@ from clickqt.core.utils import *
 
 class Control:
     def __init__(self, cmd:click.Group|click.Command, is_ep:bool=None, ep_or_eppath:str=None):
+        """ __init__ function initializing the GUI object and the registries together with the differentiation of a group command and a simple command. """
+
         self.gui = GUI()
         self.cmd = cmd
 
@@ -55,9 +57,11 @@ class Control:
         return widget.container
 
     def concat(self, a: str, b: str) -> str:
+        """ Returns a concatenated string """
         return a + ":" + b
     
     def parse_cmd_group(self, cmdgroup: click.Group, group_names: str) -> QTabWidget:
+        """ Function to parse the information of a grouped click command. """
         group_tab_widget = QTabWidget()
         for group_name, group_cmd in cmdgroup.commands.items():
             if isinstance(group_cmd, click.Group):
@@ -78,6 +82,7 @@ class Control:
         return group_tab_widget
     
     def parse_cmd(self, cmd: click.Command, groups_command_name: str):
+        """ Function to parse the information of a simple command. """
         cmdbox = QWidget()
         cmdbox.setLayout(QVBoxLayout())
 
@@ -115,6 +120,7 @@ class Control:
         return cmd_tab_widget
     
     def check_error(self, err: ClickQtError) -> bool:
+        """ Returns if parameter has Error. """
         if err.type != ClickQtError.ErrorType.NO_ERROR:
             if (message := err.message()): # Don't print on context exit
                 print(message, file=sys.stderr)
@@ -137,6 +143,7 @@ class Control:
             return [group]
         
     def get_option_names(self,cmd):
+        """ Returns an array of all the parameters used for the current command togeter with their properties."""
         option_names = []
         for param in cmd.params:
             if isinstance(param, click.Option):
@@ -153,6 +160,7 @@ class Control:
         return option_names
         
     def get_params(self, selected_command_name:str, args):
+        """ Returns an array of strings that are used for the output field."""
         params = [k for k, v in self.widget_registry[selected_command_name].items()]
         if "yes" in params: 
             params.remove("yes")
@@ -163,16 +171,19 @@ class Control:
         return params
     
     def clean_command_string(self, word, text):
+        """ Returns a string without any special characters using regex."""
         text = re.sub(r'\b{}\b'.format(re.escape(word)), '', text)
         text = re.sub(r'[^a-zA-Z0-9 .-]', ' ', text)
         return text
     
     def command_to_string(self, hierarchy_selected_command_name: str):
+        """ Returns the current command name. """
         hierarchy_selected_command_name = self.clean_command_string(self.cmd.name, hierarchy_selected_command_name)
         return hierarchy_selected_command_name
     
     
     def command_to_string_to_copy(self, hierarchy_selected_name:str, selected_command):
+        """ Returns a string representing the click command if one actually would actually execute it in the shell"""
         parameter_list = self.get_option_names(selected_command)
         parameter_list = [param for param in parameter_list if param[0] != "--yes"]
         widgets = self.widget_registry[hierarchy_selected_name]
@@ -221,6 +232,7 @@ class Control:
 
     def run(self):
         hierarchy_selected_command = self.current_command_hierarchy(self.gui.main_tab.currentWidget(), self.cmd)
+        """ Computes the current command displayed on the current tab, if it is a grouped click command and computes the arguments that are used for the execution for the click command. """
         selected_command = hierarchy_selected_command[-1]
         hierarchy_selected_command_name = reduce(self.concat, [g.name for g in hierarchy_selected_command])
 

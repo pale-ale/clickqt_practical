@@ -19,6 +19,7 @@ from clickqt.core.output import OutputStream, TerminalOutput
 import sys
 
 class GUI:
+    """ GUI class responsible for setting up the components for the GUI that is used to navigate through the different kind of commands and their execution"""
     def __init__(self):
         self.window = QWidget()
         self.window.setLayout(QVBoxLayout())
@@ -44,6 +45,7 @@ class GUI:
         QApplication.instance().exec()
 
     def create_widget(self, otype:click.ParamType, param:click.Parameter, *args, **kwargs):
+        """ Function to return the widget object of the correct widget class determined by the param.type"""
         typedict = {
             click.types.BoolParamType: MessageBox if hasattr(param, "is_flag") and param.is_flag and hasattr(param, "prompt") and param.prompt else CheckBox,
             click.types.IntParamType: IntField,

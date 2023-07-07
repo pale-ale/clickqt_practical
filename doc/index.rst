@@ -6,7 +6,9 @@ clickqt
    :caption: Contents:
    
    intro
-   api
+   user_api
+   dev_api
+
 
 Indices and tables
 ==================
