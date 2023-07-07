@@ -25,4 +25,4 @@ class ClickQtError():
             case ClickQtError.ErrorType.REQUIRED_ERROR: return f"Required error ({self.trigger}): {self.click_error_message} is empty" #Argument/Option
             case ClickQtError.ErrorType.EXIT_ERROR: return "" # Don't print an error (click behaviour)
 
-        return "Unknown"
+        raise NotImplementedError(f"Message for this error ({self.type.value}) not implemented yet")

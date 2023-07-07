@@ -10,13 +10,15 @@ def clickqtfy():
 @clickqtfy.command('ep')
 @click.argument('epname')
 def package(epname):
-	qtgui_from_click(get_command_from_entrypoint(epname))()
+	qtgui_from_click(get_command_from_entrypoint(epname), True, epname)()
+
 
 @clickqtfy.command('file')
 @click.argument('epfile', type=click.Path(exists=True))
 @click.argument('epname')
 def withep(epfile, epname):
-	qtgui_from_click(get_command_from_path(epfile, epname))()
+	qtgui_from_click(get_command_from_path(epfile, epname), False, str(epfile))()
+
 
 def get_command_from_entrypoint(epname:str) -> click.Command:
 	eps = get_entrypoints_from_name(epname)
@@ -30,8 +32,8 @@ def get_command_from_entrypoint(epname:str) -> click.Command:
 def get_entrypoints_from_name(epname:str) -> list[metadata.EntryPoint]:	
 		grouped_eps = metadata.entry_points()
 		candidates:list[metadata.EntryPoint] = []
-		for eps in grouped_eps.values():
-			for ep in eps:
+		for group in grouped_eps.groups:
+			for ep in grouped_eps.select(group=group):
 				if ep.name == epname:
 					return [ep]
 				if epname in ep.name or epname in ep.value:
