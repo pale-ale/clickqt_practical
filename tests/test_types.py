@@ -9,6 +9,10 @@ import clickqt.widgets
 import sys
 import time
 
+
+class CustomParamType(click.ParamType):
+    pass
+
 @pytest.mark.parametrize(
     ("click_attrs", "expected_clickqt_type"),
     [
@@ -30,7 +34,8 @@ import time
         (ClickAttrs.filepathfield(), clickqt.widgets.FilePathField), 
         (ClickAttrs.nvalue_widget(), clickqt.widgets.NValueWidget),
         (ClickAttrs.tuple_widget(types=(click.types.Path(),int)), clickqt.widgets.TupleWidget),
-        (ClickAttrs.multi_value_widget(nargs=2), clickqt.widgets.MultiValueWidget),  
+        (ClickAttrs.multi_value_widget(nargs=2), clickqt.widgets.MultiValueWidget),
+        ({"type":CustomParamType()}, clickqt.widgets.TextField), # Custom types are mapped to TextFields
     ]
 )
 def test_type_assignment(click_attrs:dict, expected_clickqt_type:clickqt.widgets.BaseWidget):
@@ -187,3 +192,35 @@ def test_pathfield(qtbot:QtBot, click_attrs:dict, value:str, expected:str):
     widget.browse()
     
     assert widget.getWidgetValue() == expected
+
+@pytest.mark.parametrize(
+    ("click_attrs", "value", "add_children", "remove_children"),
+    [
+        (ClickAttrs.nvalue_widget(), "", 0, 0),
+        (ClickAttrs.nvalue_widget(), "test", 2, 0),
+        (ClickAttrs.nvalue_widget(), "test2", 3, 2),
+        (ClickAttrs.nvalue_widget(), "test3", 5, 5),
+
+        # With default
+        (ClickAttrs.nvalue_widget(default=["A", "B"]), "test3", 5, 5),
+    ]
+)
+def test_nvaluewidget_add_remove_children(click_attrs:dict, value:str, add_children:int, remove_children:int):
+    param = click.Option(param_decls=["--p"], **click_attrs) 
+    cli = click.Command("cli", params=[param])
+
+    control = clickqt.qtgui_from_click(cli)
+    widget:clickqt.widgets.NValueWidget = control.widget_registry[cli.name][param.name]
+
+    for _ in range(add_children):
+        widget.addPair(value)
+
+    amount_children = add_children + (len(param.default) if param.default is not None else 0)
+
+    assert len(widget.children) == amount_children
+    assert sum(1 for w in widget.buttondict.values() if w.getWidgetValue() == value) == add_children
+
+    for _ in range(remove_children):
+        widget.removeButtonPair(list(widget.buttondict.keys())[0])
+
+    assert len(widget.children) == amount_children-remove_children
