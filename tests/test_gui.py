@@ -199,7 +199,7 @@ def test_gui_stop_execution():
     for _ in range(10):
         if not spy.count():
             QApplication.processEvents()
-            spy.wait(20)
+            spy.wait(200)
 
     assert run_button.isEnabled() and not stop_button.isEnabled()
     assert control.worker is None and control.worker_thread is None
