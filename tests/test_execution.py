@@ -260,3 +260,28 @@ def test_execution_nvalue_widget(runner:CliRunner, click_attrs:dict, value:list[
                 QApplication.processEvents()
                 time.sleep(0.001)
             val = clickqt_res
+
+def test_execution_context():
+    clickqt_res:list = []
+    @click.group()
+    @click.pass_context
+    def cli(ctx):
+        nonlocal clickqt_res
+        ctx.obj = "test1"
+        clickqt_res.append(ctx)
+
+    @cli.command()
+    @click.pass_obj
+    def test(obj):
+        nonlocal clickqt_res
+        clickqt_res.append(obj)
+
+    control = clickqt.qtgui_from_click(cli)
+    control.gui.run_button.click()
+
+    for i in range(10):  # Wait for worker thread to finish the execution
+        QApplication.processEvents()
+        time.sleep(0.001)
+
+    assert len(clickqt_res) == 2 and isinstance(clickqt_res[0], click.Context) and clickqt_res[1] == "test1"
+
