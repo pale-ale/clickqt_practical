@@ -9,7 +9,14 @@ import clickqt.widgets
 from clickqt.core.error import ClickQtError
 from typing import Any
 import time
+import os
 
+clickqt_res:Any = None
+def callback(p):
+    global clickqt_res
+    if clickqt_res is None:
+        clickqt_res = p
+    return p
 
 def prepare_execution(monkeypatch:MonkeyPatch, value:Any, widget:clickqt.widgets.BaseWidget) -> tuple[str, str|None]:
     if isinstance(widget, clickqt.widgets.MessageBox):
@@ -34,7 +41,7 @@ def prepare_execution(monkeypatch:MonkeyPatch, value:Any, widget:clickqt.widgets
         for v in value:
             if isinstance(v, list):
                 args += reduce(v)
-            else:
+            elif str(v) != "":
                 args += f"--p={str(v)} "
     elif isinstance(widget, clickqt.widgets.ConfirmationWidget):
         values = value.split(";")
@@ -108,8 +115,6 @@ def prepare_execution(monkeypatch:MonkeyPatch, value:Any, widget:clickqt.widgets
             ClickQtError(ClickQtError.ErrorType.PROCESSING_VALUE_ERROR)), 
         (ClickAttrs.nvalue_widget(type=(int, str), callback=lambda ctx,param,value: raise_(click.exceptions.BadParameter("...")) if value[0] != (12, "test") else value), 
             [[11, "test"], [231, "abc"]], ClickQtError(ClickQtError.ErrorType.PROCESSING_VALUE_ERROR)),
-        # Confirmation error (input not equal)
-        (ClickAttrs.confirmation_widget(), "a;b", ClickQtError(ClickQtError.ErrorType.CONFIRMATION_INPUT_NOT_EQUAL_ERROR)), # Testing: split on ';' 
         # Required error (Required param not provided)
         (ClickAttrs.textfield(required=True), "", ClickQtError(ClickQtError.ErrorType.REQUIRED_ERROR)),
         (ClickAttrs.checkable_combobox(choices=["A", "B", "C"], required=True), [], ClickQtError(ClickQtError.ErrorType.REQUIRED_ERROR)),
@@ -124,13 +129,7 @@ def prepare_execution(monkeypatch:MonkeyPatch, value:Any, widget:clickqt.widgets
     ]
 )
 def test_execution(monkeypatch:MonkeyPatch, runner:CliRunner, click_attrs:dict, value:Any, error:ClickQtError):
-    clickqt_res:Any = None
-
-    def callback(p):
-        nonlocal clickqt_res
-        if clickqt_res is None:
-            clickqt_res = p
-        return p
+    global clickqt_res
 
     param = click.Option(param_decls=["--p"], **click_attrs)
     cli = click.Command("cli", params=[param], callback=callback)
@@ -140,18 +139,16 @@ def test_execution(monkeypatch:MonkeyPatch, runner:CliRunner, click_attrs:dict, 
 
     if isinstance(widget, clickqt.widgets.FileField) and value == "--" and "r" in widget.type.mode:
         widget.setValue("-")
-    elif not isinstance(widget, clickqt.widgets.ConfirmationWidget):
-        widget.setValue(value)
-    else:
+    elif isinstance(widget, clickqt.widgets.ConfirmationWidget):
         values = value.split(";")
         widget.field.setValue(values[0])
         widget.confirmation_field.setValue(values[1])
+    elif value is not None:
+        widget.setValue(value)
 
     args, input = prepare_execution(monkeypatch, value, widget)
     standalone_mode = False
-    # See click/core.py#1082 for first condition
-    if error.type == ClickQtError.ErrorType.EXIT_ERROR or \
-        (error.type == ClickQtError.ErrorType.CONFIRMATION_INPUT_NOT_EQUAL_ERROR and isinstance(widget, clickqt.widgets.ConfirmationWidget)):
+    if error.type == ClickQtError.ErrorType.EXIT_ERROR: #  See click/core.py#1082
         standalone_mode = True
     click_res = runner.invoke(cli, args, input, standalone_mode=standalone_mode)
     val, err = widget.getValue()
@@ -190,4 +187,76 @@ def test_execution(monkeypatch:MonkeyPatch, runner:CliRunner, click_attrs:dict, 
                 QApplication.processEvents()
                 time.sleep(0.001)
             val = clickqt_res
+
+@pytest.mark.parametrize(
+    ("click_attrs", "value1", "value2", "error"),
+    [
+        (ClickAttrs.confirmation_widget(), "a", "b", ClickQtError(ClickQtError.ErrorType.CONFIRMATION_INPUT_NOT_EQUAL_ERROR)),
+        (ClickAttrs.confirmation_widget(required=True), "", "b", ClickQtError(ClickQtError.ErrorType.REQUIRED_ERROR)), # First check for required, then value equality
+    ]
+)
+def test_execution_confirmation_widget_fail(click_attrs:dict, value1:str, value2:str, error:ClickQtError):
+    param = click.Option(param_decls=["--p"], **click_attrs)
+    cli = click.Command("cli", params=[param])
     
+    control = clickqt.qtgui_from_click(cli)
+    widget:clickqt.widgets.ConfirmationWidget = control.widget_registry[cli.name][param.name]
+
+    widget.field.setValue(value1)
+    widget.confirmation_field.setValue(value2)
+
+    control.gui.run_button.click()
+
+    for i in range(10):  # Wait for worker thread to finish the execution
+        QApplication.processEvents()
+        time.sleep(0.001)
+
+    val, err = widget.getValue()
+
+    assert val is None and err.type == error.type
+
+@pytest.mark.parametrize(
+    ("click_attrs", "value", "envvar_values"),
+    [
+        (ClickAttrs.nvalue_widget(), [], []),
+        (ClickAttrs.nvalue_widget(), [], ["test1", "test2"]),
+        (ClickAttrs.nvalue_widget(), ["a", "b"], []),
+        (ClickAttrs.nvalue_widget(), ["a", "b"], ["test1", "test2"]),
+        (ClickAttrs.nvalue_widget(default=["x", "y"]), [], []),
+        (ClickAttrs.nvalue_widget(default=["x", "y"]), [], ["test1", "test2"]),
+        (ClickAttrs.nvalue_widget(default=["x", "y"]), ["a", "b"], []),
+        (ClickAttrs.nvalue_widget(default=["x", "y"]), ["a", "b"], ["test1", "test2"]),
+
+        # Children are empty
+        (ClickAttrs.nvalue_widget(default=["x", "y"]), ["", ""], []),
+        (ClickAttrs.nvalue_widget(default=[]), ["", ""], []),
+    ]
+)
+def test_execution_nvalue_widget(runner:CliRunner, click_attrs:dict, value:list[str], envvar_values:list[str]):
+    global clickqt_res
+    os.environ["TEST_CLICKQT_ENVVAR"] = os.path.pathsep.join(envvar_values)
+
+    param = click.Option(param_decls=["--p"], envvar="TEST_CLICKQT_ENVVAR", **click_attrs)
+    cli = click.Command("cli", params=[param], callback=callback)
+    
+    control = clickqt.qtgui_from_click(cli)
+    widget:clickqt.widgets.NValueWidget = control.widget_registry[cli.name][param.name]
+
+    widget.setValue(value)
+
+    val, err = widget.getValue()
+    args, input = prepare_execution(monkeypatch=None, value=value, widget=widget)
+    click_res = runner.invoke(cli, args, input, standalone_mode=False)
+
+    for i in range(2):
+        assert val == click_res.return_value
+
+        if i == 0:
+            assert err.type == ClickQtError.ErrorType.NO_ERROR
+
+            clickqt_res = None # Reset the stored click result
+            control.gui.run_button.click()
+            for i in range(10):  # Wait for worker thread to finish the execution
+                QApplication.processEvents()
+                time.sleep(0.001)
+            val = clickqt_res
