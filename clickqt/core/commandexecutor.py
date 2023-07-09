@@ -8,7 +8,7 @@ class CommandExecutor(QObject):
     finished = Signal()
 
     @Slot(list)
-    def run(self, tasks:Iterable[Callable]):
+    def run(self, tasks:Iterable[Callable]): # pragma: no cover; Tested in test_execution.py
         for task in tasks:
             task()
         
