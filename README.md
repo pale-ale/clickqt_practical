@@ -36,7 +36,7 @@ python -m pytest
 Currently clickqt only supports the built-in features from click.
 This means that any user defined behaviour (e.g., custom ParamTypes / Commands / Contexts) will propably not work as expected.
 Furthermore, clickqt handles envvar options diffently from click
-In particular clickqt always splits the envvar whereas click
+In particular clickqt always splits the envvar whereas click.
 does this dependent on the ParamType.
 Future releases will take these issues into account.
 
