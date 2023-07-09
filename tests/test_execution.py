@@ -205,12 +205,6 @@ def test_execution_confirmation_widget_fail(click_attrs:dict, value1:str, value2
     widget.field.setValue(value1)
     widget.confirmation_field.setValue(value2)
 
-    control.gui.run_button.click()
-
-    for i in range(10):  # Wait for worker thread to finish the execution
-        QApplication.processEvents()
-        time.sleep(0.001)
-
     val, err = widget.getValue()
 
     assert val is None and err.type == error.type
@@ -285,3 +279,23 @@ def test_execution_context():
 
     assert len(clickqt_res) == 2 and isinstance(clickqt_res[0], click.Context) and clickqt_res[1] == "test1"
 
+def test_execution_expose_value_kwargs():
+    clickqt_res:dict = None
+    def f(p1, **kwargs):
+        nonlocal clickqt_res
+        clickqt_res = kwargs
+
+    cli = click.Command("cli", params=[click.Option(["--p1"], default="a"), 
+                                       click.Option(["--p2"], default="b", expose_value=False), 
+                                       click.Option(["--p3"], default="c")], callback=f)
+
+    control = clickqt.qtgui_from_click(cli)
+    control.gui.run_button.click()
+
+    for i in range(10):  # Wait for worker thread to finish the execution
+        QApplication.processEvents()
+        time.sleep(0.001)
+
+    assert len(clickqt_res.values()) == 1
+    assert clickqt_res.get("p3") == "c"
+    
