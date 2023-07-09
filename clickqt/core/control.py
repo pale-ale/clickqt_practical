@@ -13,7 +13,7 @@ from functools import reduce
 import re 
 
 class Control(QObject):
-    requestExecution = Signal(list) # Generics do not work here
+    requestExecution = Signal(list, click.Context) # Generics do not work here
 
     def __init__(self, cmd:click.Group|click.Command):
         super().__init__()
@@ -217,9 +217,6 @@ class Control(QObject):
     @Slot()
     def startExecution(self):
         hierarchy_selected_command = self.current_command_hierarchy(self.gui.main_tab.currentWidget(), self.cmd)
-
-        # Push context of selected command, needed for @click.pass_context and @click.pass_obj
-        click.globals.push_context(click.Context(hierarchy_selected_command[-1])) 
         
         def run_command(command:click.Command|click.Group, hierarchy_command:str) -> Callable|None:
             kwargs: Dict[str, Any] = {}
@@ -289,5 +286,5 @@ class Control(QObject):
             self.worker.finished.connect(self.executionFinished)
             self.requestExecution.connect(self.worker.run)
 
-            self.requestExecution.emit(callables)
+            self.requestExecution.emit(callables, click.Context(hierarchy_selected_command[-1]))
         
