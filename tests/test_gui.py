@@ -93,7 +93,7 @@ def isIncluded(tab_widget:QTabWidget|QWidget, expected_group_command:list[click.
     ]
 )
 def test_gui_construction_no_options(root_group_command: click.Group|click.Command):
-    control = clickqt.qtgui_from_click(root_group_command, True, " ")
+    control = clickqt.qtgui_from_click(root_group_command)
     gui = control.gui
 
     # Base widgets are set correctly
@@ -148,7 +148,7 @@ def test_gui_construction_no_options(root_group_command: click.Group|click.Comma
     ]
 )
 def test_gui_construction_with_options(root_group_command: click.Group|click.Command):
-    control = clickqt.qtgui_from_click(root_group_command, True, " ")
+    control = clickqt.qtgui_from_click(root_group_command)
     gui = control.gui
 
     parent_tab_widget = checkLen(findChildren(gui.splitter, QTabWidget), 1)[0]

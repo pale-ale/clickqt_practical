@@ -26,7 +26,7 @@ def test_callback(click_attrs:dict, value:Any, expected:Any):
     param = click.Option(param_decls=["--test"], **click_attrs)
     cli = click.Command("cli", params=[param])
     
-    control = clickqt.qtgui_from_click(cli, True, " ")
+    control = clickqt.qtgui_from_click(cli)
     control.widget_registry[cli.name][param.name].setValue(value)
     val, err = control.widget_registry[cli.name][param.name].getValue()
 
@@ -44,7 +44,7 @@ def test_callback_fail(click_attrs:dict, value:Any, expected:Any):
     param = click.Option(param_decls=["--test"], **click_attrs)
     cli = click.Command("cli", params=[param])
     
-    control = clickqt.qtgui_from_click(cli, True, " ")
+    control = clickqt.qtgui_from_click(cli)
     control.widget_registry[cli.name][param.name].setValue(value)
     val, err = control.widget_registry[cli.name][param.name].getValue()
 
@@ -61,7 +61,7 @@ def test_callback_abort(click_attrs:dict, value:Any, expected:Any):
     param = click.Option(param_decls=["--test"], **click_attrs)
     cli = click.Command("cli", params=[param])
     
-    control = clickqt.qtgui_from_click(cli, True, " ")
+    control = clickqt.qtgui_from_click(cli)
     control.widget_registry[cli.name][param.name].setValue(value)
     val, err = control.widget_registry[cli.name][param.name].getValue()
 
@@ -78,7 +78,7 @@ def test_callback_exit(click_attrs:dict, value:Any, expected:Any):
     param = click.Option(param_decls=["--test"], **click_attrs)
     cli = click.Command("cli", params=[param])
     
-    control = clickqt.qtgui_from_click(cli, True, " ")
+    control = clickqt.qtgui_from_click(cli)
     control.widget_registry[cli.name][param.name].setValue(value)
     val, err = control.widget_registry[cli.name][param.name].getValue()
 

@@ -134,7 +134,7 @@ def test_execution(monkeypatch:MonkeyPatch, runner:CliRunner, click_attrs:dict, 
     param = click.Option(param_decls=["--p"], **click_attrs)
     cli = click.Command("cli", params=[param], callback=callback)
     
-    control = clickqt.qtgui_from_click(cli, True, " ")
+    control = clickqt.qtgui_from_click(cli)
     widget = control.widget_registry[cli.name][param.name]
 
     if isinstance(widget, clickqt.widgets.FileField) and value == "--" and "r" in widget.type.mode:
