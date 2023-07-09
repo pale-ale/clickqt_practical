@@ -2,11 +2,10 @@ import click
 import pytest
 
 from PySide6.QtWidgets import QLineEdit, QFileDialog, QApplication, QPushButton, QMessageBox
-from PySide6.QtCore import QTimer, SIGNAL, Signal, QObject
-from PySide6.QtTest import QSignalSpy
+from PySide6.QtCore import QTimer, Signal, QObject, Qt
+from pytestqt.qtbot import QtBot
 from tests.testutils import ClickAttrs
 import clickqt.widgets
-from clickqt.widgets.core.QPathDialog import QPathDialog
 import sys
 import time
 
@@ -117,23 +116,23 @@ def test_passwordfield_showPassword():
 @pytest.mark.parametrize(
     ("click_attrs", "value", "expected"),
     [
-        pytest.param(ClickAttrs.filefield(type_dict={"mode":"r"}), "README.md", "README.md", marks=pytest.mark.skipif(sys.platform == "linux", reason="Does not work under linux")),
+        (ClickAttrs.filefield(type_dict={"mode":"r"}), ".gitignore", ".gitignore"), #marks=pytest.mark.skipif(sys.platform == "linux", reason="Does not work under linux")),
         (ClickAttrs.filefield(type_dict={"mode":"r"}), "invalid_file.txt", ""),
         (ClickAttrs.filefield(type_dict={"mode":"w"}), ".gitignore", ".gitignore"),
         (ClickAttrs.filefield(type_dict={"mode":"w"}), "invalid_file.txt", "invalid_file.txt"),
         (ClickAttrs.filepathfield(type_dict={"exists":True}), "invalid_path", ""),
         (ClickAttrs.filepathfield(type_dict={"exists":True}), "tests", "tests"), # valid folder
-        pytest.param(ClickAttrs.filepathfield(type_dict={"exists":True}), "README.md", "README.md", marks=pytest.mark.skipif(sys.platform == "linux", reason="Does not work under linux")), # valid file
+        (ClickAttrs.filepathfield(type_dict={"exists":True}), ".gitignore", ".gitignore"), #marks=pytest.mark.skipif(sys.platform == "linux", reason="Does not work under linux")), # valid file
         (ClickAttrs.filepathfield(type_dict={"exists":False}), "invalid_path", "invalid_path"), # Exists==False: Accept any file
+        (ClickAttrs.filepathfield(type_dict={"exists":True, "dir_okay":False}), ".gitignore", ".gitignore"),
         (ClickAttrs.filepathfield(type_dict={"exists":True, "dir_okay":False}), "tests", ""),
-        #(ClickAttrs.filepathfield(type_dict={"exists":True, "dir_okay":False}), ".gitignore", ".gitignore"), # Test does not work, but manually it does
-        (ClickAttrs.filepathfield(type_dict={"exists":False, "dir_okay":False}), "tests", "tests"),
+        (ClickAttrs.filepathfield(type_dict={"exists":False, "dir_okay":False}), "tests", ""),
         (ClickAttrs.filepathfield(type_dict={"exists":True, "file_okay":False}), ".gitignore", ""),
-        #(ClickAttrs.filepathfield(type_dict={"exists":True, "file_okay":False}), "tests", "tests"), # Test does not work, but manually it does
+        (ClickAttrs.filepathfield(type_dict={"exists":True, "file_okay":False}), "tests", "tests"),
         (ClickAttrs.filepathfield(type_dict={"exists":False, "file_okay":False}), ".gitignore", ".gitignore"),
     ]
 )
-def test_pathfield(click_attrs:dict, value:str, expected:str):
+def test_pathfield(qtbot:QtBot, click_attrs:dict, value:str, expected:str):
     param = click.Option(param_decls=["--p"], **click_attrs) 
     cli = click.Command("cli", params=[param])
 
@@ -143,29 +142,29 @@ def test_pathfield(click_attrs:dict, value:str, expected:str):
     class Finished(QObject):
         finished = Signal()
 
-    def closeMessagebox(messageBoxClosed:Finished):
+    def closeMessagebox(message_box_closed:Finished):
         messagebox:QMessageBox = QApplication.activeModalWidget()
 
         # Wait, until we have the QMessageBox- or QFileDialog-object
         tries = 0
-        while messagebox is not None and not isinstance(messagebox, QFileDialog|QPathDialog|QMessageBox) and tries < 10:
+        while messagebox is not None and not isinstance(messagebox, QFileDialog|QMessageBox) and tries < 10:
             QApplication.processEvents()
             messagebox = QApplication.activeModalWidget()
             tries += 1
             #time.sleep(0.001)
 
-        if messagebox is not None:
+        if messagebox is not None and isinstance(messagebox, QMessageBox):
             messagebox.close()
 
-        messageBoxClosed.finished.emit()
+        message_box_closed.finished.emit()
 
     def selectFile():
-        file_dialog:QFileDialog|QPathDialog = QApplication.activeModalWidget()
-        messageBoxClosed = Finished()
+        file_dialog:QFileDialog = QApplication.activeModalWidget()
+        message_box_closed = Finished()
 
         # Wait, until we have the QFileDialog object
         tries = 0
-        while file_dialog is None or not isinstance(file_dialog, QFileDialog|QPathDialog) and tries < 10: # See also https://github.com/pytest-dev/pytest-qt/issues/256
+        while file_dialog is None or not isinstance(file_dialog, QFileDialog) and tries < 10: # See also https://github.com/pytest-dev/pytest-qt/issues/256
             QApplication.processEvents()
             file_dialog = QApplication.activeModalWidget()
             tries += 1
@@ -178,21 +177,13 @@ def test_pathfield(click_attrs:dict, value:str, expected:str):
             for btn in file_dialog.findChildren(QPushButton):
                 text = btn.text().lower()
                 if "open" in text or "choose" in text:
-                    spy = QSignalSpy(messageBoxClosed, SIGNAL("finished()"))
-                    QTimer.singleShot(5, lambda: closeMessagebox(messageBoxClosed))
-                    btn.click() 
-
-                    for _ in range(5):
-                        if not spy.wait(20):  # wait for function closeMessagebox to finish   
-                            QApplication.processEvents()
-                        else:
-                            break
-                        
-                    break
+                    QTimer.singleShot(5, lambda: closeMessagebox(message_box_closed))
+                    qtbot.mouseClick(btn, Qt.MouseButton.LeftButton)
+                    qtbot.wait_signal(message_box_closed.finished, timeout=50)
 
             file_dialog.close()
     
     QTimer.singleShot(5, selectFile)
     widget.browse()
-
+    
     assert widget.getWidgetValue() == expected
