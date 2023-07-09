@@ -6,17 +6,20 @@ from PySide6.QtWidgets import QWidget, QFrame, QVBoxLayout, QTabWidget, QScrollA
 from PySide6.QtCore import QThread, QObject, Signal, Slot
 from PySide6.QtGui import QPalette
 from clickqt.core.error import ClickQtError
+from clickqt.widgets.confirmationwidget import ConfirmationWidget
 from clickqt.widgets.basewidget import BaseWidget
 from typing import Dict, Callable, List, Any, Tuple
 import sys
 from functools import reduce
 import re 
+from clickqt.core.utils import *
+
 
 class Control(QObject):
     requestExecution = Signal(list, click.Context) # Generics do not work here
 
-    def __init__(self, cmd:click.Group|click.Command):
-        super().__init__()
+    def __init__(self, cmd:click.Group|click.Command, is_ep:bool=None, ep_or_eppath:str=None):
+        """ __init__ function initializing the GUI object and the registries together with the differentiation of a group command and a simple command. """
 
         self.gui = GUI()
         self.cmd = cmd
@@ -34,6 +37,8 @@ class Control(QObject):
         # Groups-Command-name concatinated with ":" to command-option-names to BaseWidget
         self.widget_registry: Dict[str, Dict[str, BaseWidget]] = {}
         self.command_registry: Dict[str, Dict[str, Tuple[int, Callable]]] = {}
+        self.ep_or_path = ep_or_eppath
+        self.is_entrypoint = is_ep
 
         # Add all widgets
         if isinstance(cmd, click.Group):
@@ -64,9 +69,11 @@ class Control(QObject):
         return widget.container
 
     def concat(self, a: str, b: str) -> str:
+        """ Returns a concatenated string """
         return a + ":" + b
     
     def parse_cmd_group(self, cmdgroup: click.Group, group_names: str) -> QTabWidget:
+        """ Function to parse the information of a grouped click command. """
         group_tab_widget = QTabWidget()
         for group_name, group_cmd in cmdgroup.commands.items():
             if isinstance(group_cmd, click.Group):
@@ -87,6 +94,7 @@ class Control(QObject):
         return group_tab_widget
     
     def parse_cmd(self, cmd: click.Command, groups_command_name: str):
+        """ Function to parse the information of a simple command. """
         cmdbox = QWidget()
         cmdbox.setLayout(QVBoxLayout())
 
@@ -124,6 +132,7 @@ class Control(QObject):
         return cmd_tab_widget
     
     def check_error(self, err: ClickQtError) -> bool:
+        """ Returns if parameter has Error. """
         if err.type != ClickQtError.ErrorType.NO_ERROR:
             if (message := err.message()): # Don't print on context exit
                 print(message, file=sys.stderr)
@@ -145,7 +154,25 @@ class Control(QObject):
         else:
             return [group]
         
+    def get_option_names(self,cmd):
+        """ Returns an array of all the parameters used for the current command togeter with their properties."""
+        option_names = []
+        for param in cmd.params:
+            if isinstance(param, click.Option):
+                long_forms = [opt for opt in param.opts if opt.startswith('--')]
+                longest_long_form = max(long_forms, key=len) if long_forms else None
+                short_forms = [opt for opt in param.opts if opt.startswith("-")]
+                short_forms = max(short_forms, key=len) if short_forms else None
+                if longest_long_form:
+                    option_names.append((longest_long_form, param.type, param.multiple))
+                else: 
+                    option_names.append((short_forms, param.type, param.multiple))
+            elif isinstance(param, click.Argument):
+                option_names.append(("Argument", param.type))
+        return option_names
+        
     def get_params(self, selected_command_name:str, args):
+        """ Returns an array of strings that are used for the output field."""
         params = [k for k, v in self.widget_registry[selected_command_name].items()]
         if "yes" in params: 
             params.remove("yes")
@@ -156,41 +183,59 @@ class Control(QObject):
         return params
     
     def clean_command_string(self, word, text):
-        pattern = r'\b{}\b|[():;]'.format(re.escape(word))  # Create a regex pattern for the word and symbols
-        replaced_text = re.sub(pattern, '', text)  # Remove the word and symbols from the text
-        return replaced_text
+        """ Returns a string without any special characters using regex."""
+        text = re.sub(r'\b{}\b'.format(re.escape(word)), '', text)
+        text = re.sub(r'[^a-zA-Z0-9 .-]', ' ', text)
+        return text
     
-    def command_to_string(self, hierarchy_selected_command_name: str, selected_command, args):
-        """ 
-            TODO: Write command string such that it can match the exact terminal call. 
-        """
-        parameter_strings = [k for k, v in self.widget_registry[hierarchy_selected_command_name].items()]
-        parameter_strings = [param for param in parameter_strings if param != 'yes']
-        parameter_list = [param for param in selected_command.params if param.name != 'yes']
-        for i, param in enumerate(parameter_list):
-            if isinstance(param, click.core.Argument):
-                """ This is the special case for the arguments. """
-                parameter_strings[i] = f"{args[param.name]}"
-            if isinstance(param, click.core.Option):
-                if param.multiple:
-                    num_calls = len(args[param.name])
-                    for j in range(num_calls):
-                        temp = "--" + param.name + " " + str(args[param.name][j])
-                        if len(parameter_strings[i]) == 0:
-                            parameter_strings[i] = temp
-                        parameter_strings[i] = parameter_strings[i] + temp
-                elif isinstance(param.type, click.types.Tuple):
-                    temp = "--" + param.name + " " + str(args[param.name])
-                    parameter_strings[i] = temp
-                else:
-                    parameter_strings[i] = "--" + param.name + " " + str(args[param.name])
-        for i in range(len(parameter_strings)):
-            temp = parameter_strings[i]
-            hierarchy_selected_command_name = hierarchy_selected_command_name + " " + temp
-            
+    def command_to_string(self, hierarchy_selected_command_name: str):
+        """ Returns the current command name. """
         hierarchy_selected_command_name = self.clean_command_string(self.cmd.name, hierarchy_selected_command_name)
         return hierarchy_selected_command_name
-                
+    
+    
+    def command_to_string_to_copy(self, hierarchy_selected_name:str, selected_command):
+        """ Returns a string representing the click command if one actually would actually execute it in the shell"""
+        parameter_list = self.get_option_names(selected_command)
+        parameter_list = [param for param in parameter_list if param[0] != "--yes"]
+        widgets = self.widget_registry[hierarchy_selected_name]
+        widget_values = []
+        for widget in widgets:
+            if type(widget) != ConfirmationWidget and widget != "yes":
+                widget_values.append(widgets[widget].getWidgetValue())
+        parameter_strings = []
+        for i, param in enumerate(parameter_list):
+            if param[0] != "Argument":
+                if type(widget_values[i]) != list or param[2] != True:
+                    widget_value = str(widget_values[i])
+                    if not is_file_path(widget_value):
+                        parameter_strings.append(parameter_list[i][0] + " " + re.sub(r'[^a-zA-Z0-9 .-]', ' ', widget_value))
+                    else: 
+                        parameter_strings.append(parameter_list[i][0] + " " + widget_value)
+                else:
+                    if is_nested_list(widget_values[i]):
+                        depth = len(widget_values[i])
+                        for j in range(depth):
+                            widget_value = str(widget_values[i][j])
+                            if not is_file_path(widget_value):
+                                parameter_strings.append(parameter_list[i][0] + " " + re.sub(r'[^a-zA-Z0-9 .-]', ' ', widget_value))
+                            else:
+                                parameter_strings.append(parameter_list[i][0] + " " + widget_value)
+                    else:
+                        length = len(widget_values[i])
+                        for j in range(length):
+                            widget_value = str(widget_values[i][j])
+                            if not is_file_path(widget_value):
+                                parameter_strings.append(parameter_list[i][0] + " " + re.sub(r'[^a-zA-Z0-9 .-]', ' ', widget_value))
+                            else:
+                                parameter_strings.append(parameter_list[i][0] + " " + widget_value)
+            else:
+                parameter_strings.append(str(widget_values[i])) 
+        message = hierarchy_selected_name + " " + " ".join(parameter_strings)
+        message = re.sub(r'\b{}\b'.format(re.escape(self.cmd.name)), '', message)
+        message = message.replace(":", " ")
+        return message
+                        
     def function_call_formatter(self, hierarchy_selected_command_name:str, selected_command_name:str, args):
         params = self.get_params(hierarchy_selected_command_name, args)
         message = f"{selected_command_name} \n"
@@ -258,17 +303,24 @@ class Control(QObject):
                 if has_error:
                     return None
             
-            #print(self.command_to_string(hierarchy_selected_command_name, selected_command, kwargs))
-            #print(f"Current Command: {self.function_call_formatter(hierarchy_selected_command_name, selected_command.name, kwargs)} \n" + f"Output:")
-            
             if len(callback_args := inspect.getfullargspec(command.callback).args) > 0:
                 args: list[Any] = []
                 for ca in callback_args: # Bring the args in the correct order
-                    args.append(kwargs.pop(ca)) # Remove explicitly mentioned args from kwargs dict
-                return lambda: command.callback(*args, **kwargs)
+                    args.append(kwargs.pop(ca)) # Remove explicitly mentioned args from kwargs
+
+                if self.is_entrypoint:
+                    print(f"For command details, please call '{self.command_to_string(hierarchy_selected_command_name)} --help'")
+                    print(f"{self.ep_or_path} {self.command_to_string_to_copy(hierarchy_selected_command_name, selected_command)}")
+                    print(f"Current Command: {self.function_call_formatter(hierarchy_selected_command_name, selected_command, kwargs)} \n" + f"Output:")
+                    return lambda: command.callback(*args, **kwargs)
+                else:
+                    print(f"For command details, please call '{self.command_to_string(hierarchy_selected_command_name)} --help'")
+                    print(f"python {self.ep_or_path} {self.command_to_string_to_copy(hierarchy_selected_command_name, selected_command)}")
+                    print(f"Current Command: {self.function_call_formatter(hierarchy_selected_command_name, selected_command, kwargs)} \n" + f"Output:") 
+                    return lambda: command.callback(*args, **kwargs)
             else:
                 return lambda: command.callback(**kwargs)
-
+            
         callables:list[Callable] = []
         for i, command in enumerate(hierarchy_selected_command, 1):    
             if (c := run_command(command, reduce(self.concat, [g.name for g in hierarchy_selected_command[:i]]))) is not None:

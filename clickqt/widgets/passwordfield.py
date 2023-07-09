@@ -23,3 +23,6 @@ class PasswordField(TextField):
             self.show_hide_action.setText(self.icon_text[show][1])
 
         self.show_hide_action.toggled.connect(showPassword)
+
+    def getWidgetValue(self) -> str:
+        return self.widget.text()
