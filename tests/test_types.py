@@ -116,13 +116,13 @@ def test_passwordfield_showPassword():
 @pytest.mark.parametrize(
     ("click_attrs", "value", "expected"),
     [
-        (ClickAttrs.filefield(type_dict={"mode":"r"}), ".gitignore", ".gitignore"), #marks=pytest.mark.skipif(sys.platform == "linux", reason="Does not work under linux")),
+        pytest.param(ClickAttrs.filefield(type_dict={"mode":"r"}), ".gitignore", ".gitignore", marks=pytest.mark.skipif(sys.platform == "linux", reason="Does not work under linux")),
         (ClickAttrs.filefield(type_dict={"mode":"r"}), "invalid_file.txt", ""),
         (ClickAttrs.filefield(type_dict={"mode":"w"}), ".gitignore", ".gitignore"),
         (ClickAttrs.filefield(type_dict={"mode":"w"}), "invalid_file.txt", "invalid_file.txt"),
         (ClickAttrs.filepathfield(type_dict={"exists":True}), "invalid_path", ""),
         (ClickAttrs.filepathfield(type_dict={"exists":True}), "tests", "tests"), # valid folder
-        (ClickAttrs.filepathfield(type_dict={"exists":True}), ".gitignore", ".gitignore"), #marks=pytest.mark.skipif(sys.platform == "linux", reason="Does not work under linux")), # valid file
+        pytest.param(ClickAttrs.filepathfield(type_dict={"exists":True}), ".gitignore", ".gitignore", marks=pytest.mark.skipif(sys.platform == "linux", reason="Does not work under linux")), # valid file
         (ClickAttrs.filepathfield(type_dict={"exists":False}), "invalid_path", "invalid_path"), # Exists==False: Accept any file
         (ClickAttrs.filepathfield(type_dict={"exists":True, "dir_okay":False}), ".gitignore", ".gitignore"),
         (ClickAttrs.filepathfield(type_dict={"exists":True, "dir_okay":False}), "tests", ""),
