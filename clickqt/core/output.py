@@ -29,7 +29,7 @@ class TerminalOutput(QPlainTextEdit):
     """
     newHtmlMessage = Signal(str)
 
-    def contextMenuEvent(self, event: QContextMenuEvent):
+    def contextMenuEvent(self, event: QContextMenuEvent): # pragma: no cover
         menu: QMenu = self.createStandardContextMenu()
         action = QAction("Clear")
         menu.addAction(action)
