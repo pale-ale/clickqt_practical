@@ -44,6 +44,9 @@ jobs:
     #- name: Install Qt
     #  uses: jurplel/install-qt-action@v3
 
+    - name: Install example entrypoints
+      run: python -m pip install --no-cache-dir example/.
+
     - name: Install Python package
       run: python -m pip install --no-cache-dir .[tests]
     
