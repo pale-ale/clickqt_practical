@@ -180,7 +180,7 @@ def test_gui_stop_execution():
 
     stop_button.click() # Stop execution
 
-    for i in range(10):  # Wait for stopping the worker
+    for _ in range(10):  # Wait for stopping the worker
         QApplication.processEvents()
         time.sleep(0.0001)
 
@@ -189,6 +189,10 @@ def test_gui_stop_execution():
     assert "Execution stopped!\n" in control.gui.terminal_output.toPlainText()
 
     run_button.click() # Start execution
+
+    for _ in range(10):  # Wait for starting the worker
+        QApplication.processEvents()
+        time.sleep(0.0001)
 
     assert not run_button.isEnabled() and stop_button.isEnabled()
     assert control.worker is not None and control.worker_thread is not None
