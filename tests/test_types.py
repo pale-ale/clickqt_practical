@@ -49,6 +49,27 @@ def test_type_assignment(click_attrs:dict, expected_clickqt_type:clickqt.widgets
     assert type(control.widget_registry[cli.name][param.name]) is expected_clickqt_type, "clickqt" # Perfect type match
 
 @pytest.mark.parametrize(
+    ("value"),
+    [
+        ("upper"),
+        ("lower"),
+    ]
+)
+def test_feature_switch(value:str):
+    param1 = click.Option(param_decls=['--upper', 'transformation'], flag_value='upper')
+    param2 = click.Option(param_decls=['--lower', 'transformation'], flag_value='lower')
+    cli = click.Command("cli", params=[param1, param2])
+
+    control = clickqt.qtgui_from_click(cli)
+    widget = control.widget_registry[cli.name][param1.name]
+
+    assert type(widget) is clickqt.widgets.ComboBox # Feature switches are mapped to ComboBoxes
+
+    widget.setValue(value)
+
+    assert widget.getWidgetValue() == value
+
+@pytest.mark.parametrize(
     ("click_attrs_list", "expected_clickqt_type_list"),
     [
         ([ClickAttrs.checkbox(), ClickAttrs.intfield(), ClickAttrs.realfield(), ClickAttrs.passwordfield()], 
