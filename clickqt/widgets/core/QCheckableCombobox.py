@@ -84,12 +84,13 @@ class QCheckableComboBox(QComboBox):
         for i in range(self.model().rowCount()):
             if self.model().item(i).checkState() == Qt.CheckState.Checked:
                 texts.append(self.model().item(i).text())
-        text = ", ".join(texts)
+
+        self.lineEdit().setText(", ".join(texts))
 
         # Compute elided text (with "...")
-        metrics = QFontMetrics(self.lineEdit().font())
-        elidedText = metrics.elidedText(text, Qt.TextElideMode.ElideRight, self.lineEdit().width())
-        self.lineEdit().setText(elidedText)
+        #metrics = QFontMetrics(self.lineEdit().font())
+        #elidedText = metrics.elidedText(text, Qt.TextElideMode.ElideRight, self.lineEdit().width())
+        #self.lineEdit().setText(elidedText)
 
     def addItem(self, text, data=None):
         item = QStandardItem()
