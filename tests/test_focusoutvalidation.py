@@ -37,7 +37,7 @@ def test_focus_out_validation(click_attrs:dict, invalid_value:Any, valid_value:A
     param = click.Option(param_decls=["--test"], **click_attrs)
     cli = click.Command("cli", params=[param])
     
-    control = clickqt.qtgui_from_click(cli, True, " ")
+    control = clickqt.qtgui_from_click(cli)
     clickqt_widget = control.widget_registry[cli.name][param.name]
 
     eval(clickqt_widget, clickqt_widget, invalid_value, valid_value)
@@ -55,7 +55,7 @@ def test_focus_out_validation_child(click_attrs:dict, invalid_value:Any, valid_v
     param = click.Option(param_decls=["--test"], **click_attrs)
     cli = click.Command("cli", params=[param])
     
-    control = clickqt.qtgui_from_click(cli, True, " ")
+    control = clickqt.qtgui_from_click(cli)
     clickqt_widget = control.widget_registry[cli.name][param.name]
 
     clickqt_widget.setValue(invalid_value) # Create the children for the NValueWidget-object

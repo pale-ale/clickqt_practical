@@ -67,8 +67,8 @@ class NValueWidget(MultiWidget):
             if self.param.required and default is None:
                 self.handleValid(False)
                 return (None, ClickQtError(ClickQtError.ErrorType.REQUIRED_ERROR, self.widget_name, self.param.param_type_name))
-            elif (envvar_values := self.param.resolve_envvar_value(Context(self.click_command))) is not None:
-                for ev in envvar_values.split(os.path.pathsep):
+            elif (envvar_values := self.param.value_from_envvar(Context(self.click_command))) is not None:
+                for ev in envvar_values:
                     self.addPair(ev)
             elif default is not None: # Add new pairs
                 for value in default: # All defaults will be considered if len(self.children)) == 0
@@ -115,11 +115,9 @@ class NValueWidget(MultiWidget):
 
     def setValue(self, value):
         if len(value) < len(self.children): # Remove pairs
-            for i, btns in enumerate(self.buttondict.keys()):   
-                if i <= len(value):
-                    continue
+            for btns in list(self.buttondict.keys())[len(value):]:   
                 self.removeButtonPair(btns)  
-        elif len(value) > len(self.children): # Add pairs
+        if len(value) > len(self.children): # Add pairs
             for i in range(len(value)-len(self.children)):   
                 self.addPair()
         

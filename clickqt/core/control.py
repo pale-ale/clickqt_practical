@@ -1,7 +1,9 @@
 import click
 import inspect
 from clickqt.core.gui import GUI
+from clickqt.core.commandexecutor import CommandExecutor
 from PySide6.QtWidgets import QWidget, QFrame, QVBoxLayout, QTabWidget, QScrollArea
+from PySide6.QtCore import QThread, QObject, Signal, Slot
 from PySide6.QtGui import QPalette
 from clickqt.core.error import ClickQtError
 from clickqt.widgets.confirmationwidget import ConfirmationWidget
@@ -12,12 +14,26 @@ from functools import reduce
 import re 
 from clickqt.core.utils import *
 
-class Control:
+
+class Control(QObject):
+    requestExecution = Signal(list, click.Context) # Generics do not work here
+
     def __init__(self, cmd:click.Group|click.Command, is_ep:bool=None, ep_or_eppath:str=None):
+        super().__init__()
         """ __init__ function initializing the GUI object and the registries together with the differentiation of a group command and a simple command. """
 
         self.gui = GUI()
         self.cmd = cmd
+
+        # Create a worker in another thread when the user clicks the run button
+        # Don't destroy a thread when no command is running and the user closes the application
+        # Otherwise "QThread: Destroyed while thread is still running" would be appear
+        self.worker_thread: QThread = None
+        self.worker: CommandExecutor = None
+
+        # Connect GUI buttons with slots
+        self.gui.run_button.clicked.connect(self.startExecution)
+        self.gui.stop_button.clicked.connect(self.stopExecution)
 
         # Groups-Command-name concatinated with ":" to command-option-names to BaseWidget
         self.widget_registry: Dict[str, Dict[str, BaseWidget]] = {}
@@ -39,9 +55,6 @@ class Control:
             self.gui.main_tab.addTab(child_tabs, cmd.name)
         else:
             self.gui.main_tab.addTab(self.parse_cmd(cmd, cmd.name), cmd.name)
-
-        # Connect GUI Run-Button with run method
-        self.gui.run_button.clicked.connect(self.run)
 
     def __call__(self):
         self.gui()
@@ -229,15 +242,27 @@ class Control:
         message = f"{selected_command_name} \n"
         parameter_message =  f"Current Command parameters: \n" + "\n".join(params)
         return message + parameter_message
+    
+    @Slot()
+    def stopExecution(self):
+        print("Execution stopped!", file=sys.stderr)
+        self.worker_thread.terminate()
+        self.executionFinished()
 
-    def run(self):
+    @Slot()
+    def executionFinished(self):
+        self.worker_thread.deleteLater()
+        self.worker.deleteLater()
+
+        self.worker_thread = None
+        self.worker = None
+
+        self.gui.run_button.setEnabled(True)
+        self.gui.stop_button.setEnabled(False)
+
+    @Slot()
+    def startExecution(self):
         hierarchy_selected_command = self.current_command_hierarchy(self.gui.main_tab.currentWidget(), self.cmd)
-        """ Computes the current command displayed on the current tab, if it is a grouped click command and computes the arguments that are used for the execution for the click command. """
-        selected_command = hierarchy_selected_command[-1]
-        hierarchy_selected_command_name = reduce(self.concat, [g.name for g in hierarchy_selected_command])
-
-        # Push context of selected command, needed for @click.pass_context and @click.pass_obj
-        click.globals.push_context(click.Context(hierarchy_selected_command[-1])) 
         
         def run_command(command:click.Command|click.Group, hierarchy_command:str) -> Callable|None:
             kwargs: Dict[str, Any] = {}
@@ -278,21 +303,21 @@ class Control:
                     
                 if has_error:
                     return None
-            
+
             if len(callback_args := inspect.getfullargspec(command.callback).args) > 0:
                 args: list[Any] = []
                 for ca in callback_args: # Bring the args in the correct order
                     args.append(kwargs.pop(ca)) # Remove explicitly mentioned args from kwargs
 
                 if self.is_entrypoint:
-                    print(f"For command details, please call '{self.command_to_string(hierarchy_selected_command_name)} --help'")
-                    print(f"{self.ep_or_path} {self.command_to_string_to_copy(hierarchy_selected_command_name, selected_command)}")
-                    print(f"Current Command: {self.function_call_formatter(hierarchy_selected_command_name, selected_command, kwargs)} \n" + f"Output:")
+                    print(f"For command details, please call '{self.command_to_string(hierarchy_command)} --help'")
+                    print(f"{self.ep_or_path} {self.command_to_string_to_copy(hierarchy_command, command)}")
+                    print(f"Current Command: {self.function_call_formatter(hierarchy_command, command, kwargs)} \n" + f"Output:")
                     return lambda: command.callback(*args, **kwargs)
                 else:
-                    print(f"For command details, please call '{self.command_to_string(hierarchy_selected_command_name)} --help'")
-                    print(f"python {self.ep_or_path} {self.command_to_string_to_copy(hierarchy_selected_command_name, selected_command)}")
-                    print(f"Current Command: {self.function_call_formatter(hierarchy_selected_command_name, selected_command, kwargs)} \n" + f"Output:") 
+                    print(f"For command details, please call '{self.command_to_string(hierarchy_command)} --help'")
+                    print(f"python {self.ep_or_path} {self.command_to_string_to_copy(hierarchy_command, command)}")
+                    print(f"Current Command: {self.function_call_formatter(hierarchy_command, command, kwargs)} \n" + f"Output:") 
                     return lambda: command.callback(*args, **kwargs)
             else:
                 return lambda: command.callback(**kwargs)
@@ -303,5 +328,16 @@ class Control:
                 callables.append(c)
   
         if len(callables) == len(hierarchy_selected_command):
-            for c in callables:
-                c()
+            self.gui.run_button.setEnabled(False)
+            self.gui.stop_button.setEnabled(True)
+
+            self.worker_thread = QThread()
+            self.worker_thread.start()
+            self.worker = CommandExecutor()
+            self.worker.moveToThread(self.worker_thread)
+            self.worker.finished.connect(self.worker_thread.quit)
+            self.worker.finished.connect(self.executionFinished)
+            self.requestExecution.connect(self.worker.run)
+
+            self.requestExecution.emit(callables, click.Context(hierarchy_selected_command[-1]))
+        

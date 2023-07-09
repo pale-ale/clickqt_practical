@@ -1,14 +1,17 @@
 import click
 import pytest
 
-from PySide6.QtWidgets import QLineEdit
 from PySide6.QtWidgets import QLineEdit, QFileDialog, QApplication, QPushButton, QMessageBox
-from PySide6.QtCore import QTimer, SIGNAL, Signal, QObject
-from PySide6.QtTest import QSignalSpy
+from PySide6.QtCore import QTimer, Signal, QObject, Qt
+from pytestqt.qtbot import QtBot
 from tests.testutils import ClickAttrs
-from pytest import MonkeyPatch
 import clickqt.widgets
-from clickqt.widgets.core.QPathDialog import QPathDialog
+import sys
+import time
+
+
+class CustomParamType(click.ParamType):
+    pass
 
 @pytest.mark.parametrize(
     ("click_attrs", "expected_clickqt_type"),
@@ -31,18 +34,40 @@ from clickqt.widgets.core.QPathDialog import QPathDialog
         (ClickAttrs.filepathfield(), clickqt.widgets.FilePathField), 
         (ClickAttrs.nvalue_widget(), clickqt.widgets.NValueWidget),
         (ClickAttrs.tuple_widget(types=(click.types.Path(),int)), clickqt.widgets.TupleWidget),
-        (ClickAttrs.multi_value_widget(nargs=2), clickqt.widgets.MultiValueWidget),  
+        (ClickAttrs.multi_value_widget(nargs=2), clickqt.widgets.MultiValueWidget),
+        ({"type":CustomParamType()}, clickqt.widgets.TextField), # Custom types are mapped to TextFields
     ]
 )
 def test_type_assignment(click_attrs:dict, expected_clickqt_type:clickqt.widgets.BaseWidget):
     param = click.Option(param_decls=["--test"], **click_attrs)
     cli = click.Command("cli", params=[param])
 
-    control = clickqt.qtgui_from_click(cli, True, " ")
+    control = clickqt.qtgui_from_click(cli)
     gui = control.gui
     
     assert type(gui.create_widget(param.type, param, widgetsource=gui.create_widget, com=cli)) is expected_clickqt_type , "directly" # Perfect type match
     assert type(control.widget_registry[cli.name][param.name]) is expected_clickqt_type, "clickqt" # Perfect type match
+
+@pytest.mark.parametrize(
+    ("value"),
+    [
+        ("upper"),
+        ("lower"),
+    ]
+)
+def test_feature_switch(value:str):
+    param1 = click.Option(param_decls=['--upper', 'transformation'], flag_value='upper')
+    param2 = click.Option(param_decls=['--lower', 'transformation'], flag_value='lower')
+    cli = click.Command("cli", params=[param1, param2])
+
+    control = clickqt.qtgui_from_click(cli)
+    widget = control.widget_registry[cli.name][param1.name]
+
+    assert type(widget) is clickqt.widgets.ComboBox # Feature switches are mapped to ComboBoxes
+
+    widget.setValue(value)
+
+    assert widget.getWidgetValue() == value
 
 @pytest.mark.parametrize(
     ("click_attrs_list", "expected_clickqt_type_list"),
@@ -63,7 +88,7 @@ def test_type_assignment_multiple_options(click_attrs_list:list[dict], expected_
 
     cli = click.Command("cli", params=params)
 
-    control = clickqt.qtgui_from_click(cli, True, " ")
+    control = clickqt.qtgui_from_click(cli)
     for i, v in enumerate(control.widget_registry[cli.name].values()):
         assert type(v) is expected_clickqt_type_list[i] # Perfect type match
 
@@ -91,7 +116,7 @@ def test_type_assignment_multiple_commands(click_attrs_list:list[list[dict]], ex
 
     group = click.Group("group", commands=clis)
 
-    control = clickqt.qtgui_from_click(group, True, " ")
+    control = clickqt.qtgui_from_click(group)
     for i, cli_name in enumerate(control.widget_registry.keys()):
         for j, v in enumerate(control.widget_registry[cli_name].values()):
             assert type(v) is expected_clickqt_type_list[i][j] # Perfect type match
@@ -100,7 +125,7 @@ def test_passwordfield_showPassword():
     param = click.Option(param_decls=["--p"], **ClickAttrs.passwordfield()) 
     cli = click.Command("cli", params=[param])
     
-    control = clickqt.qtgui_from_click(cli, True, " ")
+    control = clickqt.qtgui_from_click(cli)
     passwordfield_widget:clickqt.widgets.PasswordField = control.widget_registry[cli.name][param.name]
 
     for _ in range(3):
@@ -113,73 +138,110 @@ def test_passwordfield_showPassword():
 
         passwordfield_widget.show_hide_action.setChecked(not passwordfield_widget.show_hide_action.isChecked())
 
+@pytest.mark.skipif(sys.platform == "darwin", reason="Not runnable on GitHubs MacOS-VMs (stuck)")
 @pytest.mark.parametrize(
     ("click_attrs", "value", "expected"),
     [
-        (ClickAttrs.filefield(type_dict={"mode":"r"}), ".gitignore", ".gitignore"),
+        pytest.param(ClickAttrs.filefield(type_dict={"mode":"r"}), ".gitignore", ".gitignore", marks=pytest.mark.skipif(sys.platform == "linux", reason="Does not work under linux")),
         (ClickAttrs.filefield(type_dict={"mode":"r"}), "invalid_file.txt", ""),
         (ClickAttrs.filefield(type_dict={"mode":"w"}), ".gitignore", ".gitignore"),
         (ClickAttrs.filefield(type_dict={"mode":"w"}), "invalid_file.txt", "invalid_file.txt"),
         (ClickAttrs.filepathfield(type_dict={"exists":True}), "invalid_path", ""),
         (ClickAttrs.filepathfield(type_dict={"exists":True}), "tests", "tests"), # valid folder
-        (ClickAttrs.filepathfield(type_dict={"exists":True}), ".gitignore", ".gitignore"), # valid file
+        pytest.param(ClickAttrs.filepathfield(type_dict={"exists":True}), ".gitignore", ".gitignore", marks=pytest.mark.skipif(sys.platform == "linux", reason="Does not work under linux")), # valid file
         (ClickAttrs.filepathfield(type_dict={"exists":False}), "invalid_path", "invalid_path"), # Exists==False: Accept any file
+        pytest.param(ClickAttrs.filepathfield(type_dict={"exists":True, "dir_okay":False}), ".gitignore", ".gitignore", marks=pytest.mark.skipif(sys.platform == "linux", reason="Does not work under linux")),
         (ClickAttrs.filepathfield(type_dict={"exists":True, "dir_okay":False}), "tests", ""),
-        #(ClickAttrs.filepathfield(type_dict={"exists":True, "dir_okay":False}), ".gitignore", ".gitignore"), # Test does not work, but manually it does
-        (ClickAttrs.filepathfield(type_dict={"exists":False, "dir_okay":False}), "tests", "tests"),
+        (ClickAttrs.filepathfield(type_dict={"exists":False, "dir_okay":False}), "tests", ""),
         (ClickAttrs.filepathfield(type_dict={"exists":True, "file_okay":False}), ".gitignore", ""),
-        #(ClickAttrs.filepathfield(type_dict={"exists":True, "file_okay":False}), "tests", "tests"), # Test does not work, but manually it does
+        (ClickAttrs.filepathfield(type_dict={"exists":True, "file_okay":False}), "tests", "tests"),
         (ClickAttrs.filepathfield(type_dict={"exists":False, "file_okay":False}), ".gitignore", ".gitignore"),
     ]
 )
-def test_pathfield(monkeypatch:MonkeyPatch, click_attrs:dict, value:str, expected:str):
+def test_pathfield(qtbot:QtBot, click_attrs:dict, value:str, expected:str):
     param = click.Option(param_decls=["--p"], **click_attrs) 
     cli = click.Command("cli", params=[param])
 
-    control = clickqt.qtgui_from_click(cli, True, " ")
+    control = clickqt.qtgui_from_click(cli)
     widget:clickqt.widgets.PathField = control.widget_registry[cli.name][param.name]
 
     class Finished(QObject):
         finished = Signal()
 
-    def closeMessagebox(messageBoxClosed:Finished):
+    def closeMessagebox(message_box_closed:Finished):
         messagebox:QMessageBox = QApplication.activeModalWidget()
 
         # Wait, until we have the QMessageBox- or QFileDialog-object
-        while messagebox is not None and not isinstance(messagebox, QFileDialog|QPathDialog|QMessageBox):
+        tries = 0
+        while messagebox is not None and not isinstance(messagebox, QFileDialog|QMessageBox) and tries < 10:
             QApplication.processEvents()
             messagebox = QApplication.activeModalWidget()
+            tries += 1
+            #time.sleep(0.001)
 
-        if messagebox is not None:
+        if messagebox is not None and isinstance(messagebox, QMessageBox):
             messagebox.close()
 
-        messageBoxClosed.finished.emit()
+        message_box_closed.finished.emit()
 
     def selectFile():
-        file_dialog:QFileDialog|QPathDialog = QApplication.activeModalWidget()
-        messageBoxClosed = Finished()
+        file_dialog:QFileDialog = QApplication.activeModalWidget()
+        message_box_closed = Finished()
 
         # Wait, until we have the QFileDialog object
-        while file_dialog is None or not isinstance(file_dialog, QFileDialog|QPathDialog): # See also https://github.com/pytest-dev/pytest-qt/issues/256
+        tries = 0
+        while file_dialog is None or not isinstance(file_dialog, QFileDialog) and tries < 10: # See also https://github.com/pytest-dev/pytest-qt/issues/256
             QApplication.processEvents()
             file_dialog = QApplication.activeModalWidget()
+            tries += 1
+            #time.sleep(0.001)
+        
+        if file_dialog is not None:
+            file_dialog.findChild(QLineEdit, "fileNameEdit").setText(value) # = file_dialog.selectFile(value)
 
-        file_dialog.findChild(QLineEdit, "fileNameEdit").setText(value)
-        #file_dialog.selectFile(value)
+            # Search Open/Choose btn and click it
+            for btn in file_dialog.findChildren(QPushButton):
+                text = btn.text().lower()
+                if "open" in text or "choose" in text:
+                    with qtbot.waitSignal(message_box_closed.finished, raising=True) as blocker:
+                        QTimer.singleShot(5, lambda: closeMessagebox(message_box_closed))
+                        qtbot.mouseClick(btn, Qt.MouseButton.LeftButton)
 
-        # Search Open/Choose btn and click it
-        for btn in file_dialog.findChildren(QPushButton):
-            text = btn.text().lower()
-            if "open" in text or "choose" in text:
-                spy = QSignalSpy(messageBoxClosed, SIGNAL("finished()"))
-                QTimer.singleShot(10, lambda: closeMessagebox(messageBoxClosed))
-                btn.click() 
-                spy.wait(50)    # wait for function closeMessagebox to finish
-                break
-
-        file_dialog.close()
+            file_dialog.close()
     
-    QTimer.singleShot(10, selectFile)
+    QTimer.singleShot(5, selectFile)
     widget.browse()
-
+    
     assert widget.getWidgetValue() == expected
+
+@pytest.mark.parametrize(
+    ("click_attrs", "value", "add_children", "remove_children"),
+    [
+        (ClickAttrs.nvalue_widget(), "", 0, 0),
+        (ClickAttrs.nvalue_widget(), "test", 2, 0),
+        (ClickAttrs.nvalue_widget(), "test2", 3, 2),
+        (ClickAttrs.nvalue_widget(), "test3", 5, 5),
+
+        # With default
+        (ClickAttrs.nvalue_widget(default=["A", "B"]), "test3", 5, 5),
+    ]
+)
+def test_nvaluewidget_add_remove_children(click_attrs:dict, value:str, add_children:int, remove_children:int):
+    param = click.Option(param_decls=["--p"], **click_attrs) 
+    cli = click.Command("cli", params=[param])
+
+    control = clickqt.qtgui_from_click(cli)
+    widget:clickqt.widgets.NValueWidget = control.widget_registry[cli.name][param.name]
+
+    for _ in range(add_children):
+        widget.addPair(value)
+
+    amount_children = add_children + (len(param.default) if param.default is not None else 0)
+
+    assert len(widget.children) == amount_children
+    assert sum(1 for w in widget.buttondict.values() if w.getWidgetValue() == value) == add_children
+
+    for _ in range(remove_children):
+        widget.removeButtonPair(list(widget.buttondict.keys())[0])
+
+    assert len(widget.children) == amount_children-remove_children

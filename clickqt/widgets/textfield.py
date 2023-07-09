@@ -55,13 +55,13 @@ class PathField(TextField):
         """
         assert self.file_type != PathField.FileType.Unknown
 
-        if (self.file_type & PathField.FileType.File and self.file_type & PathField.FileType.Directory) or (hasattr(self.type, "exists") and not self.type.exists):
-            dialog = QPathDialog(None, self.type.exists)
+        if (self.file_type & PathField.FileType.File and self.file_type & PathField.FileType.Directory):
+            dialog = QPathDialog(None, directory=QDir.currentPath(), exist=self.type.exists)
             if dialog.exec():
                 self.handleValid(True)
                 self.setValue(dialog.selectedPath().replace(QDir.currentPath(), "").replace("/", QDir.separator()).removeprefix(QDir.separator()))
         else:
-            dialog = QFileDialog()
+            dialog = QFileDialog(directory=QDir.currentPath())
             dialog.setViewMode(QFileDialog.ViewMode.Detail)
             dialog.setOption(QFileDialog.Option.DontUseNativeDialog, True)
             # File or directory selectable
@@ -73,11 +73,12 @@ class PathField(TextField):
                 else:
                     dialog.setFileMode(QFileDialog.FileMode.AnyFile)  
             else: # Only FilePathField can be here
+                
                 if self.type.exists:
                     dialog.setFileMode(QFileDialog.FileMode.Directory)
                 else:
-                    dialog.setFileMode(QFileDialog.FileMode.AnyFile)
-                
+                    dialog.setFileMode(QFileDialog.FileMode.AnyFile)  
+
                 dialog.setOption(QFileDialog.Option.ShowDirsOnly, True)
             
             if dialog.exec():

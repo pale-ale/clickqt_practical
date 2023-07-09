@@ -3,16 +3,18 @@ import pytest
 import clickqt
 
 from tests.testutils import ClickAttrs
-from PySide6.QtWidgets import QTabWidget, QPushButton, QSplitter, QWidget
-from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QTabWidget, QPushButton, QSplitter, QWidget, QApplication
+from PySide6.QtCore import Qt, SIGNAL
 from clickqt.core.output import TerminalOutput
 from clickqt.core.control import Control
+from PySide6.QtTest import QSignalSpy
 from typing import Iterable
 import clickqt.widgets
+import time
 
 
-def findChildren(object: QWidget, child_type: QWidget) -> Iterable:
-    return object.findChildren(child_type, options=Qt.FindChildOption.FindDirectChildrenOnly)
+def findChildren(object: QWidget, child_type: QWidget, options=Qt.FindChildOption.FindDirectChildrenOnly) -> Iterable:
+    return object.findChildren(child_type, options=options)
 
 def checkLen(children: Iterable, expected_len:int) -> Iterable:
     assert len(children) == expected_len
@@ -91,12 +93,13 @@ def isIncluded(tab_widget:QTabWidget|QWidget, expected_group_command:list[click.
     ]
 )
 def test_gui_construction_no_options(root_group_command: click.Group|click.Command):
-    control = clickqt.qtgui_from_click(root_group_command, True, " ")
+    control = clickqt.qtgui_from_click(root_group_command)
     gui = control.gui
 
     # Base widgets are set correctly
     assert checkLen(findChildren(gui.window, QSplitter), 1)[0] == gui.splitter
-    assert checkLen(findChildren(gui.splitter, QPushButton), 1)[0] == gui.run_button
+    buttons = checkLen(findChildren(gui.splitter, QPushButton, Qt.FindChildOption.FindChildrenRecursively), 2)
+    assert gui.run_button in buttons and gui.stop_button in buttons
     assert checkLen(findChildren(gui.splitter, TerminalOutput), 1)[0] == gui.terminal_output
 
     parent_tab_widget = checkLen(findChildren(gui.splitter, QTabWidget), 1)[0]
@@ -145,7 +148,7 @@ def test_gui_construction_no_options(root_group_command: click.Group|click.Comma
     ]
 )
 def test_gui_construction_with_options(root_group_command: click.Group|click.Command):
-    control = clickqt.qtgui_from_click(root_group_command, True, " ")
+    control = clickqt.qtgui_from_click(root_group_command)
     gui = control.gui
 
     parent_tab_widget = checkLen(findChildren(gui.splitter, QTabWidget), 1)[0]
@@ -158,3 +161,49 @@ def test_gui_construction_with_options(root_group_command: click.Group|click.Com
         included, err_message = isIncluded(tab_widget, root_group_command.commands.values(), control, root_group_command.name) 
 
         assert included, err_message
+
+def test_gui_stop_execution():
+    param = click.Option(param_decls=["--p"], **ClickAttrs.checkbox())
+    cli = click.Command("cli", params=[param], callback=lambda p: time.sleep(0.05))
+
+    control = clickqt.qtgui_from_click(cli)
+    run_button = control.gui.run_button
+    stop_button = control.gui.stop_button
+
+    assert run_button.isEnabled() and not stop_button.isEnabled()
+    assert control.worker is None and control.worker_thread is None
+
+    run_button.click() # Start execution
+
+    assert not run_button.isEnabled() and stop_button.isEnabled()
+    assert control.worker is not None and control.worker_thread is not None
+
+    stop_button.click() # Stop execution
+
+    for _ in range(10):  # Wait for stopping the worker
+        QApplication.processEvents()
+        time.sleep(0.0001)
+
+    assert run_button.isEnabled() and not stop_button.isEnabled()
+    assert control.worker is None and control.worker_thread is None
+    assert "Execution stopped!\n" in control.gui.terminal_output.toPlainText()
+
+    """run_button.click() # Start execution
+
+    for _ in range(10):  # Wait for starting the worker
+        QApplication.processEvents()
+        time.sleep(0.0001)
+
+    assert not run_button.isEnabled() and stop_button.isEnabled()
+    assert control.worker is not None and control.worker_thread is not None
+    
+    spy = QSignalSpy(control.worker, SIGNAL("finished()"))
+
+    # Wait for the worker to finish
+    for _ in range(10):
+        if not spy.count():
+            QApplication.processEvents()
+            spy.wait(200)
+
+    assert run_button.isEnabled() and not stop_button.isEnabled()
+    assert control.worker is None and control.worker_thread is None"""

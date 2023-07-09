@@ -44,8 +44,8 @@ class CheckableComboBox(ComboBoxBase):
     def addItems(self, items: list[str]):
         self.widget.addItems(items)
 
-    def isEmpty(self) -> bool:
-        return len(self.getWidgetValue()) == 0
+    #def isEmpty(self) -> bool:
+    #    return len(self.getWidgetValue()) == 0
 
     def getWidgetValue(self) -> list[str]:
         return self.widget.getData()

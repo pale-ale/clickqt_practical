@@ -26,7 +26,7 @@ def test_widget_registry_command_names(click_attrs_list:list[list[dict]], group_
 
     group = click.Group(group_name, commands=clis)
 
-    control = clickqt.qtgui_from_click(group, True, " ")
+    control = clickqt.qtgui_from_click(group)
     assert len(control.widget_registry) == len(cli_names_list)
     for i, cli_name in enumerate(control.widget_registry.keys()):
         assert cli_name == expected[i]
