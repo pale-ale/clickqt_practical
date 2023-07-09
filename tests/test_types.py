@@ -203,9 +203,9 @@ def test_pathfield(qtbot:QtBot, click_attrs:dict, value:str, expected:str):
             for btn in file_dialog.findChildren(QPushButton):
                 text = btn.text().lower()
                 if "open" in text or "choose" in text:
-                    QTimer.singleShot(5, lambda: closeMessagebox(message_box_closed))
-                    qtbot.mouseClick(btn, Qt.MouseButton.LeftButton)
-                    qtbot.wait_signal(message_box_closed.finished, timeout=100)
+                    with qtbot.waitSignal(message_box_closed.finished, raising=True) as blocker:
+                        QTimer.singleShot(5, lambda: closeMessagebox(message_box_closed))
+                        qtbot.mouseClick(btn, Qt.MouseButton.LeftButton)
 
             file_dialog.close()
     
