@@ -1,13 +1,12 @@
 from PySide6.QtWidgets import QWidget, QTreeView, QLineEdit, QPushButton, QFileDialog, QDialog
 from PySide6.QtCore import QObject, QEvent, SIGNAL, QDir
-from typing import Optional
 
 class QPathDialog(QFileDialog):
     """
         A QFileDialog that accepts a single file or a single directory
     """
-    def __init__(self, parent: Optional[QWidget] = None, exist: bool = True):
-        super().__init__(parent)
+    def __init__(self, parent:QWidget|None=None, directory:str=QDir.currentPath(), exist:bool=True):
+        super().__init__(parent, directory=directory)
         
         self.exist = exist
         self.setOption(QFileDialog.Option.DontUseNativeDialog, True)
