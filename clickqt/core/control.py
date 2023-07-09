@@ -19,6 +19,7 @@ class Control(QObject):
     requestExecution = Signal(list, click.Context) # Generics do not work here
 
     def __init__(self, cmd:click.Group|click.Command, is_ep:bool=None, ep_or_eppath:str=None):
+        super().__init__()
         """ __init__ function initializing the GUI object and the registries together with the differentiation of a group command and a simple command. """
 
         self.gui = GUI()
@@ -302,21 +303,21 @@ class Control(QObject):
                     
                 if has_error:
                     return None
-            
+
             if len(callback_args := inspect.getfullargspec(command.callback).args) > 0:
                 args: list[Any] = []
                 for ca in callback_args: # Bring the args in the correct order
                     args.append(kwargs.pop(ca)) # Remove explicitly mentioned args from kwargs
 
                 if self.is_entrypoint:
-                    print(f"For command details, please call '{self.command_to_string(hierarchy_selected_command_name)} --help'")
-                    print(f"{self.ep_or_path} {self.command_to_string_to_copy(hierarchy_selected_command_name, selected_command)}")
-                    print(f"Current Command: {self.function_call_formatter(hierarchy_selected_command_name, selected_command, kwargs)} \n" + f"Output:")
+                    print(f"For command details, please call '{self.command_to_string(hierarchy_command)} --help'")
+                    print(f"{self.ep_or_path} {self.command_to_string_to_copy(hierarchy_command, command)}")
+                    print(f"Current Command: {self.function_call_formatter(hierarchy_command, command, kwargs)} \n" + f"Output:")
                     return lambda: command.callback(*args, **kwargs)
                 else:
-                    print(f"For command details, please call '{self.command_to_string(hierarchy_selected_command_name)} --help'")
-                    print(f"python {self.ep_or_path} {self.command_to_string_to_copy(hierarchy_selected_command_name, selected_command)}")
-                    print(f"Current Command: {self.function_call_formatter(hierarchy_selected_command_name, selected_command, kwargs)} \n" + f"Output:") 
+                    print(f"For command details, please call '{self.command_to_string(hierarchy_command)} --help'")
+                    print(f"python {self.ep_or_path} {self.command_to_string_to_copy(hierarchy_command, command)}")
+                    print(f"Current Command: {self.function_call_formatter(hierarchy_command, command, kwargs)} \n" + f"Output:") 
                     return lambda: command.callback(*args, **kwargs)
             else:
                 return lambda: command.callback(**kwargs)
