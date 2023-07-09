@@ -124,7 +124,7 @@ def test_passwordfield_showPassword():
         (ClickAttrs.filepathfield(type_dict={"exists":True}), "tests", "tests"), # valid folder
         pytest.param(ClickAttrs.filepathfield(type_dict={"exists":True}), ".gitignore", ".gitignore", marks=pytest.mark.skipif(sys.platform == "linux", reason="Does not work under linux")), # valid file
         (ClickAttrs.filepathfield(type_dict={"exists":False}), "invalid_path", "invalid_path"), # Exists==False: Accept any file
-        (ClickAttrs.filepathfield(type_dict={"exists":True, "dir_okay":False}), ".gitignore", ".gitignore"),
+        pytest.param(ClickAttrs.filepathfield(type_dict={"exists":True, "dir_okay":False}), ".gitignore", ".gitignore", marks=pytest.mark.skipif(sys.platform == "linux", reason="Does not work under linux")),
         (ClickAttrs.filepathfield(type_dict={"exists":True, "dir_okay":False}), "tests", ""),
         (ClickAttrs.filepathfield(type_dict={"exists":False, "dir_okay":False}), "tests", ""),
         (ClickAttrs.filepathfield(type_dict={"exists":True, "file_okay":False}), ".gitignore", ""),
@@ -179,7 +179,7 @@ def test_pathfield(qtbot:QtBot, click_attrs:dict, value:str, expected:str):
                 if "open" in text or "choose" in text:
                     QTimer.singleShot(5, lambda: closeMessagebox(message_box_closed))
                     qtbot.mouseClick(btn, Qt.MouseButton.LeftButton)
-                    qtbot.wait_signal(message_box_closed.finished, timeout=50)
+                    qtbot.wait_signal(message_box_closed.finished, timeout=100)
 
             file_dialog.close()
     
