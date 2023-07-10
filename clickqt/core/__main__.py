@@ -5,22 +5,32 @@ from importlib import util, metadata
 
 @click.group('clickqtfy')
 def clickqtfy():
-	''' Generate a GUI for an entry point inside EPFILE named EPNAME. '''
+	''' Generate a GUI for an entry point. '''
 
 @clickqtfy.command('ep')
 @click.argument('epname')
-def package(epname):
+def ep(epname):
+	''' Use the endpoint called EPNAME for the GUI. '''
 	qtgui_from_click(get_command_from_entrypoint(epname), True, epname)()
-
 
 @clickqtfy.command('file')
 @click.argument('epfile', type=click.Path(exists=True))
 @click.argument('epname')
-def withep(epfile, epname):
+def file(epfile, epname):
+	''' 
+	Use the function named EPNAME, with its definition in EPFILE. 
+	
+	EPFILE is path to the file which contains the click.Command
+
+	EPNAME is the name of the click.Command's function
+	
+	'''
 	qtgui_from_click(get_command_from_path(epfile, epname), False, str(epfile))()
 
-
 def get_command_from_entrypoint(epname:str) -> click.Command:
+	'''
+	Returns the click.Command specified by `epname`. If `epname` is not a click.Command, raises `ImportError`.
+	'''
 	eps = get_entrypoints_from_name(epname)
 	if len(eps) == 0:
 		raise ImportError(f"No entry point named '{epname}' found.")
@@ -30,17 +40,23 @@ def get_command_from_entrypoint(epname:str) -> click.Command:
 	return validate_entrypoint(eps[0].load())
 
 def get_entrypoints_from_name(epname:str) -> list[metadata.EntryPoint]:	
-		grouped_eps = metadata.entry_points()
-		candidates:list[metadata.EntryPoint] = []
-		for group in grouped_eps.groups:
-			for ep in grouped_eps.select(group=group):
-				if ep.name == epname:
-					return [ep]
-				if epname in ep.name or epname in ep.value:
-					candidates.append(ep)
-		return candidates
+	'''
+	Returns the entrypoints that include `epname` in their name.
+	'''
+	grouped_eps = metadata.entry_points()
+	candidates:list[metadata.EntryPoint] = []
+	for group in grouped_eps.groups:
+		for ep in grouped_eps.select(group=group):
+			if ep.name == epname:
+				return [ep]
+			if epname in ep.name or epname in ep.value:
+				candidates.append(ep)
+	return candidates
 
 def get_command_from_path(eppath:str, epname:str) -> click.Command:	
+	'''
+	Returns the entrypoint given by the file path and the function name, or raises `ImportError` if the endpoint is not a `click.Command`.
+	'''
 	modulename = f"clickqtfy.imported_module"
 	spec = util.spec_from_file_location(modulename, eppath)
 	module = util.module_from_spec(spec)
@@ -52,6 +68,9 @@ def get_command_from_path(eppath:str, epname:str) -> click.Command:
 	return validate_entrypoint(entrypoint)
 	
 def validate_entrypoint(ep):
+	'''
+	Raise a `TypeError` if a provided function is not a `click.Command`.
+	'''
 	if not isinstance(ep, click.Command):
 		raise TypeError(f"Entry point '{ep}' is not a 'click.Command'.")
 	return ep

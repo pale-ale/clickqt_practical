@@ -31,6 +31,35 @@ Having done so, the test suite can be run using `pytest`:
 python -m pytest
 ```
 
+## Usage
+
+`clickqt` is designed to allow two ways of usage: 
+  ### External
+To use `clickqt` externally, you can run the entry point created by installing `clickqt`, called `clickqtfy`.
+There are two ways to use this entry point:
+- ```
+  clickqtfy ep EPNAME
+  ```
+This way works if you have an installed entry point.
+- ```
+  clickqtfy file EPFILE EPNAME 
+  ```
+In cases where there is no installed entry point, you can use this method instead, providing a path/filename and a function name within that file.
+
+  ### Wrapper
+You can create your own python file using `clickqt` like this:
+``` python
+from clickqt import qt_gui_from_click
+import click
+
+@click.command(...)
+def foo(...):
+  pass
+
+qt_gui_from_click(foo)()
+```
+
+
 ## Limitations
 
 Currently clickqt only supports the built-in features from click.
