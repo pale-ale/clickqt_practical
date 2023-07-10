@@ -165,9 +165,9 @@ class Control(QObject):
                 short_forms = [opt for opt in param.opts if opt.startswith("-")]
                 short_forms = max(short_forms, key=len) if short_forms else None
                 if longest_long_form:
-                    option_names.append((longest_long_form, param.type, param.multiple))
+                    option_names.append((longest_long_form, param.type, param.multiple, param.nargs))
                 else: 
-                    option_names.append((short_forms, param.type, param.multiple))
+                    option_names.append((short_forms, param.type, param.multiple, param.nargs))
             elif isinstance(param, click.Argument):
                 option_names.append(("Argument", param.type))
         return option_names
@@ -207,7 +207,8 @@ class Control(QObject):
         parameter_strings = []
         for i, param in enumerate(parameter_list):
             if param[0] != "Argument":
-                if type(widget_values[i]) != list or param[2] != True:
+                print(parameter_list)
+                if type(widget_values[i]) != list and param[2] != True:
                     widget_value = str(widget_values[i])
                     if not is_file_path(widget_value):
                         parameter_strings.append(parameter_list[i][0] + " " + re.sub(r'[^a-zA-Z0-9 .-]', ' ', widget_value))
@@ -224,12 +225,21 @@ class Control(QObject):
                                 parameter_strings.append(parameter_list[i][0] + " " + widget_value)
                     else:
                         length = len(widget_values[i])
-                        for j in range(length):
-                            widget_value = str(widget_values[i][j])
-                            if not is_file_path(widget_value):
-                                parameter_strings.append(parameter_list[i][0] + " " + re.sub(r'[^a-zA-Z0-9 .-]', ' ', widget_value))
-                            else:
-                                parameter_strings.append(parameter_list[i][0] + " " + widget_value)
+                        if param[2] != True:
+                            parameter_strings.append(parameter_list[i][0])
+                            for j in range(length):
+                                widget_value = str(widget_values[i][j])
+                                if not is_file_path(widget_value):
+                                    parameter_strings.append(" " + re.sub(r'[^a-zA-Z0-9 .-]', ' ', widget_value))
+                                else:
+                                    parameter_strings.append(" " + widget_value)
+                        else:             
+                            for j in range(length):
+                                widget_value = str(widget_values[i][j])
+                                if not is_file_path(widget_value):
+                                    parameter_strings.append(parameter_list[i][0] + " " + re.sub(r'[^a-zA-Z0-9 .-]', ' ', widget_value))
+                                else:
+                                    parameter_strings.append(parameter_list[i][0] + " " + widget_value)
             else:
                 parameter_strings.append(str(widget_values[i])) 
         message = hierarchy_selected_name + " " + " ".join(parameter_strings)
