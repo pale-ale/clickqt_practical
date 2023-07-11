@@ -2,6 +2,7 @@ import click
 from clickqt.widgets.multivaluewidget import MultiValueWidget
 from PySide6.QtWidgets import QApplication, QSplitter, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QTabWidget, QSizePolicy
 from PySide6.QtGui import QColor, Qt
+from clickqt.widgets.basewidget import BaseWidget
 from clickqt.widgets.checkbox import CheckBox
 from clickqt.widgets.textfield import TextField
 from clickqt.widgets.passwordfield import PasswordField
@@ -17,8 +18,10 @@ from clickqt.widgets.messagebox import MessageBox
 from clickqt.core.output import OutputStream, TerminalOutput
 import sys
 
+
 class GUI:
-    """ GUI class responsible for setting up the components for the GUI that is used to navigate through the different kind of commands and their execution"""
+    """ Responsible for setting up the components for the Qt-GUI that is used to navigate through the different kind of commands and their execution. """
+
     def __init__(self):
         self.window = QWidget()
         self.window.setLayout(QVBoxLayout())
@@ -49,11 +52,19 @@ class GUI:
         sys.stderr = OutputStream(self.terminal_output, sys.stderr, QColor("red"))
 
     def __call__(self):
+        """Shows the GUI-window"""
+
         self.window.show()
         QApplication.instance().exec()
 
-    def create_widget(self, otype:click.ParamType, param:click.Parameter, **kwargs):
-        """ Function to return the widget object of the correct widget class determined by the param.type"""
+    def create_widget(self, otype:click.ParamType, param:click.Parameter, **kwargs) -> BaseWidget:
+        """Creates the clickqt widget object of the correct widget class determined by the **otype** and returns it.
+        
+        :param otype: The type which specifies the clickqt widget type. This type may be different compared to **param**.type when dealing with click.types.CompositeParamType-objects
+        :param param: The parameter from which **otype** came from
+        :param kwargs: Additionally parameters ('widgetsource', 'parent', 'com') needed for :class:`~clickqt.widgets.basewidget.MultiWidget`-widgets
+        """
+
         typedict = {
             click.types.BoolParamType: MessageBox if hasattr(param, "is_flag") and param.is_flag and hasattr(param, "prompt") and param.prompt else CheckBox,
             click.types.IntParamType: IntField,

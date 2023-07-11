@@ -16,11 +16,20 @@ from clickqt.core.utils import *
 
 
 class Control(QObject):
-    requestExecution = Signal(list, click.Context) # Generics do not work here
+    """Regulates the creation of the GUI with their widgets according to clicks parameter types and causes the execution/abortion of a selected command.
+    
+    :param cmd: The callback function from which a GUI should be created
+    :param is_ep: Specifies whether there is an installed entry point
+    :param ep_or_eppath: The name of the entry point or the path to the entry point
+    """
 
-    def __init__(self, cmd:click.Group|click.Command, is_ep:bool=None, ep_or_eppath:str=None):
+    #: Internal Qt-signal, which will be emitted when the :func:`~clickqt.core.control.Control.startExecution`-Slot was triggered and executed successfully.
+    requestExecution:Signal = Signal(list, click.Context) # Generics do not work here
+
+    def __init__(self, cmd:click.Command, is_ep:bool=None, ep_or_eppath:str=None):
+        """ Initializing the GUI object and the registries together with the differentiation of a group command and a simple command. """
+
         super().__init__()
-        """ __init__ function initializing the GUI object and the registries together with the differentiation of a group command and a simple command. """
 
         self.gui = GUI()
         self.cmd = cmd
@@ -57,9 +66,21 @@ class Control(QObject):
             self.gui.main_tab.addTab(self.parse_cmd(cmd, cmd.name), cmd.name)
 
     def __call__(self):
+        """Shows the GUI according to :func:`~clickqt.core.gui.GUI.__call__` of :class:`~clickqt.core.gui.GUI`."""
+        
         self.gui()
     
-    def parameter_to_widget(self, command: click.Command, groups_command_name:str, param: click.Parameter) -> QWidget:
+    def parameter_to_widget(self, command:click.Command, groups_command_name:str, param:click.Parameter) -> QWidget:
+        """Creates a clickqt widget according to :func:`~clickqt.core.gui.GUI.create_widget` and returns the container of the widget (label-element + Qt-widget).
+
+        :param command: The click command of the provided **param**
+        :param groups_command_name: The hierarchy of the **command** as string whereby the names of the components are 
+                                    concatenated according to :func:`~clickqt.core.control.Control.concat`
+        :param param: The click parameter whose type a clickqt widget should be created from
+        
+        :return: The container of the created widget (label-element + Qt-widget)
+        """
+
         assert param.name, "No parameter name specified"
         assert self.widget_registry[groups_command_name].get(param.name) is None
         
@@ -69,12 +90,23 @@ class Control(QObject):
         
         return widget.container
 
-    def concat(self, a: str, b: str) -> str:
-        """ Returns a concatenated string """
+    def concat(self, a:str, b:str) -> str:
+        """ Concatenates the strings a and b with ':' and returns the result. """
+
         return a + ":" + b
     
-    def parse_cmd_group(self, cmdgroup: click.Group, group_names: str) -> QTabWidget:
-        """ Function to parse the information of a grouped click command. """
+    def parse_cmd_group(self, cmdgroup:click.Group, group_names:str) -> QTabWidget:
+        """ Creates for every group in **cmdgroup** a QTabWidget instance and adds every command in **cmdgroup** as a tab to it. 
+        The creation of the content of every tab is realized by calling :func:`~clickqt.core.control.Control.parse_cmd`.
+        To realize command hierachies, this method is called recursively.
+
+        :param cmdgroup: The group from which a QTabWidget with content should be created
+        :param group_names: The hierarchy of **cmdgroup** as string whereby the names of the components are 
+                            concatenated according to :func:`~clickqt.core.control.Control.concat`
+
+        :returns: A Qt-GUI representation in a QTabWidget of **cmdgroup**
+        """
+
         group_tab_widget = QTabWidget()
         for group_name, group_cmd in cmdgroup.commands.items():
             if isinstance(group_cmd, click.Group):
@@ -94,8 +126,16 @@ class Control(QObject):
         
         return group_tab_widget
     
-    def parse_cmd(self, cmd: click.Command, groups_command_name: str):
-        """ Function to parse the information of a simple command. """
+    def parse_cmd(self, cmd:click.Command, groups_command_name:str) -> QScrollArea:
+        """ Creates for every click parameter in **cmd** a clickqt widget and returns them stored in a QScrollArea
+
+        :param cmd: The command from which a QTabWidget with content should be created
+        :param groups_command_name: The hierarchy of **cmd** as string whereby the names of the components are 
+                                    concatenated according to :func:`~clickqt.core.control.Control.concat`
+
+        :returns: The created clickqt widgets stored in a QScrollArea
+        """
+
         cmdbox = QWidget()
         cmdbox.setLayout(QVBoxLayout())
 
@@ -132,8 +172,11 @@ class Control(QObject):
 
         return cmd_tab_widget
     
-    def check_error(self, err: ClickQtError) -> bool:
-        """ Returns if parameter has Error. """
+    def check_error(self, err:ClickQtError) -> bool:
+        """Checks whether **err** contains an error and prints on error case the message of it to sys.stderr. 
+
+        :return: True, if **err** contains an error, False otherwise"""
+
         if err.type != ClickQtError.ErrorType.NO_ERROR:
             if (message := err.message()): # Don't print on context exit
                 print(message, file=sys.stderr)
@@ -141,10 +184,16 @@ class Control(QObject):
         
         return False
 
-    def current_command_hierarchy(self, tab_widget: QTabWidget|QWidget, group: click.Group|click.Command) -> list[click.Group|click.Command]:
+    def current_command_hierarchy(self, tab_widget:QTabWidget|QWidget, group:click.Command) -> list[click.Command]:
+        """Returns the hierarchy of the command of the selected tab as list whereby the order of the list is from root command
+        to the selected command.
+
+        :param tab_widget: The currend widget of the root-QTabWidget
+        :param group: The click command provided to :func:`~clickqt.core.control.Control`
+        
+        :return: The hierarchy of the command of the selected tab as ordered list (root command to selected command)
         """
-            Returns the hierarchy of the command of the selected tab
-        """
+
         if isinstance(group, click.Group):
             if len(group.params) > 0: # Group has params
                 tab_widget = tab_widget.findChild(QTabWidget)
@@ -196,7 +245,7 @@ class Control(QObject):
     
     
     def command_to_string_to_copy(self, hierarchy_selected_name:str, selected_command):
-        """ Returns a string representing the click command if one actually would actually execute it in the shell"""
+        """ Returns a string representing the click command if one actually would actually execute it in the shell."""
         parameter_list = self.get_option_names(selected_command)
         parameter_list = [param for param in parameter_list if param[0] != "--yes"]
         widgets = self.widget_registry[hierarchy_selected_name]
@@ -255,12 +304,18 @@ class Control(QObject):
     
     @Slot()
     def stopExecution(self):
+        """Qt-Slot, which stops the execution of the command(-hierarchy) which is currently running."""
+
         print("Execution stopped!", file=sys.stderr)
         self.worker_thread.terminate()
         self.executionFinished()
 
     @Slot()
     def executionFinished(self):
+        """Qt-Slot, which deletes the internal worker-object and resets the buttons of the GUI. 
+        This slot is automatically executed when the execution of a command has finished.
+        """
+
         self.worker_thread.deleteLater()
         self.worker.deleteLater()
 
@@ -272,6 +327,11 @@ class Control(QObject):
 
     @Slot()
     def startExecution(self):
+        """Qt-Slot, which validates the selected command hierarchy and causes (on success) their execution in another thread by 
+        emitting the :func:`~clickqt.core.control.Control.requestExecution`-Signal.
+        This slot is automatically executed when the user clicks on the 'Run'-button.
+        """
+
         hierarchy_selected_command = self.current_command_hierarchy(self.gui.main_tab.currentWidget(), self.cmd)
         
         def run_command(command:click.Command|click.Group, hierarchy_command:str) -> Callable|None:
