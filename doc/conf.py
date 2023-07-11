@@ -20,7 +20,15 @@ extensions = [
     "sphinx_mdinclude",
     "sphinx.ext.autodoc",
     "sphinx_rtd_theme",
+    "enum_tools.autoenum",
+    "sphinx_qt_documentation",
 ]
+
+# Make the documentations order the same as the source order.
+autodoc_member_order = 'bysource'
+
+# Linking to PySide6 documentation on "https://doc.qt.io/qtforpython-6/"
+qt_documentation = "PySide6"
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = []
