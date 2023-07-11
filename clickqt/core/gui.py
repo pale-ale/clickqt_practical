@@ -52,7 +52,7 @@ class GUI:
         self.window.show()
         QApplication.instance().exec()
 
-    def create_widget(self, otype:click.ParamType, param:click.Parameter, *args, **kwargs):
+    def create_widget(self, otype:click.ParamType, param:click.Parameter, **kwargs):
         """ Function to return the widget object of the correct widget class determined by the param.type"""
         typedict = {
             click.types.BoolParamType: MessageBox if hasattr(param, "is_flag") and param.is_flag and hasattr(param, "prompt") and param.prompt else CheckBox,
@@ -74,16 +74,16 @@ class GUI:
             return NValueWidget
 
         if hasattr(param, "confirmation_prompt") and param.confirmation_prompt:
-            return ConfirmationWidget(otype, param, *args, **kwargs)
+            return ConfirmationWidget(otype, param, **kwargs)
         if param.multiple:
-            return get_multiarg_version(otype)(otype, param, *args, **kwargs)
+            return get_multiarg_version(otype)(otype, param, **kwargs)
         if param.nargs > 1:
             if isinstance(otype, click.types.Tuple):
-                return TupleWidget(otype, param, *args, **kwargs)
-            return MultiValueWidget(otype, param, *args, **kwargs)
+                return TupleWidget(otype, param, **kwargs)
+            return MultiValueWidget(otype, param, **kwargs)
 
         for t, widgetclass in typedict.items():
             if isinstance(otype, t):
-                return widgetclass(otype, param, *args, **kwargs)
+                return widgetclass(otype, param, **kwargs)
             
-        return TextField(otype, param, *args, **kwargs) # Custom types are mapped to TextField
+        return TextField(otype, param, **kwargs) # Custom types are mapped to TextField

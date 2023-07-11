@@ -7,8 +7,8 @@ from click import Parameter, ParamType, Context, Choice
 class ComboBox(ComboBoxBase):
     widget_type = QComboBox
 
-    def __init__(self, otype:ParamType, param:Parameter, *args, **kwargs):
-        super().__init__(otype, param, *args, **kwargs)
+    def __init__(self, otype:ParamType, param:Parameter, **kwargs):
+        super().__init__(otype, param, **kwargs)
         
         if self.parent_widget is None and (default := BaseWidget.getParamDefault(param, None)) is not None:
             self.setValue(default)
@@ -26,8 +26,8 @@ class ComboBox(ComboBoxBase):
 class CheckableComboBox(ComboBoxBase):
     widget_type = QCheckableComboBox
 
-    def __init__(self, otype:ParamType, param:Parameter, *args, **kwargs):
-        super().__init__(otype, param, *args, **kwargs)
+    def __init__(self, otype:ParamType, param:Parameter, **kwargs):
+        super().__init__(otype, param, **kwargs)
 
         assert param.multiple, "'param.multiple' should be True"
 

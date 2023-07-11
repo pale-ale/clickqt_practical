@@ -13,7 +13,7 @@ class BaseWidget(ABC):
     # The type of this widget
     widget_type: ClassVar[Type]
 
-    def __init__(self, otype:ParamType, param:Parameter, *args, parent:"BaseWidget|None"=None, **kwargs):
+    def __init__(self, otype:ParamType, param:Parameter, parent:"BaseWidget|None"=None, **kwargs):
         assert isinstance(otype, ParamType)
         assert isinstance(param, Parameter)
         self.type:ParamType = otype
@@ -170,8 +170,8 @@ class NumericField(BaseWidget):
     
 
 class ComboBoxBase(BaseWidget):
-    def __init__(self, otype:ParamType, param:Parameter, *args, **kwargs):
-        super().__init__(otype, param, *args, **kwargs)
+    def __init__(self, otype:ParamType, param:Parameter, **kwargs):
+        super().__init__(otype, param, **kwargs)
 
         assert isinstance(otype, Choice), f"'otype' must be of type '{Choice}', but is '{type(otype)}'."
 
@@ -184,8 +184,8 @@ class ComboBoxBase(BaseWidget):
         """
 
 class MultiWidget(BaseWidget):
-    def __init__(self, otype:ParamType, param:Parameter, *args, **kwargs):
-        super().__init__(otype, param, *args, **kwargs)
+    def __init__(self, otype:ParamType, param:Parameter, **kwargs):
+        super().__init__(otype, param, **kwargs)
         
         self.children:list[BaseWidget]|dict_values[BaseWidget] = []
 

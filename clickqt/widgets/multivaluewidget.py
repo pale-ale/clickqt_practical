@@ -6,8 +6,8 @@ from typing import Any, Callable
 class MultiValueWidget(MultiWidget):
     widget_type = QGroupBox
     
-    def __init__(self, otype:ParamType, param:Parameter, widgetsource:Callable[[Any], BaseWidget], parent:BaseWidget=None, *args, **kwargs):
-        super().__init__(otype, param, parent, *args, **kwargs)
+    def __init__(self, otype:ParamType, param:Parameter, widgetsource:Callable[[Any], BaseWidget], parent:BaseWidget=None, **kwargs):
+        super().__init__(otype, param, parent=parent, **kwargs)
 
         assert param.nargs >= 2, f"'param.nargs' should be >= 2, but is '{param.nargs}'."
 
@@ -17,7 +17,7 @@ class MultiValueWidget(MultiWidget):
         for i in range(param.nargs):
             nargs = param.nargs
             param.nargs = 1 # Stop recursion
-            bw:BaseWidget = widgetsource(otype, param, *args, parent=self, widgetsource=widgetsource, **kwargs)
+            bw:BaseWidget = widgetsource(otype, param, widgetsource=widgetsource, parent=self,**kwargs)
             param.nargs = nargs # click needs the right value for a correct conversion
             bw.layout.removeWidget(bw.label)
             bw.label.deleteLater()

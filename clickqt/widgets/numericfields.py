@@ -6,8 +6,8 @@ import sys
 class IntField(NumericField):
     widget_type = QSpinBox
 
-    def __init__(self, otype:ParamType, param:Parameter, *args, **kwargs):
-        super().__init__(otype, param, *args, **kwargs)
+    def __init__(self, otype:ParamType, param:Parameter, **kwargs):
+        super().__init__(otype, param, **kwargs)
 
         assert isinstance(otype, IntRange|type(INT)), f"'otype' must be of type '{IntRange}' or '{type(INT)}', but is '{type(otype)}'."
         
@@ -28,8 +28,8 @@ class IntField(NumericField):
 class RealField(NumericField):
     widget_type = QDoubleSpinBox
 
-    def __init__(self, otype:ParamType, param:Parameter, *args, **kwargs):
-        super().__init__(otype, param, *args, **kwargs)
+    def __init__(self, otype:ParamType, param:Parameter, **kwargs):
+        super().__init__(otype, param, **kwargs)
 
         assert isinstance(otype, FloatRange|type(FLOAT)), f"'otype' must be of type '{FloatRange}' or '{type(FLOAT)}', but is '{type(otype)}'."
 

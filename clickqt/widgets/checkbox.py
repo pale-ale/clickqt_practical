@@ -6,8 +6,8 @@ from typing import Any
 class CheckBox(BaseWidget):
     widget_type = QCheckBox
 
-    def __init__(self, otype:ParamType, param:Parameter, *args, **kwargs):
-        super().__init__(otype, param, *args, **kwargs)
+    def __init__(self, otype:ParamType, param:Parameter, **kwargs):
+        super().__init__(otype, param, **kwargs)
 
         assert isinstance(otype, type(BOOL)), f"'otype' must be of type '{type(BOOL)}', but is '{type(otype)}'."
 

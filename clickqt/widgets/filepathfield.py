@@ -5,8 +5,8 @@ from click import Parameter, Path, ParamType
 class FilePathField(PathField):
     widget_type = QLineEdit
 
-    def __init__(self, otype:ParamType, param:Parameter, *args, **kwargs):
-        super().__init__(otype, param, *args, **kwargs)
+    def __init__(self, otype:ParamType, param:Parameter, **kwargs):
+        super().__init__(otype, param, **kwargs)
 
         assert isinstance(otype, Path), f"'otype' must be of type '{Path}', but is '{type(otype)}'."
         

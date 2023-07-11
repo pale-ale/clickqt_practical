@@ -7,8 +7,8 @@ from click import Parameter, ParamType, Tuple as ClickTuple
 class TupleWidget(MultiWidget):
     widget_type = QGroupBox
 
-    def __init__(self, otype:ParamType, param:Parameter, widgetsource:Callable[[Any], BaseWidget], *args, parent:BaseWidget|None=None, **kwargs):
-        super().__init__(otype, param, *args, parent=parent, **kwargs)
+    def __init__(self, otype:ParamType, param:Parameter, widgetsource:Callable[[Any], BaseWidget], parent:BaseWidget|None=None, **kwargs):
+        super().__init__(otype, param, parent=parent, **kwargs)
         
         assert isinstance(otype, ClickTuple), f"'otype' must be of type '{ClickTuple}', but is '{type(otype)}'."
         assert otype.is_composite, f"otype.is_composite should be True"
@@ -18,7 +18,7 @@ class TupleWidget(MultiWidget):
         for t in (otype.types if hasattr(otype, "types") else otype):
             nargs = self.param.nargs
             self.param.nargs = 1
-            bw:BaseWidget = widgetsource(t, self.param, *args, widgetsource=widgetsource, parent=self, **kwargs)
+            bw:BaseWidget = widgetsource(t, self.param, widgetsource=widgetsource, parent=self, **kwargs)
             self.param.nargs = nargs 
             bw.layout.removeWidget(bw.label)
             bw.label.deleteLater()

@@ -7,8 +7,8 @@ from click import Parameter, ParamType, Context
 class MessageBox(BaseWidget):
     widget_type = QWidget
 
-    def __init__(self, otype:ParamType, param:Parameter, *args, **kwargs):
-        super().__init__(otype, param, *args, **kwargs)
+    def __init__(self, otype:ParamType, param:Parameter, **kwargs):
+        super().__init__(otype, param, **kwargs)
 
         assert hasattr(param, "is_flag") and param.is_flag, "'param.is_flag' should be True" 
         assert hasattr(param, "prompt") and param.prompt, "'param.prompt' should be not empty"

@@ -9,14 +9,13 @@ import os
 class NValueWidget(MultiWidget):
     widget_type = QScrollArea
     
-    def __init__(self, otype:ParamType, param:Parameter, widgetsource:Callable[[Any], BaseWidget], parent:BaseWidget=None, *args, **kwargs):
-        super().__init__(otype, param, parent, *args, **kwargs)
+    def __init__(self, otype:ParamType, param:Parameter, widgetsource:Callable[[Any], BaseWidget], parent:BaseWidget=None, **kwargs):
+        super().__init__(otype, param, parent=parent, **kwargs)
 
         assert not isinstance(otype, Choice), f"'otype' is of type '{Choice}', but there is a better version for this type"
         assert param.multiple, "'param.multiple' should be True"
 
         self.widget.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
-        self.optargs = args
         self.optkwargs = kwargs
         self.widgetsource = widgetsource
         self.vbox = QWidget()
@@ -37,7 +36,7 @@ class NValueWidget(MultiWidget):
             self.handleValid(True)
 
         self.param.multiple = False # nargs cannot be nested, so it is safe to turn this off for children
-        clickqtwidget:BaseWidget = self.widgetsource(self.type, self.param, *self.optargs, widgetsource=self.widgetsource, parent=self, **self.optkwargs)
+        clickqtwidget:BaseWidget = self.widgetsource(self.type, self.param, widgetsource=self.widgetsource, parent=self, **self.optkwargs)
         self.param.multiple = True # click needs this for a correct conversion
         if value is not None:
             clickqtwidget.setValue(value)

@@ -10,8 +10,8 @@ import datetime
 class DateTimeEdit(BaseWidget):
     widget_type = QDateTimeEdit
 
-    def __init__(self, otype:ParamType, param:Parameter, *args, **kwargs):
-        super().__init__(otype, param, *args, **kwargs)
+    def __init__(self, otype:ParamType, param:Parameter, **kwargs):
+        super().__init__(otype, param, **kwargs)
 
         assert isinstance(otype, DateTime), f"'otype' must be of type '{DateTime}', but is '{type(otype)}'."
 

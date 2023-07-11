@@ -9,8 +9,8 @@ from click import Parameter, Context, ParamType
 class TextField(BaseWidget):
     widget_type = QLineEdit
 
-    def __init__(self, otype:ParamType, param:Parameter, *args, **kwargs):
-        super().__init__(otype, param, *args, **kwargs)
+    def __init__(self, otype:ParamType, param:Parameter, **kwargs):
+        super().__init__(otype, param, **kwargs)
 
         if self.parent_widget is None:
             if (envvar_value := param.resolve_envvar_value(Context(self.click_command))) is not None: # Consider envvar
@@ -37,8 +37,8 @@ class PathField(TextField):
         File = 1
         Directory = 2
 
-    def __init__(self, otype:ParamType, param:Parameter, *args, **kwargs):
-        super().__init__(otype, param, *args, **kwargs)
+    def __init__(self, otype:ParamType, param:Parameter, **kwargs):
+        super().__init__(otype, param, **kwargs)
 
         self.file_type = PathField.FileType.Unknown
 

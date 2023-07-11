@@ -7,15 +7,15 @@ from click import Parameter, ParamType
 class ConfirmationWidget(BaseWidget):
     widget_type = QWidget
 
-    def __init__(self, otype:ParamType, param:Parameter, widgetsource:Callable[[Any], BaseWidget], *args, **kwargs):
-        super().__init__(otype, param, *args, **kwargs)
+    def __init__(self, otype:ParamType, param:Parameter, widgetsource:Callable[[Any], BaseWidget], **kwargs):
+        super().__init__(otype, param, **kwargs)
 
         assert hasattr(self.param, "confirmation_prompt") and self.param.confirmation_prompt, "'param.confirmation_prompt' should be True"
         
         self.param.confirmation_prompt = False  # Stop recursion
-        self.field: BaseWidget = widgetsource(self.type, param, parent=self, *args, **kwargs)
+        self.field: BaseWidget = widgetsource(self.type, param, parent=self, **kwargs)
         kwargs["label"] = "Confirmation "
-        self.confirmation_field: BaseWidget = widgetsource(self.type, param, parent=self, *args, **kwargs)
+        self.confirmation_field: BaseWidget = widgetsource(self.type, param, parent=self, **kwargs)
         self.param.confirmation_prompt = True
         self.widget.setLayout(QVBoxLayout())
         self.layout.removeWidget(self.label)

@@ -6,8 +6,8 @@ from click import Parameter, ParamType
 class PasswordField(TextField):
     widget_type = QLineEdit
 
-    def __init__(self, otype:ParamType, param:Parameter, *args, **kwargs):
-        super().__init__(otype, param, *args, **kwargs)
+    def __init__(self, otype:ParamType, param:Parameter, **kwargs):
+        super().__init__(otype, param, **kwargs)
 
         assert hasattr(param, "hide_input") and param.hide_input, "'param.hide_input' should be True"
 
