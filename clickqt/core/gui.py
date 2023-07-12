@@ -57,7 +57,7 @@ class GUI:
         self.window.show()
         QApplication.instance().exec()
 
-    def create_widget(self, otype:click.ParamType, param:click.Parameter, **kwargs) -> BaseWidget:
+    def createWidget(self, otype:click.ParamType, param:click.Parameter, **kwargs) -> BaseWidget:
         """Creates the clickqt widget object of the correct widget class determined by the **otype** and returns it.
         
         :param otype: The type which specifies the clickqt widget type. This type may be different compared to **param**.type when dealing with click.types.CompositeParamType-objects

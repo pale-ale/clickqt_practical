@@ -71,7 +71,7 @@ class Control(QObject):
         self.gui()
     
     def parameter_to_widget(self, command:click.Command, groups_command_name:str, param:click.Parameter) -> QWidget:
-        """Creates a clickqt widget according to :func:`~clickqt.core.gui.GUI.create_widget` and returns the container of the widget (label-element + Qt-widget).
+        """Creates a clickqt widget according to :func:`~clickqt.core.gui.GUI.createWidget` and returns the container of the widget (label-element + Qt-widget).
 
         :param command: The click command of the provided **param**
         :param groups_command_name: The hierarchy of the **command** as string whereby the names of the components are 
@@ -84,7 +84,7 @@ class Control(QObject):
         assert param.name, "No parameter name specified"
         assert self.widget_registry[groups_command_name].get(param.name) is None
         
-        widget = self.gui.create_widget(param.type, param, widgetsource=self.gui.create_widget, com=command)                
+        widget = self.gui.createWidget(param.type, param, widgetsource=self.gui.createWidget, com=command)                
         self.widget_registry[groups_command_name][param.name] = widget
         self.command_registry[groups_command_name][param.name] = (param.nargs, type(param.type).__name__)
         
