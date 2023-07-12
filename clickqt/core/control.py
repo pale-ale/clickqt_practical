@@ -8,6 +8,8 @@ from PySide6.QtGui import QPalette
 from clickqt.core.error import ClickQtError
 from clickqt.widgets.confirmationwidget import ConfirmationWidget
 from clickqt.widgets.basewidget import BaseWidget
+from clickqt.widgets.messagebox import MessageBox
+from clickqt.widgets.filefield import FileField
 from typing import Dict, Callable, List, Any, Tuple
 import sys
 from functools import reduce
@@ -67,7 +69,7 @@ class Control(QObject):
 
     def __call__(self):
         """Shows the GUI according to :func:`~clickqt.core.gui.GUI.__call__` of :class:`~clickqt.core.gui.GUI`."""
-        
+
         self.gui()
     
     def parameter_to_widget(self, command:click.Command, groups_command_name:str, param:click.Parameter) -> QWidget:
@@ -328,7 +330,7 @@ class Control(QObject):
     @Slot()
     def startExecution(self):
         """Qt-Slot, which validates the selected command hierarchy and causes (on success) their execution in another thread by 
-        emitting the :func:`~clickqt.core.control.Control.requestExecution`-Signal.
+        emitting the :func:`~clickqt.core.control.Control.requestExecution`-Signal. Widgets that will show a dialog will be validated at last.
         This slot is automatically executed when the user clicks on the 'Run'-button.
         """
 
@@ -337,39 +339,32 @@ class Control(QObject):
         def run_command(command:click.Command|click.Group, hierarchy_command:str) -> Callable|None:
             kwargs: Dict[str, Any] = {}
             has_error = False
-            unused_options: List[BaseWidget] = [] # parameters with expose_value==False
+            dialog_widgets: List[BaseWidget] = [] # widgets that will show a dialog
 
             if self.widget_registry.get(hierarchy_command) is not None: # Groups with no options are not in the dict
-                # Check all values for errors
+                # Check the values of all non dialog widgets for errors
                 for option_name, widget in self.widget_registry[hierarchy_command].items():
-                    param: click.Parameter = next((x for x in command.params if x.name == option_name))
-                    if param.expose_value:
+                    if isinstance(widget, MessageBox):
+                        dialog_widgets.append(widget) # MessageBox widgets should be shown at last
+                    elif isinstance(widget, FileField) and "r" in widget.type.mode and widget.getWidgetValue() == "-":
+                        dialog_widgets.insert(0, widget) # FileField widgets with input dialog should be shown at last, but before MessageBox widgets
+                    else:
                         widget_value, err = widget.getValue()  
                         has_error |= self.check_error(err)
 
-                        kwargs[option_name] = widget_value
-                    else: # Verify it when all options are valid
-                        unused_options.append(widget)
+                        if widget.param.expose_value:
+                            kwargs[option_name] = widget_value
 
                 if has_error:
                     return None
 
-                # Replace the callables with their values and check for errors
-                for option_name, value in kwargs.items():
-                    if callable(value):
-                        kwargs[option_name], err = value()
-                        has_error |= self.check_error(err)
-
-                if has_error:
-                    return None
-
-                # Parameters with expose_value==False
-                for widget in unused_options:
+                # Now check the values of all dialog widgets for errors
+                for widget in dialog_widgets:
                     widget_value, err = widget.getValue()
                     has_error |= self.check_error(err)
-                    if callable(widget_value):
-                        _, err = widget_value()  
-                        has_error |= self.check_error(err)
+
+                    if widget.param.expose_value:
+                         kwargs[widget.param.name] = widget_value
                     
                 if has_error:
                     return None
