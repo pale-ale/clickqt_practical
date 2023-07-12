@@ -58,14 +58,14 @@ class Control(QObject):
             if len(cmd.params) > 0:
                 child_tabs = QWidget()
                 child_tabs.setLayout(QVBoxLayout())
-                child_tabs.layout().addWidget(self.parse_cmd(cmd, cmd.name)) # Group params
-                child_tabs.layout().addWidget(self.parse_cmd_group(cmd, cmd.name)) # Child group/commands params 
+                child_tabs.layout().addWidget(self.parseCmd(cmd, cmd.name)) # Group params
+                child_tabs.layout().addWidget(self.parseCmdGroup(cmd, cmd.name)) # Child group/commands params 
             else:
-                child_tabs = self.parse_cmd_group(cmd, cmd.name)
+                child_tabs = self.parseCmdGroup(cmd, cmd.name)
 
             self.gui.main_tab.addTab(child_tabs, cmd.name)
         else:
-            self.gui.main_tab.addTab(self.parse_cmd(cmd, cmd.name), cmd.name)
+            self.gui.main_tab.addTab(self.parseCmd(cmd, cmd.name), cmd.name)
 
     def __call__(self):
         """Shows the GUI according to :func:`~clickqt.core.gui.GUI.__call__` of :class:`~clickqt.core.gui.GUI`."""
@@ -97,9 +97,9 @@ class Control(QObject):
 
         return a + ":" + b
     
-    def parse_cmd_group(self, cmdgroup:click.Group, group_names:str) -> QTabWidget:
+    def parseCmdGroup(self, cmdgroup:click.Group, group_names:str) -> QTabWidget:
         """ Creates for every group in **cmdgroup** a QTabWidget instance and adds every command in **cmdgroup** as a tab to it. 
-        The creation of the content of every tab is realized by calling :func:`~clickqt.core.control.Control.parse_cmd`.
+        The creation of the content of every tab is realized by calling :func:`~clickqt.core.control.Control.parseCmd`.
         To realize command hierachies, this method is called recursively.
 
         :param cmdgroup: The group from which a QTabWidget with content should be created
@@ -117,18 +117,18 @@ class Control(QObject):
                 if len(group_cmd.params) > 0:
                     child_tabs = QWidget()
                     child_tabs.setLayout(QVBoxLayout())
-                    child_tabs.layout().addWidget(self.parse_cmd(group_cmd, concat_group_names))
-                    child_tabs.layout().addWidget(self.parse_cmd_group(group_cmd, concat_group_names))
+                    child_tabs.layout().addWidget(self.parseCmd(group_cmd, concat_group_names))
+                    child_tabs.layout().addWidget(self.parseCmdGroup(group_cmd, concat_group_names))
                 else:
-                    child_tabs = self.parse_cmd_group(group_cmd, concat_group_names)
+                    child_tabs = self.parseCmdGroup(group_cmd, concat_group_names)
 
                 group_tab_widget.addTab(child_tabs, group_name)
             else:
-                group_tab_widget.addTab(self.parse_cmd(group_cmd, self.concat(group_names, group_cmd.name)), group_name)
+                group_tab_widget.addTab(self.parseCmd(group_cmd, self.concat(group_names, group_cmd.name)), group_name)
         
         return group_tab_widget
     
-    def parse_cmd(self, cmd:click.Command, groups_command_name:str) -> QScrollArea:
+    def parseCmd(self, cmd:click.Command, groups_command_name:str) -> QScrollArea:
         """ Creates for every click parameter in **cmd** a clickqt widget and returns them stored in a QScrollArea
 
         :param cmd: The command from which a QTabWidget with content should be created
@@ -174,7 +174,7 @@ class Control(QObject):
 
         return cmd_tab_widget
     
-    def check_error(self, err:ClickQtError) -> bool:
+    def checkError(self, err:ClickQtError) -> bool:
         """Checks whether **err** contains an error and prints on error case the message of it to sys.stderr. 
 
         :return: True, if **err** contains an error, False otherwise"""
@@ -186,7 +186,7 @@ class Control(QObject):
         
         return False
 
-    def current_command_hierarchy(self, tab_widget:QTabWidget|QWidget, group:click.Command) -> list[click.Command]:
+    def currentCommandHierarchy(self, tab_widget:QTabWidget|QWidget, group:click.Command) -> list[click.Command]:
         """Returns the hierarchy of the command of the selected tab as list whereby the order of the list is from root command
         to the selected command.
 
@@ -202,7 +202,7 @@ class Control(QObject):
             
             command = group.get_command(ctx=None, cmd_name=tab_widget.tabText(tab_widget.currentIndex()))
 
-            return [group] + self.current_command_hierarchy(tab_widget.currentWidget(), command)
+            return [group] + self.currentCommandHierarchy(tab_widget.currentWidget(), command)
         else:
             return [group]
         
@@ -334,7 +334,7 @@ class Control(QObject):
         This slot is automatically executed when the user clicks on the 'Run'-button.
         """
 
-        hierarchy_selected_command = self.current_command_hierarchy(self.gui.main_tab.currentWidget(), self.cmd)
+        hierarchy_selected_command = self.currentCommandHierarchy(self.gui.main_tab.currentWidget(), self.cmd)
         
         def run_command(command:click.Command|click.Group, hierarchy_command:str) -> Callable|None:
             kwargs: Dict[str, Any] = {}
@@ -350,7 +350,7 @@ class Control(QObject):
                         dialog_widgets.insert(0, widget) # FileField widgets with input dialog should be shown at last, but before MessageBox widgets
                     else:
                         widget_value, err = widget.getValue()  
-                        has_error |= self.check_error(err)
+                        has_error |= self.checkError(err)
 
                         if widget.param.expose_value:
                             kwargs[option_name] = widget_value
@@ -361,7 +361,7 @@ class Control(QObject):
                 # Now check the values of all dialog widgets for errors
                 for widget in dialog_widgets:
                     widget_value, err = widget.getValue()
-                    has_error |= self.check_error(err)
+                    has_error |= self.checkError(err)
 
                     if widget.param.expose_value:
                          kwargs[widget.param.name] = widget_value
