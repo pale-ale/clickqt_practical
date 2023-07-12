@@ -4,7 +4,7 @@ import clickqt
 
 from tests.testutils import ClickAttrs
 from PySide6.QtWidgets import QTabWidget, QPushButton, QSplitter, QWidget, QApplication
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QEventLoop
 from clickqt.core.output import TerminalOutput
 from clickqt.core.control import Control
 from typing import Iterable
@@ -180,8 +180,8 @@ def test_gui_stop_execution():
     stop_button.click() # Stop execution
 
     for _ in range(10):  # Wait for stopping the worker
-        QApplication.processEvents()
-        time.sleep(0.0001)
+        QApplication.processEvents(QEventLoop.ProcessEventsFlag.AllEvents, 5)
+        #time.sleep(0.001)
 
     assert run_button.isEnabled() and not stop_button.isEnabled()
     assert control.worker is None and control.worker_thread is None
