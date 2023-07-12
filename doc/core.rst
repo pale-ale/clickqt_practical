@@ -3,20 +3,20 @@ Core
 
 .. toctree::
 
-.. autoclass:: clickqt.core.control.Control
+.. automodule:: clickqt.core.control
     :show-inheritance:
     :members:
     :special-members: __call__
 
-.. autoclass:: clickqt.core.gui.GUI
+.. automodule:: clickqt.core.gui
     :members:
     :special-members: __call__
 
-.. autoclass:: clickqt.core.commandexecutor.CommandExecutor
+.. automodule:: clickqt.core.commandexecutor
     :show-inheritance:
     :members:
 
-.. autoclass:: clickqt.core.focusoutvalidator.FocusOutValidator
+.. automodule:: clickqt.core.focusoutvalidator
     :show-inheritance:
     :members:
 
@@ -24,6 +24,6 @@ Core
     :show-inheritance:
     :members:
 
-.. autoclass:: clickqt.core.error.ClickQtError
+.. automodule:: clickqt.core.error
     :members:
     
