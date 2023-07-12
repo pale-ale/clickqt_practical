@@ -92,24 +92,19 @@ class QCheckableComboBox(QComboBox):
         #elidedText = metrics.elidedText(text, Qt.TextElideMode.ElideRight, self.lineEdit().width())
         #self.lineEdit().setText(elidedText)
 
-    def addItem(self, text, data=None):
+    def addItem(self, text:str):
         item = QStandardItem()
         item.setText(text)
-        if data is None:
-            item.setData(text)
-        else:
-            item.setData(data)
+        item.setData(text)
         item.setFlags(Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsUserCheckable)
         item.setData(Qt.CheckState.Unchecked, Qt.ItemDataRole.CheckStateRole)
         self.model().appendRow(item)
 
-    def addItems(self, texts, datalist=None):
-        for i, text in enumerate(texts):
-            try:
-                data = datalist[i]
-            except (TypeError, IndexError):
-                data = None
-            self.addItem(text, data)
+    def addItems(self, texts:list[str]):
+        """Adds each of the strings in **items** to the checkable combobox."""
+
+        for text in texts:
+            self.addItem(text)
 
     def checkItems(self, texts: list[str]):
         for i in range(self.model().rowCount()):
