@@ -4,7 +4,15 @@ from click import Parameter, Context, ParamType, BOOL
 from typing import Any
 
 class CheckBox(BaseWidget):
-    widget_type = QCheckBox
+    """Represents a click.types.BoolParamType object
+    
+    :param otype: The type which specifies the clickqt widget type. This type may be different compared to **param**.type when dealing with click.types.CompositeParamType-objects
+    :param param: The parameter from which **otype** came from
+    :param kwargs: Additionally parameters ('parent', 'widgetsource', 'com', 'label') needed for 
+                    :class:`~clickqt.widgets.basewidget.MultiWidget`- / :class:`~clickqt.widgets.confirmationwidget.ConfirmationWidget`-widgets
+    """
+
+    widget_type = QCheckBox #: The Qt-type of this widget.
 
     def __init__(self, otype:ParamType, param:Parameter, **kwargs):
         super().__init__(otype, param, **kwargs)

@@ -2,10 +2,18 @@ from typing import Any
 from PySide6.QtWidgets import QComboBox
 from clickqt.widgets.basewidget import ComboBoxBase, BaseWidget
 from clickqt.widgets.core.QCheckableCombobox import QCheckableComboBox
-from click import Parameter, ParamType, Context, Choice
+from click import Parameter, ParamType, Context
 
 class ComboBox(ComboBoxBase):
-    widget_type = QComboBox
+    """Represents a click.types.Choice object
+    
+    :param otype: The type which specifies the clickqt widget type. This type may be different compared to **param**.type when dealing with click.types.CompositeParamType-objects
+    :param param: The parameter from which **otype** came from
+    :param kwargs: Additionally parameters ('parent', 'widgetsource', 'com', 'label') needed for 
+                    :class:`~clickqt.widgets.basewidget.MultiWidget`- / :class:`~clickqt.widgets.confirmationwidget.ConfirmationWidget`-widgets
+    """
+
+    widget_type = QComboBox #: The Qt-type of this widget.
 
     def __init__(self, otype:ParamType, param:Parameter, **kwargs):
         super().__init__(otype, param, **kwargs)
@@ -24,7 +32,15 @@ class ComboBox(ComboBoxBase):
     
    
 class CheckableComboBox(ComboBoxBase):
-    widget_type = QCheckableComboBox
+    """Represents a multiple click.types.Choice object
+    
+    :param otype: The type which specifies the clickqt widget type. This type may be different compared to **param**.type when dealing with click.types.CompositeParamType-objects
+    :param param: The parameter from which **otype** came from
+    :param kwargs: Additionally parameters ('parent', 'widgetsource', 'com', 'label') needed for 
+                    :class:`~clickqt.widgets.basewidget.MultiWidget`- / :class:`~clickqt.widgets.confirmationwidget.ConfirmationWidget`-widgets
+    """
+
+    widget_type = QCheckableComboBox #: The Qt-type of this widget.
 
     def __init__(self, otype:ParamType, param:Parameter, **kwargs):
         super().__init__(otype, param, **kwargs)

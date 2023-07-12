@@ -5,6 +5,8 @@ from PySide6.QtCore import Qt, QEvent
 from PySide6.QtGui import QStandardItem, QFontMetrics
 
 class QCheckableComboBox(QComboBox):
+    """Combobox with checkable items."""
+
     # Subclass Delegate to increase item height
     class Delegate(QStyledItemDelegate):
         def sizeHint(self, option, index):
@@ -80,6 +82,8 @@ class QCheckableComboBox(QComboBox):
         self.closeOnLineEditClick = False
 
     def updateText(self):
+        """Updates the text displayed in the combobox."""
+
         texts = []
         for i in range(self.model().rowCount()):
             if self.model().item(i).checkState() == Qt.CheckState.Checked:
@@ -93,6 +97,8 @@ class QCheckableComboBox(QComboBox):
         #self.lineEdit().setText(elidedText)
 
     def addItem(self, text:str):
+        """Adds the string in **text** to the checkable combobox and unchecks the added item."""
+
         item = QStandardItem()
         item.setText(text)
         item.setData(text)
@@ -101,12 +107,14 @@ class QCheckableComboBox(QComboBox):
         self.model().appendRow(item)
 
     def addItems(self, texts:list[str]):
-        """Adds each of the strings in **items** to the checkable combobox."""
+        """Adds each of the strings in **texts** to the checkable combobox."""
 
         for text in texts:
             self.addItem(text)
 
     def checkItems(self, texts: list[str]):
+        """Checks every item in **texts**, all other items will be unchecked."""
+
         for i in range(self.model().rowCount()):
             if self.model().item(i).data().upper() in texts:
                 self.model().item(i).setCheckState(Qt.CheckState.Checked)
@@ -116,7 +124,8 @@ class QCheckableComboBox(QComboBox):
         self.updateText()
 
     def getData(self) -> list[str]:
-        # Return the list of selected items data
+        """Returns the names of all checked items."""
+
         res = []
         for i in range(self.model().rowCount()):
             if self.model().item(i).checkState() == Qt.CheckState.Checked:

@@ -8,7 +8,15 @@ import datetime
 
 
 class DateTimeEdit(BaseWidget):
-    widget_type = QDateTimeEdit
+    """Represents a click.types.DateTime object. The format of the datetime displayed in this widget can be changed by opening the context menu.
+    
+    :param otype: The type which specifies the clickqt widget type. This type may be different compared to **param**.type when dealing with click.types.CompositeParamType-objects
+    :param param: The parameter from which **otype** came from
+    :param kwargs: Additionally parameters ('parent', 'widgetsource', 'com', 'label') needed for 
+                    :class:`~clickqt.widgets.basewidget.MultiWidget`- / :class:`~clickqt.widgets.confirmationwidget.ConfirmationWidget`-widgets
+    """
+
+    widget_type = QDateTimeEdit #: The Qt-type of this widget.
 
     def __init__(self, otype:ParamType, param:Parameter, **kwargs):
         super().__init__(otype, param, **kwargs)
@@ -17,7 +25,8 @@ class DateTimeEdit(BaseWidget):
 
         self.widget.setContextMenuPolicy(Qt.ContextMenuPolicy.ActionsContextMenu)
 
-        self.format_group = QActionGroup(self.widget)
+        #: Contains all available formats in qt_format- and click_format-style. Default format string is the last string in the *click.types.DateTime*\s ``formats`` attribute
+        self.format_group:QActionGroup = QActionGroup(self.widget) 
         
         # Add for each format a context menu entry
         for click_format in self.type.formats: # click ensures that there is at least one format
@@ -40,6 +49,7 @@ class DateTimeEdit(BaseWidget):
             self.setValue(default)
 
     def setValue(self, value:Any):
+        """Sets the value of the Qt-widget according to the selected format stored in :attr:`~clickqt.widgets.datetimeedit.DateTimeEdit.format_group`."""
         # value -> datetime -> str -> QDateTime
         self.widget.setDateTime(QDateTime.fromString(self.type.convert(str(value), self.click_command, Context(self.click_command))
                                                                        .strftime(self.format_group.checkedAction().data()), self.format_group.checkedAction().text()))

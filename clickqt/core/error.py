@@ -2,7 +2,7 @@ from enum import IntEnum
 import enum_tools.documentation
 
 class ClickQtError:
-    """Shows whether an error occured during value validation of the widgets
+    """Shows whether an error occured during value validation of the widgets.
 
     :param type: The type of the error, defaults to ErrorType.NO_ERROR
     :param trigger: The source where the error occured, defaults to ''
@@ -11,7 +11,7 @@ class ClickQtError:
 
     @enum_tools.documentation.document_enum
     class ErrorType(IntEnum):
-        """Specifies the possible error types"""
+        """Specifies the possible error types."""
 
         NO_ERROR = 0 # doc: No error occured.
         CONFIRMATION_INPUT_NOT_EQUAL_ERROR = 1 # doc: The values of the elements of a ConfirmationWidget do not match.

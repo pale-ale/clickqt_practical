@@ -5,8 +5,17 @@ from clickqt.widgets.basewidget import BaseWidget
 from typing import Any
 from enum import IntFlag
 from click import Parameter, Context, ParamType
+import enum_tools.documentation
 
 class TextField(BaseWidget):
+    """Represents a click.types.StringParamType-object and user defined click types.
+     
+    :param otype: The type which specifies the clickqt widget type. This type may be different compared to **param**.type when dealing with click.types.CompositeParamType-objects
+    :param param: The parameter from which **otype** came from
+    :param kwargs: Additionally parameters ('parent', 'widgetsource', 'com', 'label') needed for 
+                    :class:`~clickqt.widgets.basewidget.MultiWidget`- / :class:`~clickqt.widgets.confirmationwidget.ConfirmationWidget`-widgets
+    """
+
     widget_type = QLineEdit
 
     def __init__(self, otype:ParamType, param:Parameter, **kwargs):
@@ -25,6 +34,8 @@ class TextField(BaseWidget):
             self.widget.setText(self.type.convert(value=value, param=self.click_command, ctx=Context(self.click_command)))
 
     def isEmpty(self) -> bool:
+        """Returns True if the current text is an empty string, False otherwise."""
+
         return self.getWidgetValue() == ""
     
     def getWidgetValue(self) -> str:
@@ -32,15 +43,26 @@ class TextField(BaseWidget):
     
 
 class PathField(TextField):
+    """Provides basic functionalities for click.types.File- and click.types.Path-objects.
+     
+    :param otype: The type which specifies the clickqt widget type. This type may be different compared to **param**.type when dealing with click.types.CompositeParamType-objects
+    :param param: The parameter from which **otype** came from
+    :param kwargs: Additionally parameters ('parent', 'widgetsource', 'com', 'label') needed for 
+                    :class:`~clickqt.widgets.basewidget.MultiWidget`- / :class:`~clickqt.widgets.confirmationwidget.ConfirmationWidget`-widgets
+    """
+
+    @enum_tools.documentation.document_enum
     class FileType(IntFlag):
+        """Specifies the possible file types."""
+
         Unknown = 0
-        File = 1
-        Directory = 2
+        File = 1    # doc: The widget accepts files.
+        Directory = 2 # doc: The widget accepts directories.
 
     def __init__(self, otype:ParamType, param:Parameter, **kwargs):
         super().__init__(otype, param, **kwargs)
 
-        self.file_type = PathField.FileType.Unknown
+        self.file_type:PathField.FileType = PathField.FileType.Unknown #: File type of this widget, defaults to :attr:`~clickqt.widgets.textfield.PathField.FileType.Unknown`.
 
         self.browse_btn = QPushButton("Browse")
         self.browse_btn.clicked.connect(self.browse)
@@ -50,9 +72,12 @@ class PathField(TextField):
         self.widget.setText(str(value))
 
     def browse(self):
+        """Opens a :class:`~clickqt.widgets.core.QPathDialog.QPathDialog` if :attr:`~clickqt.widgets.textfield.PathField.file_type` is of type 
+        :attr:`~clickqt.widgets.textfield.PathField.FileType.File` and :attr:`~clickqt.widgets.textfield.PathField.FileType.Directory`, a
+        :class:`~PySide6.QtWidgets.QFileDialog` otherwise. Sets the relative path or absolute path (-> path does not contain the path of this project) 
+        that was selected in the dialog as the value of the widget.
         """
-            Sets the relative path or absolute path (when the path does not contain the path of this project) in the textfield
-        """
+
         assert self.file_type != PathField.FileType.Unknown
 
         if (self.file_type & PathField.FileType.File and self.file_type & PathField.FileType.Directory):

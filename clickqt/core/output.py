@@ -19,7 +19,7 @@ class OutputStream(TextIOWrapper):
         self.color = color
 
     def write(self, message:bytes|str):
-        """Writes **message** to **output** and utf-8 decoded and Html-escaped to **stream**
+        """Writes **message** to **output** and utf-8 decoded + Html-escaped to **stream**
         
         :param message: The message which should be written to **output** and **stream**
         """

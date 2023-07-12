@@ -57,9 +57,9 @@ class BaseWidget(ABC):
 
     @abstractmethod
     def setValue(self, value:Any):
-        """Sets the value of the widget.
+        """Sets the value of the Qt-widget.
         
-        :param value: The new value that should be stored in widget
+        :param value: The new value that should be stored in the widget
         :raises click.BadParameter: **value** could not be converted into the corresponding click.ParamType
         """
 
@@ -73,7 +73,7 @@ class BaseWidget(ABC):
         return False
 
     def getValue(self) -> tuple[Any, ClickQtError]:
-        """Validates the value of the widget and returns the result.
+        """Validates the value of the Qt-widget and returns the result.
 
         :return: Valid: (widget value or the value of a callback, :class:`~clickqt.core.error.ClickQtError.ErrorType.NO_ERROR`)\n
                  Invalid: (None, :class:`~clickqt.core.error.ClickQtError.ErrorType.CONVERTING_ERROR` or 
@@ -159,7 +159,7 @@ class BaseWidget(ABC):
 
     @abstractmethod
     def getWidgetValue(self) -> Any:
-        """Returns the value of the widget without any checks."""
+        """Returns the value of the Qt-widget without any checks."""
     
     def handleValid(self, valid: bool):
         """Changes the border of the widget dependent on **valid**. If **valid** == False, the border will be colored red, otherwise black.
@@ -186,20 +186,40 @@ class BaseWidget(ABC):
 
 
 class NumericField(BaseWidget):
+    """Provides basic functionalities for numeric based widgets
+    
+    :param otype: The type which specifies the clickqt widget type. This type may be different compared to **param**.type when dealing with click.types.CompositeParamType-objects
+    :param param: The parameter from which **otype** came from
+    :param kwargs: Additionally parameters ('parent', 'widgetsource', 'com', 'label') needed for 
+                    :class:`~clickqt.widgets.basewidget.MultiWidget`- / :class:`~clickqt.widgets.confirmationwidget.ConfirmationWidget`-widgets
+    """
+
     def setValue(self, value: Any):
         self.widget.setValue(self.type.convert(value=str(value), param=self.click_command, ctx=Context(self.click_command)))
 
-    def setMinimum(self, value: int|float):
-        self.widget.setMinimum(value)
+    def setMinimum(self, min: int|float):
+        """Sets the minimum value."""
+        
+        self.widget.setMinimum(min)
 
-    def setMaximum(self, value: int|float):
-        self.widget.setMaximum(value)
+    def setMaximum(self, max: int|float):
+        """Sets the maximum value."""
+
+        self.widget.setMaximum(max)
     
     def getWidgetValue(self) -> int|float:
         return self.widget.value()
     
 
 class ComboBoxBase(BaseWidget):
+    """Provides basic functionalities for click.types.Choice based widgets
+    
+    :param otype: The type which specifies the clickqt widget type. This type may be different compared to **param**.type when dealing with click.types.CompositeParamType-objects
+    :param param: The parameter from which **otype** came from
+    :param kwargs: Additionally parameters ('parent', 'widgetsource', 'com', 'label') needed for 
+                    :class:`~clickqt.widgets.basewidget.MultiWidget`- / :class:`~clickqt.widgets.confirmationwidget.ConfirmationWidget`-widgets
+    """
+
     def __init__(self, otype:ParamType, param:Parameter, **kwargs):
         super().__init__(otype, param, **kwargs)
 
@@ -209,17 +229,27 @@ class ComboBoxBase(BaseWidget):
 
     @abstractmethod
     def addItems(self, items:list[str]):
-        """
-            Adds items to the combobox
-        """
+        """Adds each of the strings in **items** to the checkable combobox."""
 
 class MultiWidget(BaseWidget):
+    """Provides basic functionalities for click.types.CompositeParamType based widgets and multiple value widgets
+    
+    :param otype: The type which specifies the clickqt widget type. This type may be different compared to **param**.type when dealing with click.types.CompositeParamType-objects
+    :param param: The parameter from which **otype** came from
+    :param kwargs: Additionally parameters ('parent', 'widgetsource', 'com', 'label') needed for 
+                    :class:`~clickqt.widgets.basewidget.MultiWidget`- / :class:`~clickqt.widgets.confirmationwidget.ConfirmationWidget`-widgets
+    """
+
     def __init__(self, otype:ParamType, param:Parameter, **kwargs):
         super().__init__(otype, param, **kwargs)
         
         self.children:list[BaseWidget]|dict_values[BaseWidget] = []
 
     def init(self):
+        """Sets the value of the (child-)widgets according to envvar or default values. 
+        If the envvar values are None, the defaults values will be considered.
+        """
+        
         if self.parent_widget is None:
             # Consider envvar
             if (envvar_values := self.param.resolve_envvar_value(Context(self.click_command))) is not None:
@@ -240,9 +270,14 @@ class MultiWidget(BaseWidget):
 
     def handleValid(self, valid: bool):
         for c in self.children:
-            c.handleValid(valid) # Recursive
+            c.handleValid(valid)
 
     def isEmpty(self) -> bool:
+        """"Checks whether the widget is empty. This is the case when there are no children or when at least one (string-based) children is empty.
+
+        :return: True, if this widget has no children or at least one children is empty, False otherwise
+        """
+        
         if len(self.children) == 0:
             return True
 

@@ -1,10 +1,14 @@
 from PySide6.QtWidgets import QWidget, QTreeView, QLineEdit, QPushButton, QFileDialog, QDialog
-from PySide6.QtCore import QObject, QEvent, SIGNAL, QDir
+from PySide6.QtCore import QObject, QEvent, SIGNAL, QDir, Slot
 
 class QPathDialog(QFileDialog):
+    """A file dialog that accepts a single file or a single directory.
+
+    :param parent: The parent Qt-widget, defaults to None
+    :param directory: The directory that will be displayed when opening the dialog, defaults to the current path
+    :param exist: Specifies, whether the file / directory has to exist
     """
-        A QFileDialog that accepts a single file or a single directory
-    """
+
     def __init__(self, parent:QWidget|None=None, directory:str=QDir.currentPath(), exist:bool=True):
         super().__init__(parent, directory=directory)
         
@@ -33,6 +37,8 @@ class QPathDialog(QFileDialog):
             self.open_button.clicked.connect(self.openClicked)
  
     def selectedPath(self) -> str:
+        """Returns the selected path."""
+
         return self.selected_path
     
     def eventFilter(self, watched: QObject, event: QEvent) -> bool:
@@ -47,6 +53,7 @@ class QPathDialog(QFileDialog):
 
         return QWidget.eventFilter(self, watched, event)
 
+    @Slot()
     def openClicked(self):
         self.selected_path = ""
         for model_index in self.tree_view.selectionModel().selectedIndexes():
