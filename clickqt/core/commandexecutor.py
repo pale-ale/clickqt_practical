@@ -5,7 +5,7 @@ from typing import Callable, Iterable
 class CommandExecutor(QObject):
     """Worker which executes the received tasks/callbacks"""
 
-    finished:Signal = Signal() #:Internal Qt-signal, which will be emitted when the run(...)-Slot has finished
+    finished:Signal = Signal() #:Internal Qt-signal, which will be emitted when the :func:`~clickqt.core.commandexecutor.CommandExecutor.run`-Slot has finished
 
     @Slot(list, click.Context)
     def run(self, tasks:Iterable[Callable], ctx:click.Context): # pragma: no cover; Tested in test_execution.py
