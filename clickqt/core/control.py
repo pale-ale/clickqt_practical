@@ -1,20 +1,20 @@
 import click
 import inspect
-from clickqt.core.gui import GUI
-from clickqt.core.commandexecutor import CommandExecutor
+import re
+from typing import Dict, Callable, List, Any, Tuple, Optional
+import sys
+from functools import reduce
 from PySide6.QtWidgets import QWidget, QFrame, QVBoxLayout, QTabWidget, QScrollArea
 from PySide6.QtCore import QThread, QObject, Signal, Slot
-from PySide6.QtGui import QPalette
+from PySide6.QtGui import QPalette, QClipboard
+from clickqt.core.gui import GUI
+from clickqt.core.commandexecutor import CommandExecutor
 from clickqt.core.error import ClickQtError
 from clickqt.widgets.confirmationwidget import ConfirmationWidget
 from clickqt.widgets.basewidget import BaseWidget
 from clickqt.widgets.messagebox import MessageBox
 from clickqt.widgets.filefield import FileField
-from typing import Dict, Callable, List, Any, Tuple, Optional
-import sys
-from functools import reduce
-import re 
-from clickqt.core.utils import *
+from clickqt.core.utils import is_nested_list, is_file_path
 
 
 class Control(QObject):
@@ -45,6 +45,7 @@ class Control(QObject):
         # Connect GUI buttons with slots
         self.gui.run_button.clicked.connect(self.startExecution)
         self.gui.stop_button.clicked.connect(self.stopExecution)
+        self.gui.copy_button.clicked.connect()
 
         # Groups-Command-name concatinated with ":" to command-option-names to BaseWidget
         self.widget_registry: Dict[str, Dict[str, BaseWidget]] = {}
@@ -406,3 +407,47 @@ class Control(QObject):
 
             self.requestExecution.emit(callables, click.Context(hierarchy_selected_command[-1]))
         
+
+    @Slot()
+    def copyParamToString(self):
+        hierarchy_selected_command = self.currentCommandHierachy(self.gui.main_tab.currentWidget(), self.cmd)
+
+        def construct_command_string(cmd: click.Command, hierarchy_command:str):
+            kwargs: Dict[str, Any] = {}
+            has_error = False
+            dialog_widgets: List[BaseWidget] = [] # widgets that will show a dialog
+
+            if self.widget_registry.get(hierarchy_command) is not None: # Groups with no options are not in the dict
+                # Check the values of all non dialog widgets for errors
+                for option_name, widget in self.widget_registry[hierarchy_command].items():
+                    if isinstance(widget, MessageBox):
+                        dialog_widgets.append(widget) # MessageBox widgets should be shown at last
+                    elif isinstance(widget, FileField) and "r" in widget.type.mode and widget.getWidgetValue() == "-":
+                        dialog_widgets.insert(0, widget) # FileField widgets with input dialog should be shown at last, but before MessageBox widgets
+                    else:
+                        widget_value, err = widget.getValue()  
+                        has_error |= self.checkError(err)
+
+                        if widget.param.expose_value:
+                            kwargs[option_name] = widget_value
+
+                if has_error:
+                    return None
+
+                # Now check the values of all dialog widgets for errors
+                for widget in dialog_widgets:
+                    widget_value, err = widget.getValue()
+                    has_error |= self.checkError(err)
+
+                    if widget.param.expose_value:
+                         kwargs[widget.param.name] = widget_value
+                    
+                if has_error:
+                    return None
+
+            if len(callback_args := inspect.getfullargspec(cmd.callback).args) > 0:
+                args: list[Any] = []
+                for ca in callback_args: # Bring the args in the correct order
+                    args.append(kwargs.pop(ca)) # Remove explicitly mentioned args from kwargs
+            else: 
+                pass
