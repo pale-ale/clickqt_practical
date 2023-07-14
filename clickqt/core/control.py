@@ -259,7 +259,6 @@ class Control(QObject):
         parameter_strings = []
         for i, param in enumerate(parameter_list):
             if param[0] != "Argument":
-                print(parameter_list)
                 if type(widget_values[i]) != list and param[2] != True:
                     widget_value = str(widget_values[i])
                     if not is_file_path(widget_value):
