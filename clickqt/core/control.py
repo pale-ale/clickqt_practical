@@ -1,20 +1,20 @@
-from typing import Dict, Callable, List, Any, Tuple, Optional
-from functools import reduce
-import inspect
-import re
-import sys
 import click
-from PySide6.QtWidgets import QWidget, QFrame, QVBoxLayout, QTabWidget, QScrollArea, QApplication
-from PySide6.QtCore import QThread, QObject, Signal, Slot
-from PySide6.QtGui import QPalette, QClipboard
+import inspect
 from clickqt.core.gui import GUI
 from clickqt.core.commandexecutor import CommandExecutor
+from PySide6.QtWidgets import QWidget, QFrame, QVBoxLayout, QTabWidget, QScrollArea
+from PySide6.QtCore import QThread, QObject, Signal, Slot
+from PySide6.QtGui import QPalette
 from clickqt.core.error import ClickQtError
 from clickqt.widgets.confirmationwidget import ConfirmationWidget
 from clickqt.widgets.basewidget import BaseWidget
 from clickqt.widgets.messagebox import MessageBox
 from clickqt.widgets.filefield import FileField
-from clickqt.core.utils import is_nested_list, is_file_path
+from typing import Dict, Callable, List, Any, Tuple, Optional
+import sys
+from functools import reduce
+import re 
+from clickqt.core.utils import *
 
 
 class Control(QObject):
@@ -45,7 +45,6 @@ class Control(QObject):
         # Connect GUI buttons with slots
         self.gui.run_button.clicked.connect(self.startExecution)
         self.gui.stop_button.clicked.connect(self.stopExecution)
-        self.gui.copy_button.clicked.connect(self.construct_command_string)
 
         # Groups-Command-name concatinated with ":" to command-option-names to BaseWidget
         self.widget_registry: Dict[str, Dict[str, BaseWidget]] = {}
@@ -259,6 +258,7 @@ class Control(QObject):
         parameter_strings = []
         for i, param in enumerate(parameter_list):
             if param[0] != "Argument":
+                print(parameter_list)
                 if type(widget_values[i]) != list and param[2] != True:
                     widget_value = str(widget_values[i])
                     if not is_file_path(widget_value):
@@ -371,20 +371,20 @@ class Control(QObject):
 
             if len(callback_args := inspect.getfullargspec(command.callback).args) > 0:
                 args: list[Any] = []
-                for callback_arg in callback_args: # Bring the args in the correct order
-                    args.append(kwargs.pop(callback_arg)) # Remove explicitly mentioned args from kwargs
+                for ca in callback_args: # Bring the args in the correct order
+                    args.append(kwargs.pop(ca)) # Remove explicitly mentioned args from kwargs
 
-                print(f"For command details, please call '{self.command_to_string(hierarchy_command)} --help'")
-                print(f"{self.command_to_string_to_copy(hierarchy_command, command)}")
-                print("Current Command: " + self.function_call_formatter(hierarchy_command, command, kwargs) + "\nOutput:")
-                return command.callback(*args, **kwargs)
+                    print(f"For command details, please call '{self.command_to_string(hierarchy_command)} --help'")
+                    #print(f"python {self.ep_or_path} {self.command_to_string_to_copy(hierarchy_command, command)}")
+                    print(f"Current Command: {self.function_call_formatter(hierarchy_command, command, kwargs)} \n" + f"Output:") 
+                    return lambda: command.callback(*args, **kwargs)
             else:
-                return command.callback(**kwargs)
+                return lambda: command.callback(**kwargs)
             
         callables:list[Callable] = []
         for i, command in enumerate(hierarchy_selected_command, 1):    
-            if (callable_command := run_command(command, reduce(self.concat, [g.name for g in hierarchy_selected_command[:i]]))) is not None:
-                callables.append(callable_command)
+            if (c := run_command(command, reduce(self.concat, [g.name for g in hierarchy_selected_command[:i]]))) is not None:
+                callables.append(c)
   
         if len(callables) == len(hierarchy_selected_command):
             self.gui.run_button.setEnabled(False)
@@ -400,54 +400,3 @@ class Control(QObject):
 
             self.requestExecution.emit(callables, click.Context(hierarchy_selected_command[-1]))
         
-
-    def construct_command_string(self):
-        """
-            This function is responsible 
-        """
-        hierarchy_selected_command = self.currentCommandHierarchy(self.gui.main_tab.currentWidget(), self.cmd)
-        selected_command = hierarchy_selected_command[-1]
-        hierarchy_selected_command_name = reduce(self.concat, [g.name for g in hierarchy_selected_command])
-
-
-        kwargs: Dict[str, Any] = {}
-        has_error = False
-        unused_options: List[BaseWidget] = [] # parameters with expose_value==False
-
-        # Check all values for errors
-        for option_name, widget in self.widget_registry[hierarchy_selected_command_name].items():
-            param: click.Parameter = next((x for x in selected_command.params if x.name == option_name))
-            if param.expose_value:
-                widget_value, err = widget.getValue()  
-                has_error |= self.checkError(err)
-
-                kwargs[option_name] = widget_value
-            else: # Verify it when all options are valid
-                unused_options.append(widget)
-
-        if has_error: 
-            return
-
-        # Replace the callables with their values and check for errors
-        for option_name, value in kwargs.items():
-            if callable(value):
-                kwargs[option_name], err = value()
-                has_error |= self.check_error(err)
-
-        if has_error:
-            return
-
-        # Parameters with expose_value==False
-        for widget in unused_options:
-            widget_value, err = widget.getValue()
-            has_error |= self.check_error(err)
-            if callable(widget_value):
-                _, err = widget_value()  
-                has_error |= self.check_error(err)
-             
-        if has_error:
-            return
-        
-        message = self.command_to_string_to_copy(hierarchy_selected_command_name, selected_command)
-        clip_board = QApplication.clipboard()
-        clip_board.setText(message, QClipboard.Clipboard)
