@@ -28,7 +28,7 @@ class Control(QObject):
     #: Internal Qt-signal, which will be emitted when the :func:`~clickqt.core.control.Control.startExecution`-Slot was triggered and executed successfully.
     requestExecution:Signal = Signal(list, click.Context) # Generics do not work here
 
-    def __init__(self, cmd:click.Command, is_ep:bool=None, ep_or_eppath:str=None):
+    def __init__(self, cmd:click.Command):
         """ Initializing the GUI object and the registries together with the differentiation of a group command and a simple command. """
 
         super().__init__()
@@ -49,8 +49,6 @@ class Control(QObject):
         # Groups-Command-name concatinated with ":" to command-option-names to BaseWidget
         self.widget_registry: Dict[str, Dict[str, BaseWidget]] = {}
         self.command_registry: Dict[str, Dict[str, Tuple[int, Callable]]] = {}
-        self.ep_or_path = ep_or_eppath
-        self.is_entrypoint = is_ep
 
         # Add all widgets
         if isinstance(cmd, click.Group):

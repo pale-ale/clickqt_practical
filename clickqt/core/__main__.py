@@ -12,7 +12,7 @@ def clickqtfy():
 @click.argument('epname')
 def ep(epname):
 	''' Use the endpoint called EPNAME for the GUI. '''
-	qtgui_from_click(get_command_from_entrypoint(epname), True, epname)()
+	qtgui_from_click(get_command_from_entrypoint(epname))()
 
 @clickqtfy.command('file')
 @click.argument('epfile', type=click.Path(exists=True))
@@ -26,7 +26,7 @@ def file(epfile, epname):
 	EPNAME is the name of the click.Command's function
 	
 	'''
-	qtgui_from_click(get_command_from_path(epfile, epname), False, str(epfile))()
+	qtgui_from_click(get_command_from_path(epfile, epname))()
 
 def get_command_from_entrypoint(epname:str) -> click.Command:
 	'''
