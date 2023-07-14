@@ -156,7 +156,7 @@ def test_passwordfield_showPassword():
         (ClickAttrs.filepathfield(type_dict={"exists":False, "dir_okay":False}), "tests", ""),
         (ClickAttrs.filepathfield(type_dict={"exists":True, "file_okay":False}), ".gitignore", ""),
         (ClickAttrs.filepathfield(type_dict={"exists":True, "file_okay":False}), "tests", "tests"),
-        (ClickAttrs.filepathfield(type_dict={"exists":False, "file_okay":False}), ".gitignore", ".gitignore"),
+        (ClickAttrs.filepathfield(type_dict={"exists":False, "file_okay":False}), ".gitignore", ""), # Not a folder
     ]
 )
 def test_pathfield(qtbot:QtBot, click_attrs:dict, value:str, expected:str):
