@@ -1,7 +1,7 @@
 from clickqt.core.control import Control
 from PySide6.QtWidgets import QApplication
 
-def qtgui_from_click(cmd, is_ep=True, ep_or_eppath=" "):
+def qtgui_from_click(cmd):
     """ 
         This function is used to generate the GUI for a given command. It takes a click command as its argument and returns a Control object
         that contains the GUI, execution logic, and the generated widgets used for the parameters of the command.
@@ -14,4 +14,4 @@ def qtgui_from_click(cmd, is_ep=True, ep_or_eppath=" "):
                         color: white; 
                         border: white solid 1px
                         }""")
-    return Control(cmd, is_ep, ep_or_eppath)
+    return Control(cmd)

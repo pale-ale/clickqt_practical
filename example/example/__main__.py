@@ -115,7 +115,7 @@ def hello_ns2(ns):
 utilgroup.add_command(hello)
 hello.add_command(hello2)
 
-gui = clickqt.qtgui_from_click(utilgroup, True, "test")
+gui = clickqt.qtgui_from_click(utilgroup)
 
 if __name__ == "__main__":
     utilgroup()
