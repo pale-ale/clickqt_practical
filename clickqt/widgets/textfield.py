@@ -102,12 +102,7 @@ class PathField(TextField):
                 else:
                     dialog.setFileMode(QFileDialog.FileMode.AnyFile)  
             else: # Only FilePathField can be here
-                
-                if self.type.exists:
-                    dialog.setFileMode(QFileDialog.FileMode.Directory)
-                else:
-                    dialog.setFileMode(QFileDialog.FileMode.AnyFile)  
-
+                dialog.setFileMode(QFileDialog.FileMode.Directory)
                 dialog.setOption(QFileDialog.Option.ShowDirsOnly, True)
             
             if dialog.exec():
