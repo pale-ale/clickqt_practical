@@ -2,9 +2,9 @@ import click
 import inspect
 from clickqt.core.gui import GUI
 from clickqt.core.commandexecutor import CommandExecutor
-from PySide6.QtWidgets import QWidget, QFrame, QVBoxLayout, QTabWidget, QScrollArea
+from PySide6.QtWidgets import QWidget, QFrame, QVBoxLayout, QTabWidget, QScrollArea, QApplication
 from PySide6.QtCore import QThread, QObject, Signal, Slot
-from PySide6.QtGui import QPalette
+from PySide6.QtGui import QPalette, QClipboard
 from clickqt.core.error import ClickQtError
 from clickqt.widgets.confirmationwidget import ConfirmationWidget
 from clickqt.widgets.basewidget import BaseWidget
@@ -45,6 +45,7 @@ class Control(QObject):
         # Connect GUI buttons with slots
         self.gui.run_button.clicked.connect(self.startExecution)
         self.gui.stop_button.clicked.connect(self.stopExecution)
+        self.gui.copy_button.clicked.connect(self.construct_command_string)
 
         # Groups-Command-name concatinated with ":" to command-option-names to BaseWidget
         self.widget_registry: Dict[str, Dict[str, BaseWidget]] = {}
@@ -400,3 +401,53 @@ class Control(QObject):
 
             self.requestExecution.emit(callables, click.Context(hierarchy_selected_command[-1]))
         
+    def construct_command_string(self):
+        """
+            This function is responsible 
+        """
+        hierarchy_selected_command = self.currentCommandHierarchy(self.gui.main_tab.currentWidget(), self.cmd)
+        selected_command = hierarchy_selected_command[-1]
+        hierarchy_selected_command_name = reduce(self.concat, [g.name for g in hierarchy_selected_command])
+
+
+        kwargs: Dict[str, Any] = {}
+        has_error = False
+        unused_options: List[BaseWidget] = [] # parameters with expose_value==False
+
+        # Check all values for errors
+        for option_name, widget in self.widget_registry[hierarchy_selected_command_name].items():
+            param: click.Parameter = next((x for x in selected_command.params if x.name == option_name))
+            if param.expose_value:
+                widget_value, err = widget.getValue()  
+                has_error |= self.checkError(err)
+
+                kwargs[option_name] = widget_value
+            else: # Verify it when all options are valid
+                unused_options.append(widget)
+
+        if has_error: 
+            return
+
+        # Replace the callables with their values and check for errors
+        for option_name, value in kwargs.items():
+            if callable(value):
+                kwargs[option_name], err = value()
+                has_error |= self.check_error(err)
+
+        if has_error:
+            return
+
+        # Parameters with expose_value==False
+        for widget in unused_options:
+            widget_value, err = widget.getValue()
+            has_error |= self.check_error(err)
+            if callable(widget_value):
+                _, err = widget_value()  
+                has_error |= self.check_error(err)
+
+        if has_error:
+            return
+
+        message = self.command_to_string_to_copy(hierarchy_selected_command_name, selected_command)
+        clip_board = QApplication.clipboard()
+        clip_board.setText(message, QClipboard.Clipboard)

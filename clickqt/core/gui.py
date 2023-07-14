@@ -36,12 +36,12 @@ class GUI:
         buttons_container.setLayout(QHBoxLayout())
         buttons_container.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed) # Not resizable in vertical direction
         self.run_button = QPushButton("&Run")  # Shortcut Alt+R
-        self.copy_button = QPushButton("&Copy-To-Clipboard")
         self.stop_button = QPushButton("&Stop")  # Shortcut Alt+S
         self.stop_button.setEnabled(False)
+        self.copy_button = QPushButton("&Copy-To-Clipboard")
         buttons_container.layout().addWidget(self.run_button)
-        buttons_container.layout().addWidget(self.copy_button)
         buttons_container.layout().addWidget(self.stop_button)
+        buttons_container.layout().addWidget(self.copy_button)
         self.splitter.addWidget(buttons_container)
 
         self.terminal_output = TerminalOutput()
