@@ -37,7 +37,6 @@ tests = [
     "pytest-xvfb",
     "pytest-cov",
     "pytest-qt",
-    "enum-tools[sphinx]",
 ]
 docs = [
     "sphinx",

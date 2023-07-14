@@ -1,5 +1,8 @@
 from enum import IntEnum
-import enum_tools.documentation
+try:
+    from enum_tools.documentation import document_enum
+except ImportError:
+    document_enum = lambda x: x
 
 class ClickQtError:
     """Shows whether an error occured during value validation of the widgets.
@@ -9,7 +12,7 @@ class ClickQtError:
     :param click_error_message: The error message which was created by click, defaults to ''
     """
 
-    @enum_tools.documentation.document_enum
+    @document_enum
     class ErrorType(IntEnum):
         """Specifies the possible error types."""
 

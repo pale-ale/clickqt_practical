@@ -5,7 +5,10 @@ from clickqt.widgets.basewidget import BaseWidget
 from typing import Any
 from enum import IntFlag
 from click import Parameter, Context, ParamType
-import enum_tools.documentation
+try:
+    from enum_tools.documentation import document_enum
+except ImportError:
+    document_enum = lambda x: x
 
 class TextField(BaseWidget):
     """Represents a click.types.StringParamType-object and user defined click types.
@@ -51,7 +54,7 @@ class PathField(TextField):
                     :class:`~clickqt.widgets.basewidget.MultiWidget`- / :class:`~clickqt.widgets.confirmationwidget.ConfirmationWidget`-widgets
     """
 
-    @enum_tools.documentation.document_enum
+    @document_enum
     class FileType(IntFlag):
         """Specifies the possible file types."""
 
