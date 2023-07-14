@@ -3,8 +3,8 @@
 # introduce pyproject.toml
 [build-system]
 requires = [
-    "setuptools >=61",
-    "setuptools_scm >=7",
+    "setuptools >=51",
+    "setuptools_scm >=6",
 ]
 build-backend = "setuptools.build_meta"
 
@@ -19,7 +19,7 @@ maintainers = [
     { name = "Dominic Kempf", email = "ssc@iwr.uni-heidelberg.de" },
 ]
 dynamic = ["version"]
-requires-python = ">=3.10"
+requires-python = ">=3.8"
 license = { text = "MIT" }
 classifiers = [
     "Programming Language :: Python :: 3",

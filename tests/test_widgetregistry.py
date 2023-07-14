@@ -3,6 +3,7 @@ import pytest
 
 from tests.testutils import ClickAttrs
 import clickqt.widgets
+from typing import Iterable
 
 @pytest.mark.parametrize(
     ("click_attrs_list", "group_name", "cli_names_list", "expected"),
@@ -13,7 +14,7 @@ import clickqt.widgets
          "abc", ["abc", "abc23"], ["abc:abc", "abc:abc23"]),
     ]
 )
-def test_widget_registry_command_names(click_attrs_list:list[list[dict]], group_name:str, cli_names_list:list[str], expected:list[str]):
+def test_widget_registry_command_names(click_attrs_list:Iterable[Iterable[dict]], group_name:str, cli_names_list:Iterable[str], expected:Iterable[str]):
     clis = []
 
     for i, cli_params in enumerate(click_attrs_list):

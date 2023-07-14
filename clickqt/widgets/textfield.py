@@ -2,6 +2,7 @@ from PySide6.QtWidgets import QLineEdit, QPushButton, QFileDialog
 from PySide6.QtCore import QDir
 from clickqt.widgets.core.QPathDialog import QPathDialog
 from clickqt.widgets.basewidget import BaseWidget
+from clickqt.core.utils import remove_prefix
 from typing import Any
 from enum import IntFlag
 from click import Parameter, Context, ParamType
@@ -87,7 +88,7 @@ class PathField(TextField):
             dialog = QPathDialog(None, directory=QDir.currentPath(), exist=self.type.exists)
             if dialog.exec():
                 self.handleValid(True)
-                self.setValue(dialog.selectedPath().replace(QDir.currentPath(), "").replace("/", QDir.separator()).removeprefix(QDir.separator()))
+                self.setValue(remove_prefix(dialog.selectedPath().replace(QDir.currentPath(), "").replace("/", QDir.separator()), QDir.separator()))
         else:
             dialog = QFileDialog(directory=QDir.currentPath())
             dialog.setViewMode(QFileDialog.ViewMode.Detail)
@@ -113,4 +114,4 @@ class PathField(TextField):
                 filenames = dialog.selectedFiles()
                 if filenames and len(filenames):
                     self.handleValid(True)
-                    self.setValue(filenames[0].replace(QDir.currentPath(), "").replace("/", QDir.separator()).removeprefix(QDir.separator())) 
+                    self.setValue(remove_prefix(filenames[0].replace(QDir.currentPath(), "").replace("/", QDir.separator()), QDir.separator())) 

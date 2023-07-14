@@ -1,13 +1,13 @@
 from PySide6.QtWidgets import QGroupBox, QHBoxLayout
 from clickqt.widgets.basewidget import BaseWidget, MultiWidget
-from typing import Callable, Any
+from typing import Callable, Any, Optional
 from click import Parameter, ParamType, Tuple as ClickTuple 
 
 
 class TupleWidget(MultiWidget):
     widget_type = QGroupBox
 
-    def __init__(self, otype:ParamType, param:Parameter, widgetsource:Callable[[Any], BaseWidget], parent:BaseWidget|None=None, **kwargs):
+    def __init__(self, otype:ParamType, param:Parameter, widgetsource:Callable[[Any], BaseWidget], parent:Optional[BaseWidget]=None, **kwargs):
         super().__init__(otype, param, parent=parent, **kwargs)
         
         assert isinstance(otype, ClickTuple), f"'otype' must be of type '{ClickTuple}', but is '{type(otype)}'."

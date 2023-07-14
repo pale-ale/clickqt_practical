@@ -7,7 +7,7 @@ from PySide6.QtWidgets import QTabWidget, QPushButton, QSplitter, QWidget, QAppl
 from PySide6.QtCore import Qt
 from clickqt.core.output import TerminalOutput
 from clickqt.core.control import Control
-from typing import Iterable
+from typing import Iterable, Tuple
 import clickqt.widgets
 import time
 
@@ -19,7 +19,7 @@ def checkLen(children: Iterable, expected_len:int) -> Iterable:
     assert len(children) == expected_len
     return children
 
-def hasWidgets(tab_widget_content:QWidget, control:Control, group_hierarchy_name:str, params:list[click.Parameter]) -> tuple[bool, str]:
+def hasWidgets(tab_widget_content:QWidget, control:Control, group_hierarchy_name:str, params:Iterable[click.Parameter]) -> Tuple[bool, str]:
     for param in params:
         # Search for the widget of type 'widget_type' and name 'widget_name' recursively
         children = tab_widget_content.findChildren(control.widget_registry[group_hierarchy_name][param.name].widget_type, (control.widget_registry[group_hierarchy_name][param.name].widget_name))
@@ -34,7 +34,7 @@ def hasWidgets(tab_widget_content:QWidget, control:Control, group_hierarchy_name
 
     return (True, "")
 
-def isIncluded(tab_widget:QTabWidget|QWidget, expected_group_command:list[click.Group|click.Command], control:Control, group_hierarchy_name:str) -> tuple[bool, str]:
+def isIncluded(tab_widget:QWidget, expected_group_command:Iterable[click.Command], control:Control, group_hierarchy_name:str) -> Tuple[bool, str]:
     if type(tab_widget) is QWidget: # Group has options
         tab_widget = checkLen(findChildren(tab_widget, QTabWidget), 1)[0]
 
@@ -91,7 +91,7 @@ def isIncluded(tab_widget:QTabWidget|QWidget, expected_group_command:list[click.
             ])),
     ]
 )
-def test_gui_construction_no_options(root_group_command: click.Group|click.Command):
+def test_gui_construction_no_options(root_group_command: click.Command):
     control = clickqt.qtgui_from_click(root_group_command)
     gui = control.gui
 
@@ -146,7 +146,7 @@ def test_gui_construction_no_options(root_group_command: click.Group|click.Comma
             ])),
     ]
 )
-def test_gui_construction_with_options(root_group_command: click.Group|click.Command):
+def test_gui_construction_with_options(root_group_command: click.Command):
     control = clickqt.qtgui_from_click(root_group_command)
     gui = control.gui
 

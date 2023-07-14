@@ -10,7 +10,7 @@ from clickqt.widgets.confirmationwidget import ConfirmationWidget
 from clickqt.widgets.basewidget import BaseWidget
 from clickqt.widgets.messagebox import MessageBox
 from clickqt.widgets.filefield import FileField
-from typing import Dict, Callable, List, Any, Tuple
+from typing import Dict, Callable, List, Any, Tuple, Optional
 import sys
 from functools import reduce
 import re 
@@ -185,8 +185,8 @@ class Control(QObject):
             return True
         
         return False
-
-    def currentCommandHierarchy(self, tab_widget:QTabWidget|QWidget, group:click.Command) -> list[click.Command]:
+    
+    def currentCommandHierarchy(self, tab_widget:QWidget, group:click.Command) -> List[click.Command]:
         """Returns the hierarchy of the command of the selected tab as list whereby the order of the list is from root command
         to the selected command.
 
@@ -200,13 +200,15 @@ class Control(QObject):
             if len(group.params) > 0: # Group has params
                 tab_widget = tab_widget.findChild(QTabWidget)
             
+            assert isinstance(tab_widget, QTabWidget)
+
             command = group.get_command(ctx=None, cmd_name=tab_widget.tabText(tab_widget.currentIndex()))
 
             return [group] + self.currentCommandHierarchy(tab_widget.currentWidget(), command)
         else:
             return [group]
         
-    def get_option_names(self,cmd):
+    def get_option_names(self, cmd):
         """ Returns an array of all the parameters used for the current command togeter with their properties."""
         option_names = []
         for param in cmd.params:
@@ -240,7 +242,7 @@ class Control(QObject):
         text = re.sub(r'[^a-zA-Z0-9 .-]', ' ', text)
         return text
     
-    def command_to_string(self, hierarchy_selected_command_name: str):
+    def command_to_string(self, hierarchy_selected_command_name:str):
         """ Returns the current command name. """
         hierarchy_selected_command_name = self.clean_command_string(self.cmd.name, hierarchy_selected_command_name)
         return hierarchy_selected_command_name
@@ -336,7 +338,7 @@ class Control(QObject):
 
         hierarchy_selected_command = self.currentCommandHierarchy(self.gui.main_tab.currentWidget(), self.cmd)
         
-        def run_command(command:click.Command|click.Group, hierarchy_command:str) -> Callable|None:
+        def run_command(command:click.Command, hierarchy_command:str) -> Optional[Callable]:
             kwargs: Dict[str, Any] = {}
             has_error = False
             dialog_widgets: List[BaseWidget] = [] # widgets that will show a dialog

@@ -5,6 +5,7 @@ from PySide6.QtWidgets import QLineEdit, QFileDialog, QApplication, QPushButton,
 from PySide6.QtCore import QTimer, Signal, QObject, Qt
 from pytestqt.qtbot import QtBot
 from tests.testutils import ClickAttrs
+from typing import Iterable
 import clickqt.widgets
 import sys
 import time
@@ -80,7 +81,7 @@ def test_feature_switch(value:str):
          [clickqt.widgets.DateTimeEdit, clickqt.widgets.ComboBox, clickqt.widgets.NValueWidget, clickqt.widgets.MultiValueWidget]),
     ]
 )
-def test_type_assignment_multiple_options(click_attrs_list:list[dict], expected_clickqt_type_list:list[clickqt.widgets.BaseWidget]):
+def test_type_assignment_multiple_options(click_attrs_list:Iterable[dict], expected_clickqt_type_list:Iterable[clickqt.widgets.BaseWidget]):
     params = []
 
     for i, click_attrs in enumerate(click_attrs_list):
@@ -103,7 +104,7 @@ def test_type_assignment_multiple_options(click_attrs_list:list[dict], expected_
          [[clickqt.widgets.DateTimeEdit, clickqt.widgets.ComboBox, clickqt.widgets.NValueWidget], [clickqt.widgets.MultiValueWidget]]),
     ]
 )
-def test_type_assignment_multiple_commands(click_attrs_list:list[list[dict]], expected_clickqt_type_list:list[list[clickqt.widgets.BaseWidget]]):
+def test_type_assignment_multiple_commands(click_attrs_list:Iterable[Iterable[dict]], expected_clickqt_type_list:Iterable[Iterable[clickqt.widgets.BaseWidget]]):
     clis = []
 
     for i, cli_params in enumerate(click_attrs_list):
@@ -173,7 +174,7 @@ def test_pathfield(qtbot:QtBot, click_attrs:dict, value:str, expected:str):
 
         # Wait, until we have the QMessageBox- or QFileDialog-object
         tries = 0
-        while messagebox is not None and not isinstance(messagebox, QFileDialog|QMessageBox) and tries < 10:
+        while messagebox is not None and not isinstance(messagebox, (QFileDialog,QMessageBox)) and tries < 10:
             QApplication.processEvents()
             messagebox = QApplication.activeModalWidget()
             tries += 1

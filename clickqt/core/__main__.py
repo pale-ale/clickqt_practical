@@ -2,6 +2,7 @@ import click
 import sys
 from clickqt.core.core import qtgui_from_click
 from importlib import util, metadata
+from typing import List
 
 @click.group('clickqtfy')
 def clickqtfy():
@@ -39,14 +40,14 @@ def get_command_from_entrypoint(epname:str) -> click.Command:
 		raise ImportError(f"No entry point named '{epname}' found. Did you mean one of the following:\n{concateps}")
 	return validate_entrypoint(eps[0].load())
 
-def get_entrypoints_from_name(epname:str) -> list[metadata.EntryPoint]:	
+def get_entrypoints_from_name(epname:str) -> List[metadata.EntryPoint]:	
 	'''
 	Returns the entrypoints that include `epname` in their name.
 	'''
 	grouped_eps = metadata.entry_points()
 	candidates:list[metadata.EntryPoint] = []
-	for group in grouped_eps.groups:
-		for ep in grouped_eps.select(group=group):
+	for group in grouped_eps.keys():
+		for ep in grouped_eps.get(group):
 			if ep.name == epname:
 				return [ep]
 			if epname in ep.name or epname in ep.value:

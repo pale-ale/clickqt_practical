@@ -1,8 +1,9 @@
 #Credits to https://gis.stackexchange.com/questions/350148/qcombobox-multiple-selection-pyqt5
 
-from PySide6.QtWidgets import QComboBox, QStyledItemDelegate
-from PySide6.QtCore import Qt, QEvent
+from PySide6.QtWidgets import QComboBox, QStyledItemDelegate 
+from PySide6.QtCore import Qt, QEvent, QObject
 from PySide6.QtGui import QStandardItem, QFontMetrics
+from typing import Iterable
 
 class QCheckableComboBox(QComboBox):
     """Combobox with checkable items."""
@@ -39,7 +40,7 @@ class QCheckableComboBox(QComboBox):
         self.updateText()
         super().resizeEvent(event)
 
-    def eventFilter(self, object, event):
+    def eventFilter(self, object:QObject, event:QEvent):
         if object == self.lineEdit():
             if event.type() == QEvent.Type.MouseButtonRelease:
                 if self.closeOnLineEditClick:
@@ -106,13 +107,13 @@ class QCheckableComboBox(QComboBox):
         item.setData(Qt.CheckState.Unchecked, Qt.ItemDataRole.CheckStateRole)
         self.model().appendRow(item)
 
-    def addItems(self, texts:list[str]):
+    def addItems(self, texts:Iterable[str]):
         """Adds each of the strings in **texts** to the checkable combobox."""
 
         for text in texts:
             self.addItem(text)
 
-    def checkItems(self, texts: list[str]):
+    def checkItems(self, texts:Iterable[str]):
         """Checks every item in **texts**, all other items will be unchecked."""
 
         for i in range(self.model().rowCount()):
@@ -123,7 +124,7 @@ class QCheckableComboBox(QComboBox):
         
         self.updateText()
 
-    def getData(self) -> list[str]:
+    def getData(self) -> Iterable[str]:
         """Returns the names of all checked items."""
 
         res = []
