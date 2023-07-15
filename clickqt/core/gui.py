@@ -29,27 +29,24 @@ class GUI:
         self.splitter.setChildrenCollapsible(False) # Child widgets can't be resized down to size 0
         self.window.layout().addWidget(self.splitter)
         
-        self.main_tab = QTabWidget()
-        self.splitter.addWidget(self.main_tab)
- 
-        buttons_container = QWidget()
-        buttons_container.setLayout(QHBoxLayout())
-        buttons_container.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed) # Not resizable in vertical direction
+        self.widgets_container:QWidget = None # Control constructs this Qt-widget
+        
+        self.buttons_container = QWidget()
+        self.buttons_container.setLayout(QHBoxLayout())
+        self.buttons_container.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed) # Not resizable in vertical direction
         self.run_button = QPushButton("&Run")  # Shortcut Alt+R
         self.stop_button = QPushButton("&Stop")  # Shortcut Alt+S
         self.stop_button.setEnabled(False)
         self.copy_button = QPushButton("&Copy-To-Clipboard")
-        buttons_container.layout().addWidget(self.run_button)
-        buttons_container.layout().addWidget(self.stop_button)
-        buttons_container.layout().addWidget(self.copy_button)
-        self.splitter.addWidget(buttons_container)
-
+        self.buttons_container.layout().addWidget(self.run_button)
+        self.buttons_container.layout().addWidget(self.stop_button)
+        self.buttons_container.layout().addWidget(self.copy_button)
+        
         self.terminal_output = TerminalOutput()
         self.terminal_output.setReadOnly(True)
         self.terminal_output.setToolTip("Terminal output")
         self.terminal_output.newHtmlMessage.connect(self.terminal_output.writeHtml)
 
-        self.splitter.addWidget(self.terminal_output)
         sys.stdout = OutputStream(self.terminal_output, sys.stdout)
         sys.stderr = OutputStream(self.terminal_output, sys.stderr, QColor("red"))
 
@@ -58,6 +55,13 @@ class GUI:
 
         self.window.show()
         QApplication.instance().exec()
+
+    def construct(self):
+        assert self.widgets_container is not None
+
+        self.splitter.addWidget(self.widgets_container)
+        self.splitter.addWidget(self.buttons_container)
+        self.splitter.addWidget(self.terminal_output)
 
     def createWidget(self, otype:click.ParamType, param:click.Parameter, **kwargs) -> BaseWidget:
         """Creates the clickqt widget object of the correct widget class determined by the **otype** and returns it.

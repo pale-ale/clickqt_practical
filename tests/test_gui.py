@@ -7,22 +7,22 @@ from PySide6.QtWidgets import QTabWidget, QPushButton, QSplitter, QWidget
 from PySide6.QtCore import Qt, QThread
 from clickqt.core.output import TerminalOutput
 from clickqt.core.control import Control
-from typing import Iterable, Tuple
+from typing import Sequence, Tuple
 import clickqt.widgets
 
 
-def findChildren(object: QWidget, child_type: QWidget, options=Qt.FindChildOption.FindDirectChildrenOnly) -> Iterable:
+def findChildren(object: QWidget, child_type: QWidget, options=Qt.FindChildOption.FindDirectChildrenOnly) -> Sequence:
     return object.findChildren(child_type, options=options)
 
-def checkLen(children: Iterable, expected_len:int) -> Iterable:
+def checkLen(children:Sequence, expected_len:int) -> Sequence:
     assert len(children) == expected_len
     return children
 
-def hasWidgets(tab_widget_content:QWidget, control:Control, group_hierarchy_name:str, params:Iterable[click.Parameter]) -> Tuple[bool, str]:
+def hasWidgets(tab_widget_content:QWidget, control:Control, group_hierarchy_name:str, params:Sequence[click.Parameter]) -> Tuple[bool, str]:
     for param in params:
         # Search for the widget of type 'widget_type' and name 'widget_name' recursively
         children = tab_widget_content.findChildren(control.widget_registry[group_hierarchy_name][param.name].widget_type, (control.widget_registry[group_hierarchy_name][param.name].widget_name))
-
+        print(children)
         if len(children) == 0:
             return (False, f"Widget is missing in QTabWidget: '{param.name}'")
         elif isinstance(control.widget_registry[group_hierarchy_name][param.name], clickqt.widgets.ConfirmationWidget):
@@ -33,11 +33,11 @@ def hasWidgets(tab_widget_content:QWidget, control:Control, group_hierarchy_name
 
     return (True, "")
 
-def isIncluded(tab_widget:QWidget, expected_group_command:Iterable[click.Command], control:Control, group_hierarchy_name:str) -> Tuple[bool, str]:
+def isIncluded(tab_widget:QWidget, expected_group_command:Sequence[click.Command], control:Control, group_hierarchy_name:str) -> Tuple[bool, str]:
     if type(tab_widget) is QWidget: # Group has options
         tab_widget = checkLen(findChildren(tab_widget, QTabWidget), 1)[0]
 
-    assert tab_widget.count() == len(expected_group_command) # amount of tabs == amount of commands and groups
+    assert tab_widget.count() == len(expected_group_command), "Amount of tabs != Amount of commands and groups"
 
     for group_command in expected_group_command:
         # group_command.name is the name of one tab
@@ -61,7 +61,6 @@ def isIncluded(tab_widget:QWidget, expected_group_command:Iterable[click.Command
                 return res    
                 
     return (True, "")
-
 
 @pytest.mark.parametrize(
     ("root_group_command"),
@@ -100,16 +99,16 @@ def test_gui_construction_no_options(root_group_command: click.Command):
     assert gui.run_button in buttons and gui.stop_button in buttons and gui.copy_button in buttons
     assert checkLen(findChildren(gui.splitter, TerminalOutput), 1)[0] == gui.terminal_output
 
-    parent_tab_widget = checkLen(findChildren(gui.splitter, QTabWidget), 1)[0]
-    assert parent_tab_widget == gui.main_tab and parent_tab_widget.tabText(0) == root_group_command.name
-
     # Check for right amount of QTabWidgets-instances with correct tab-names
-    if isinstance(root_group_command, click.Group) and len(root_group_command.commands.values()) > 1:
-        tab_widget = next(filter(lambda x: isinstance(x, QTabWidget) or type(x) is QWidget, [parent_tab_widget.widget(i) for i in range(parent_tab_widget.count())]))
-        
-        included, err_message = isIncluded(tab_widget, root_group_command.commands.values(), control, root_group_command.name) 
+    if isinstance(root_group_command, click.Group) and len(root_group_command.commands.values()) > 0:
+        parent_tab_widget = checkLen(findChildren(gui.splitter, QTabWidget), 1)[0]
+        assert parent_tab_widget == gui.widgets_container
+
+        included, err_message = isIncluded(parent_tab_widget, root_group_command.commands.values(), control, root_group_command.name) 
 
         assert included, err_message
+    else:
+        checkLen([x for x in findChildren(gui.splitter, QWidget) if x == gui.widgets_container], 1)
 
 @pytest.mark.parametrize(
     ("root_group_command"),
@@ -149,16 +148,23 @@ def test_gui_construction_with_options(root_group_command: click.Command):
     control = clickqt.qtgui_from_click(root_group_command)
     gui = control.gui
 
-    parent_tab_widget = checkLen(findChildren(gui.splitter, QTabWidget), 1)[0]
-    hasWidgets(parent_tab_widget.widget(0), control, root_group_command.name, root_group_command.params)
-
     # Check for right amount of QTabWidgets-instances with correct tab-names and correct widget objects
-    if isinstance(root_group_command, click.Group) and len(root_group_command.commands.values()) > 1:
-        tab_widget = next(filter(lambda x: isinstance(x, QTabWidget) or type(x) is QWidget, [parent_tab_widget.widget(i) for i in range(parent_tab_widget.count())]))
-        
-        included, err_message = isIncluded(tab_widget, root_group_command.commands.values(), control, root_group_command.name) 
+    if isinstance(root_group_command, click.Group) and len(root_group_command.commands.values()) > 0:
+        parent_tab_widget:QWidget = None
+
+        if len(root_group_command.params) > 0:
+            parent_tab_widget = checkLen([x for x in findChildren(gui.splitter, QWidget, Qt.FindChildOption.FindChildrenRecursively) if x == gui.widgets_container], 1)[0]
+        else:
+            parent_tab_widget = checkLen(findChildren(gui.splitter, QTabWidget), 1)[0]
+            assert parent_tab_widget == gui.widgets_container
+
+        hasWidgets(parent_tab_widget, control, root_group_command.name, root_group_command.params)
+
+        included, err_message = isIncluded(parent_tab_widget, root_group_command.commands.values(), control, root_group_command.name) 
 
         assert included, err_message
+    else:
+        checkLen([x for x in findChildren(gui.splitter, QWidget) if x == gui.widgets_container], 1)
 
 def test_gui_start_stop_execution():
     param = click.Option(param_decls=["--p"], **ClickAttrs.checkbox())
