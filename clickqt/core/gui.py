@@ -37,8 +37,10 @@ class GUI:
         self.run_button = QPushButton("&Run")  # Shortcut Alt+R
         self.stop_button = QPushButton("&Stop")  # Shortcut Alt+S
         self.stop_button.setEnabled(False)
+        self.copy_button = QPushButton("&Copy-To-Clipboard")
         self.buttons_container.layout().addWidget(self.run_button)
         self.buttons_container.layout().addWidget(self.stop_button)
+        self.buttons_container.layout().addWidget(self.copy_button)
         
         self.terminal_output = TerminalOutput()
         self.terminal_output.setReadOnly(True)
