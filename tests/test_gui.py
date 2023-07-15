@@ -2,14 +2,29 @@ import click
 import pytest
 import clickqt
 
-from tests.testutils import ClickAttrs
+from tests.testutils import ClickAttrs, raise_
 from PySide6.QtWidgets import QTabWidget, QPushButton, QSplitter, QWidget, QApplication
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, SIGNAL, QThread
+from PySide6.QtTest import QSignalSpy
 from clickqt.core.output import TerminalOutput
 from clickqt.core.control import Control
+from clickqt.core.commandexecutor import CommandExecutor
 from typing import Iterable, Tuple
 import clickqt.widgets
-import time
+
+
+def wait_for_worker_to_finish(worker:CommandExecutor):
+    spy = QSignalSpy(worker, SIGNAL("finished()"))
+    is_finished = False
+
+    for _ in range(10):
+        is_finished = spy.count() > 0
+
+        QApplication.processEvents()
+        spy.wait(100)
+
+        if is_finished:
+            break
 
 
 def findChildren(object: QWidget, child_type: QWidget, options=Qt.FindChildOption.FindDirectChildrenOnly) -> Iterable:
@@ -163,7 +178,7 @@ def test_gui_construction_with_options(root_group_command: click.Command):
 
 def test_gui_stop_execution():
     param = click.Option(param_decls=["--p"], **ClickAttrs.checkbox())
-    cli = click.Command("cli", params=[param], callback=lambda p: time.sleep(5))
+    cli = click.Command("cli", params=[param], callback=lambda p: QThread.msleep(200))
 
     control = clickqt.qtgui_from_click(cli)
     run_button = control.gui.run_button
@@ -174,35 +189,54 @@ def test_gui_stop_execution():
 
     run_button.click() # Start execution
 
+    for _ in range(10):  # Wait for starting the worker
+        QApplication.processEvents()
+        QThread.msleep(1)
+
     assert not run_button.isEnabled() and stop_button.isEnabled()
     assert control.worker is not None and control.worker_thread is not None
 
     stop_button.click() # Stop execution
 
     for _ in range(10):  # Wait for stopping the worker
-        #QApplication.processEvents()
-        time.sleep(0.001)
+        QApplication.processEvents()
+        QThread.msleep(1)
 
     assert run_button.isEnabled() and not stop_button.isEnabled()
     assert control.worker is None and control.worker_thread is None
     assert "Execution stopped!\n" in control.gui.terminal_output.toPlainText()
 
-    """run_button.click() # Start execution
+    run_button.click() # Start execution
 
     for _ in range(10):  # Wait for starting the worker
         QApplication.processEvents()
-        time.sleep(0.0001)
-
-    assert not run_button.isEnabled() and stop_button.isEnabled()
-    assert control.worker is not None and control.worker_thread is not None
+        QThread.msleep(1)
     
-    spy = QSignalSpy(control.worker, SIGNAL("finished()"))
-
-    # Wait for the worker to finish
-    for _ in range(10):
-        if not spy.count():
-            QApplication.processEvents()
-            spy.wait(200)
+    wait_for_worker_to_finish(control.worker)
 
     assert run_button.isEnabled() and not stop_button.isEnabled()
-    assert control.worker is None and control.worker_thread is None"""
+    assert control.worker is None and control.worker_thread is None
+    
+@pytest.mark.parametrize(
+    ("exception", "output_expected"),
+    [
+        (SystemExit(527), "SystemExit-Exception, return code: 527\n"),
+        (TypeError("Wrong type"), "Exception: Wrong type\n"),
+    ]
+)    
+def test_gui_exception(exception:Exception, output_expected:str):
+    param = click.Option(param_decls=["--p"], **ClickAttrs.checkbox())
+    cli = click.Command("cli", params=[param], callback=lambda p: raise_(exception))
+
+    control = clickqt.qtgui_from_click(cli)
+    run_button = control.gui.run_button
+
+    run_button.click() # Start execution
+
+    for _ in range(10):  # Wait for starting the worker
+        QApplication.processEvents()
+        QThread.msleep(1)
+
+    wait_for_worker_to_finish(control.worker)
+
+    assert output_expected in control.gui.terminal_output.toPlainText()

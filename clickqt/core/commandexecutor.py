@@ -1,6 +1,7 @@
 import click
 from PySide6.QtCore import Signal, QObject, Slot
 from typing import Callable, Iterable
+import sys
 
 class CommandExecutor(QObject):
     """Worker which executes the received tasks/callbacks"""
@@ -20,6 +21,11 @@ class CommandExecutor(QObject):
         click.globals.push_context(ctx) 
 
         for task in tasks:
-            task()
+            try:
+                task()
+            except SystemExit as e:
+                print(f"SystemExit-Exception, return code: {e.code}", file=sys.stderr)
+            except Exception as e:
+                print(f"Exception: {str(e)}", file=sys.stderr)
         
         self.finished.emit()
