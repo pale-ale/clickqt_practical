@@ -96,8 +96,8 @@ def test_gui_construction_no_options(root_group_command: click.Command):
 
     # Base widgets are set correctly
     assert checkLen(findChildren(gui.window, QSplitter), 1)[0] == gui.splitter
-    buttons = checkLen(findChildren(gui.splitter, QPushButton, Qt.FindChildOption.FindChildrenRecursively), 2)
-    assert gui.run_button in buttons and gui.stop_button in buttons
+    buttons = checkLen(findChildren(gui.splitter, QPushButton, Qt.FindChildOption.FindChildrenRecursively), 3)
+    assert gui.run_button in buttons and gui.stop_button in buttons and gui.copy_button in buttons
     assert checkLen(findChildren(gui.splitter, TerminalOutput), 1)[0] == gui.terminal_output
 
     parent_tab_widget = checkLen(findChildren(gui.splitter, QTabWidget), 1)[0]
