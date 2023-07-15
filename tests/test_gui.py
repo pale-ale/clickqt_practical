@@ -13,20 +13,6 @@ from typing import Iterable, Tuple
 import clickqt.widgets
 
 
-def wait_for_worker_to_finish(worker:CommandExecutor):
-    spy = QSignalSpy(worker, SIGNAL("finished()"))
-    is_finished = False
-
-    for _ in range(10):
-        is_finished = spy.count() > 0
-
-        QApplication.processEvents()
-        spy.wait(100)
-
-        if is_finished:
-            break
-
-
 def findChildren(object: QWidget, child_type: QWidget, options=Qt.FindChildOption.FindDirectChildrenOnly) -> Iterable:
     return object.findChildren(child_type, options=options)
 
@@ -176,7 +162,7 @@ def test_gui_construction_with_options(root_group_command: click.Command):
 
         assert included, err_message
 
-def test_gui_stop_execution():
+def test_gui_start_stop_execution():
     param = click.Option(param_decls=["--p"], **ClickAttrs.checkbox())
     cli = click.Command("cli", params=[param], callback=lambda p: QThread.msleep(200))
 
@@ -203,7 +189,18 @@ def test_gui_stop_execution():
     run_button.click() # Start execution
     wait_process_Events(1) # Wait for starting the worker
     
-    wait_for_worker_to_finish(control.worker)
+    # Wait for thread to finish
+    spy = QSignalSpy(control.worker, SIGNAL("finished()"))
+    is_finished = False
+
+    for _ in range(10):
+        is_finished = spy.count() > 0
+
+        QApplication.processEvents()
+        spy.wait(100)
+
+        if is_finished:
+            break
 
     assert run_button.isEnabled() and not stop_button.isEnabled()
     assert control.worker is None and control.worker_thread is None
@@ -225,6 +222,6 @@ def test_gui_exception(exception:Exception, output_expected:str):
     run_button.click() # Start execution
     wait_process_Events(1) # Wait for starting the worker
 
-    wait_for_worker_to_finish(control.worker)
+    # Worker thread does not sleep so no need to wait for thread to finish
 
     assert output_expected in control.gui.terminal_output.toPlainText()
