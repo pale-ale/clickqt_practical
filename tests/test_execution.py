@@ -7,7 +7,7 @@ from PySide6.QtWidgets import QMessageBox, QInputDialog, QApplication
 from pytest import MonkeyPatch
 import clickqt.widgets
 from clickqt.core.error import ClickQtError
-from typing import Any
+from typing import Any, Optional, Tuple, Sequence
 import time
 import os
 
@@ -18,7 +18,7 @@ def callback(p):
         clickqt_res = p
     return p
 
-def prepare_execution(monkeypatch:MonkeyPatch, value:Any, widget:clickqt.widgets.BaseWidget) -> tuple[str, str|None]:
+def prepare_execution(monkeypatch:MonkeyPatch, value:Any, widget:clickqt.widgets.BaseWidget) -> Tuple[str, Optional[str]]:
     if isinstance(widget, clickqt.widgets.MessageBox):
         # Mock the QMessageBox.information-function
         # User clicked on button "Yes" or "No"
@@ -182,7 +182,7 @@ def test_execution(monkeypatch:MonkeyPatch, runner:CliRunner, click_attrs:dict, 
             control.gui.run_button.click()
             for i in range(10):  # Wait for worker thread to finish the execution
                 QApplication.processEvents()
-                time.sleep(0.001)
+                time.sleep(0.0001)
             val = clickqt_res
 
 @pytest.mark.parametrize(
@@ -223,7 +223,7 @@ def test_execution_confirmation_widget_fail(click_attrs:dict, value1:str, value2
         (ClickAttrs.nvalue_widget(default=[]), ["", ""], []),
     ]
 )
-def test_execution_nvalue_widget(runner:CliRunner, click_attrs:dict, value:list[str], envvar_values:list[str]):
+def test_execution_nvalue_widget(runner:CliRunner, click_attrs:dict, value:Sequence[str], envvar_values:Sequence[str]):
     global clickqt_res
     os.environ["TEST_CLICKQT_ENVVAR"] = os.path.pathsep.join(envvar_values)
 

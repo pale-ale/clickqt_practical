@@ -10,7 +10,7 @@ from clickqt.widgets.confirmationwidget import ConfirmationWidget
 from clickqt.widgets.basewidget import BaseWidget
 from clickqt.widgets.messagebox import MessageBox
 from clickqt.widgets.filefield import FileField
-from typing import Dict, Callable, List, Any, Tuple
+from typing import Dict, Callable, List, Any, Tuple, Optional
 import sys
 from functools import reduce
 import re 
@@ -28,7 +28,7 @@ class Control(QObject):
     #: Internal Qt-signal, which will be emitted when the :func:`~clickqt.core.control.Control.startExecution`-Slot was triggered and executed successfully.
     requestExecution:Signal = Signal(list, click.Context) # Generics do not work here
 
-    def __init__(self, cmd:click.Command, is_ep:bool=None, ep_or_eppath:str=None):
+    def __init__(self, cmd:click.Command):
         """ Initializing the GUI object and the registries together with the differentiation of a group command and a simple command. """
 
         super().__init__()
@@ -49,8 +49,6 @@ class Control(QObject):
         # Groups-Command-name concatinated with ":" to command-option-names to BaseWidget
         self.widget_registry: Dict[str, Dict[str, BaseWidget]] = {}
         self.command_registry: Dict[str, Dict[str, Tuple[int, Callable]]] = {}
-        self.ep_or_path = ep_or_eppath
-        self.is_entrypoint = is_ep
 
         # Add all widgets
         if isinstance(cmd, click.Group):
@@ -185,8 +183,8 @@ class Control(QObject):
             return True
         
         return False
-
-    def currentCommandHierarchy(self, tab_widget:QTabWidget|QWidget, group:click.Command) -> list[click.Command]:
+    
+    def currentCommandHierarchy(self, tab_widget:QWidget, group:click.Command) -> List[click.Command]:
         """Returns the hierarchy of the command of the selected tab as list whereby the order of the list is from root command
         to the selected command.
 
@@ -200,13 +198,15 @@ class Control(QObject):
             if len(group.params) > 0: # Group has params
                 tab_widget = tab_widget.findChild(QTabWidget)
             
+            assert isinstance(tab_widget, QTabWidget)
+
             command = group.get_command(ctx=None, cmd_name=tab_widget.tabText(tab_widget.currentIndex()))
 
             return [group] + self.currentCommandHierarchy(tab_widget.currentWidget(), command)
         else:
             return [group]
         
-    def get_option_names(self,cmd):
+    def get_option_names(self, cmd):
         """ Returns an array of all the parameters used for the current command togeter with their properties."""
         option_names = []
         for param in cmd.params:
@@ -240,7 +240,7 @@ class Control(QObject):
         text = re.sub(r'[^a-zA-Z0-9 .-]', ' ', text)
         return text
     
-    def command_to_string(self, hierarchy_selected_command_name: str):
+    def command_to_string(self, hierarchy_selected_command_name:str):
         """ Returns the current command name. """
         hierarchy_selected_command_name = self.clean_command_string(self.cmd.name, hierarchy_selected_command_name)
         return hierarchy_selected_command_name
@@ -336,7 +336,7 @@ class Control(QObject):
 
         hierarchy_selected_command = self.currentCommandHierarchy(self.gui.main_tab.currentWidget(), self.cmd)
         
-        def run_command(command:click.Command|click.Group, hierarchy_command:str) -> Callable|None:
+        def run_command(command:click.Command, hierarchy_command:str) -> Optional[Callable]:
             kwargs: Dict[str, Any] = {}
             has_error = False
             dialog_widgets: List[BaseWidget] = [] # widgets that will show a dialog
@@ -374,14 +374,8 @@ class Control(QObject):
                 for ca in callback_args: # Bring the args in the correct order
                     args.append(kwargs.pop(ca)) # Remove explicitly mentioned args from kwargs
 
-                if self.is_entrypoint:
                     print(f"For command details, please call '{self.command_to_string(hierarchy_command)} --help'")
-                    print(f"{self.ep_or_path} {self.command_to_string_to_copy(hierarchy_command, command)}")
-                    print(f"Current Command: {self.function_call_formatter(hierarchy_command, command, kwargs)} \n" + f"Output:")
-                    return lambda: command.callback(*args, **kwargs)
-                else:
-                    print(f"For command details, please call '{self.command_to_string(hierarchy_command)} --help'")
-                    print(f"python {self.ep_or_path} {self.command_to_string_to_copy(hierarchy_command, command)}")
+                    #print(f"python {self.ep_or_path} {self.command_to_string_to_copy(hierarchy_command, command)}")
                     print(f"Current Command: {self.function_call_formatter(hierarchy_command, command, kwargs)} \n" + f"Output:") 
                     return lambda: command.callback(*args, **kwargs)
             else:

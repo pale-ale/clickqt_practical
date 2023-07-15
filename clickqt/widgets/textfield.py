@@ -2,10 +2,14 @@ from PySide6.QtWidgets import QLineEdit, QPushButton, QFileDialog
 from PySide6.QtCore import QDir
 from clickqt.widgets.core.QPathDialog import QPathDialog
 from clickqt.widgets.basewidget import BaseWidget
+from clickqt.core.utils import remove_prefix
 from typing import Any
 from enum import IntFlag
 from click import Parameter, Context, ParamType
-import enum_tools.documentation
+try:
+    from enum_tools.documentation import document_enum
+except ImportError:
+    document_enum = lambda x: x
 
 class TextField(BaseWidget):
     """Represents a click.types.StringParamType-object and user defined click types.
@@ -51,7 +55,7 @@ class PathField(TextField):
                     :class:`~clickqt.widgets.basewidget.MultiWidget`- / :class:`~clickqt.widgets.confirmationwidget.ConfirmationWidget`-widgets
     """
 
-    @enum_tools.documentation.document_enum
+    @document_enum
     class FileType(IntFlag):
         """Specifies the possible file types."""
 
@@ -84,7 +88,7 @@ class PathField(TextField):
             dialog = QPathDialog(None, directory=QDir.currentPath(), exist=self.type.exists)
             if dialog.exec():
                 self.handleValid(True)
-                self.setValue(dialog.selectedPath().replace(QDir.currentPath(), "").replace("/", QDir.separator()).removeprefix(QDir.separator()))
+                self.setValue(remove_prefix(dialog.selectedPath().replace(QDir.currentPath(), "").replace("/", QDir.separator()), QDir.separator()))
         else:
             dialog = QFileDialog(directory=QDir.currentPath())
             dialog.setViewMode(QFileDialog.ViewMode.Detail)
@@ -98,16 +102,11 @@ class PathField(TextField):
                 else:
                     dialog.setFileMode(QFileDialog.FileMode.AnyFile)  
             else: # Only FilePathField can be here
-                
-                if self.type.exists:
-                    dialog.setFileMode(QFileDialog.FileMode.Directory)
-                else:
-                    dialog.setFileMode(QFileDialog.FileMode.AnyFile)  
-
+                dialog.setFileMode(QFileDialog.FileMode.Directory)
                 dialog.setOption(QFileDialog.Option.ShowDirsOnly, True)
             
             if dialog.exec():
                 filenames = dialog.selectedFiles()
                 if filenames and len(filenames):
                     self.handleValid(True)
-                    self.setValue(filenames[0].replace(QDir.currentPath(), "").replace("/", QDir.separator()).removeprefix(QDir.separator())) 
+                    self.setValue(remove_prefix(filenames[0].replace(QDir.currentPath(), "").replace("/", QDir.separator()), QDir.separator())) 

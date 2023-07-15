@@ -2,6 +2,7 @@ from io import BytesIO, TextIOWrapper
 from PySide6.QtWidgets import QPlainTextEdit, QMenu
 from PySide6.QtGui import QTextCursor, QColor, QContextMenuEvent, QAction
 from PySide6.QtCore import Signal
+from typing import Union
 import html
 
 class OutputStream(TextIOWrapper):
@@ -18,7 +19,7 @@ class OutputStream(TextIOWrapper):
         self.stream = stream
         self.color = color
 
-    def write(self, message:bytes|str):
+    def write(self, message:Union[bytes,str]):
         """Writes **message** to **output** and utf-8 decoded + Html-escaped to **stream**
         
         :param message: The message which should be written to **output** and **stream**

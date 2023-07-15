@@ -16,7 +16,7 @@ def eval(clickqt_widget:clickqt.widgets.BaseWidget, clickqt_child_widget:clickqt
         clickqt_widget.setValue(value[i])
         clickqt_child_widget.focus_out_validator.eventFilter(clickqt_child_widget.widget, QEvent(QEvent.Type.FocusOut)) # widget goes out of focus
         if (clickqt_widget == clickqt_child_widget and isinstance(clickqt_widget, clickqt.widgets.MultiWidget)) or \
-            (clickqt_widget != clickqt_child_widget and isinstance(clickqt_widget, clickqt.widgets.MultiValueWidget|clickqt.widgets.TupleWidget)): # NValueWidget: Every child can be checked individually
+            (clickqt_widget != clickqt_child_widget and isinstance(clickqt_widget, (clickqt.widgets.MultiValueWidget,clickqt.widgets.TupleWidget))): # NValueWidget: Every child can be checked individually
             for child in clickqt_widget.children:
                 assert border[i](child.widget)
         else:

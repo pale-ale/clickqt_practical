@@ -1,5 +1,8 @@
 from enum import IntEnum
-import enum_tools.documentation
+try:
+    from enum_tools.documentation import document_enum
+except ImportError:
+    document_enum = lambda x: x
 
 class ClickQtError:
     """Shows whether an error occured during value validation of the widgets.
@@ -9,7 +12,7 @@ class ClickQtError:
     :param click_error_message: The error message which was created by click, defaults to ''
     """
 
-    @enum_tools.documentation.document_enum
+    @document_enum
     class ErrorType(IntEnum):
         """Specifies the possible error types."""
 
@@ -32,13 +35,12 @@ class ClickQtError:
         If there was no error, an empty string will be returned.
         """
         
-        match(self.type.value):
-            case ClickQtError.ErrorType.NO_ERROR: return ""
-            case ClickQtError.ErrorType.CONFIRMATION_INPUT_NOT_EQUAL_ERROR: return f"Confirmation input ({self.trigger}) is not equal"
-            case ClickQtError.ErrorType.ABORTED_ERROR: return "Aborted!"
-            case ClickQtError.ErrorType.PROCESSING_VALUE_ERROR: return f"Processing value error ({self.trigger}): {self.click_error_message}"
-            case ClickQtError.ErrorType.CONVERTING_ERROR: return f"Converting error ({self.trigger}): {self.click_error_message}"
-            case ClickQtError.ErrorType.REQUIRED_ERROR: return f"Required error ({self.trigger}): {self.click_error_message} is empty" #Argument/Option
-            case ClickQtError.ErrorType.EXIT_ERROR: return "" # Don't print an error (click behaviour)
+        if self.type.value == ClickQtError.ErrorType.NO_ERROR: return ""
+        elif self.type.value == ClickQtError.ErrorType.CONFIRMATION_INPUT_NOT_EQUAL_ERROR: return f"Confirmation input ({self.trigger}) is not equal"
+        elif self.type.value == ClickQtError.ErrorType.ABORTED_ERROR: return "Aborted!"
+        elif self.type.value == ClickQtError.ErrorType.PROCESSING_VALUE_ERROR: return f"Processing value error ({self.trigger}): {self.click_error_message}"
+        elif self.type.value == ClickQtError.ErrorType.CONVERTING_ERROR: return f"Converting error ({self.trigger}): {self.click_error_message}"
+        elif self.type.value == ClickQtError.ErrorType.REQUIRED_ERROR: return f"Required error ({self.trigger}): {self.click_error_message} is empty" #Argument/Option
+        elif self.type.value == ClickQtError.ErrorType.EXIT_ERROR: return "" # Don't print an error (click behaviour)
 
         raise NotImplementedError(f"Message for this error ({self.type.value}) not implemented yet")

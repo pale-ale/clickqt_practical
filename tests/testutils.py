@@ -1,5 +1,5 @@
 import click
-from typing import Sequence, Type
+from typing import Sequence, Type, Union, Any, Optional
 import inspect
 from collections import defaultdict
 
@@ -42,11 +42,11 @@ class ClickAttrs():
         return {"type":click.types.FLOAT, **attrs_dict}
     
     @staticmethod
-    def intrange(min:int|None=None, max:int|None=None, min_open:bool=False, max_open:bool=False, clamp:bool=False, **attrs_dict) -> dict:
+    def intrange(min:Optional[int]=None, max:Optional[int]=None, min_open:bool=False, max_open:bool=False, clamp:bool=False, **attrs_dict) -> dict:
         return {"type":click.IntRange(min=min, max=max, min_open=min_open, max_open=max_open, clamp=clamp), **attrs_dict}
     
     @staticmethod
-    def floatrange(min:int|None=None, max:int|None=None, min_open:bool=False, max_open:bool=False, clamp:bool=False, **attrs_dict) -> dict:
+    def floatrange(min:Optional[float]=None, max:Optional[float]=None, min_open:bool=False, max_open:bool=False, clamp:bool=False, **attrs_dict) -> dict:
         return {"type":click.FloatRange(min=min, max=max, min_open=min_open, max_open=max_open, clamp=clamp), **attrs_dict}
     
     @staticmethod
@@ -74,11 +74,11 @@ class ClickAttrs():
         return {"type":click.types.Path(**type_dict), **attrs_dict}
     
     @staticmethod
-    def datetime(formats:Sequence[str]|None=None, **attrs_dict) -> dict:
+    def datetime(formats:Optional[Sequence[str]]=None, **attrs_dict) -> dict:
         return {"type":click.types.DateTime(formats), **attrs_dict}
     
     @staticmethod
-    def tuple_widget(types:Sequence[Type|click.ParamType], **attrs_dict) -> dict:
+    def tuple_widget(types:Sequence[Union[Type[Any],click.ParamType]], **attrs_dict) -> dict:
         return {"type":click.types.Tuple(types), **attrs_dict}
     
     @staticmethod

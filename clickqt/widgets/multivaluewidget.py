@@ -1,7 +1,7 @@
 from PySide6.QtWidgets import QGroupBox, QVBoxLayout
 from clickqt.widgets.basewidget import BaseWidget, MultiWidget
 from click import Parameter, ParamType
-from typing import Any, Callable
+from typing import Any, Callable, Optional
 
 class MultiValueWidget(MultiWidget):
     """Represents a multi value click option with a fixed number of types (**param**\.nargs >=2). 
@@ -17,7 +17,7 @@ class MultiValueWidget(MultiWidget):
 
     widget_type = QGroupBox #: The Qt-type of this widget.
     
-    def __init__(self, otype:ParamType, param:Parameter, widgetsource:Callable[[Any], BaseWidget], parent:BaseWidget=None, **kwargs):
+    def __init__(self, otype:ParamType, param:Parameter, widgetsource:Callable[[Any], BaseWidget], parent:Optional[BaseWidget]=None, **kwargs):
         super().__init__(otype, param, parent=parent, **kwargs)
 
         assert param.nargs >= 2, f"'param.nargs' should be >= 2, but is '{param.nargs}'."

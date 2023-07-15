@@ -1,5 +1,6 @@
 from PySide6.QtWidgets import QWidget, QTreeView, QLineEdit, QPushButton, QFileDialog, QDialog
 from PySide6.QtCore import QObject, QEvent, SIGNAL, QDir, Slot
+from typing import Optional
 
 class QPathDialog(QFileDialog):
     """A file dialog that accepts a single file or a single directory.
@@ -9,21 +10,21 @@ class QPathDialog(QFileDialog):
     :param exist: Specifies, whether the file / directory has to exist
     """
 
-    def __init__(self, parent:QWidget|None=None, directory:str=QDir.currentPath(), exist:bool=True):
+    def __init__(self, parent:Optional[QWidget]=None, directory:str=QDir.currentPath(), exist:bool=True):
         super().__init__(parent, directory=directory)
         
         self.exist = exist
         self.setOption(QFileDialog.Option.DontUseNativeDialog, True)
         self.setFileMode(QFileDialog.FileMode.Directory)
-        self.open_button: QPushButton = None
+        self.open_button:QPushButton = None
         #self.list_view: QListView = self.findChild(QListView, "listView")
         #if self.list_view:
         #    self.list_view.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
-        self.tree_view: QTreeView = self.findChild(QTreeView)
+        self.tree_view:QTreeView = self.findChild(QTreeView)
         #if self.tree_view:
         #    self.tree_view.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
-        self.selected_path: str = ""
-        self.base_dir: str = ""
+        self.selected_path:str = ""
+        self.base_dir:str = ""
 
         for btn in self.findChildren(QPushButton):
             text = btn.text().lower()
@@ -41,8 +42,8 @@ class QPathDialog(QFileDialog):
 
         return self.selected_path
     
-    def eventFilter(self, watched: QObject, event: QEvent) -> bool:
-        btn: QPushButton = watched
+    def eventFilter(self, watched:QObject, event:QEvent) -> bool:
+        btn:QPushButton = watched
         if btn:
             if event.type() == QEvent.Type.EnabledChange and not btn.isEnabled():
                 btn.setEnabled(True)

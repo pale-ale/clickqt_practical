@@ -18,3 +18,9 @@ def is_file_path(string):
         return True
     else:
         return False
+    
+def remove_prefix(text:str, prefix:str):
+    if text.startswith(prefix):
+        return text[len(prefix):]
+    
+    return text

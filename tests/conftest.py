@@ -2,12 +2,13 @@ import pytest
 import re
 
 from click.testing import CliRunner
+from typing import Iterable
 
 @pytest.fixture(scope="function")
 def runner(request):
     return CliRunner()
 
-def pytest_collection_modifyitems(items:list[pytest.Function]):
+def pytest_collection_modifyitems(items:Iterable[pytest.Function]):
     """
         Change the default test execution order
         Fundamental tests should be executed first

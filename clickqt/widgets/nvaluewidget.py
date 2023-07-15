@@ -1,15 +1,15 @@
 from PySide6.QtWidgets import QVBoxLayout, QScrollArea, QPushButton, QWidget
 from PySide6.QtCore import Qt
 from clickqt.widgets.basewidget import BaseWidget, MultiWidget
-from typing import Any, Callable, Tuple, List
+from typing import Any, Callable, Optional, Iterable, Tuple
 from clickqt.core.error import ClickQtError
 from click import Context, Parameter, ParamType, Choice
-import os
+
 
 class NValueWidget(MultiWidget):
     widget_type = QScrollArea
     
-    def __init__(self, otype:ParamType, param:Parameter, widgetsource:Callable[[Any], BaseWidget], parent:BaseWidget=None, **kwargs):
+    def __init__(self, otype:ParamType, param:Parameter, widgetsource:Callable[[Any], BaseWidget], parent:Optional[BaseWidget]=None, **kwargs):
         super().__init__(otype, param, parent=parent, **kwargs)
 
         assert not isinstance(otype, Choice), f"'otype' is of type '{Choice}', but there is a better version for this type"
@@ -75,11 +75,11 @@ class NValueWidget(MultiWidget):
             else: # param is not required and there is no default -> value is None
                 value_missing = True # But callback should be considered
 
-        values: list|None = None
+        values:Optional[Iterable] = None
         
         if not value_missing:
             values = []
-            err_messages: List[str] = []
+            err_messages:list[str] = []
             default = BaseWidget.getParamDefault(self.param, None)
 
             # len(self.children)) < len(default): We set at most len(self.children)) defaults
@@ -112,7 +112,7 @@ class NValueWidget(MultiWidget):
 
         return self.handleCallback(values)
 
-    def setValue(self, value):
+    def setValue(self, value:Iterable[Any]):
         if len(value) < len(self.children): # Remove pairs
             for btns in list(self.buttondict.keys())[len(value):]:   
                 self.removeButtonPair(btns)  
@@ -123,7 +123,7 @@ class NValueWidget(MultiWidget):
         for i,c in enumerate(self.children): # Set the value
             c.setValue(value[i])
 
-    def handleValid(self, valid: bool):
+    def handleValid(self, valid:bool):
         if len(self.children) == 0:
             BaseWidget.handleValid(self, valid)
         else:

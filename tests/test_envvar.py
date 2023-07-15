@@ -4,6 +4,7 @@ import os
 
 from tests.testutils import ClickAttrs
 import clickqt.widgets
+from typing import Union, Sequence, Any
 
 
 @pytest.mark.parametrize(
@@ -23,8 +24,8 @@ import clickqt.widgets
         (ClickAttrs.nvalue_widget(), ["2.3", "3", "av"], ["2.3", "3", "av"]),
     ]
 )
-def test_set_envvar(click_attrs:dict, envvar_values:str|list[str], expected:str|list):
-    os.environ["TEST_CLICKQT_ENVVAR"] = os.path.pathsep.join(envvar_values if isinstance(envvar_values, list) else [envvar_values])
+def test_set_envvar(click_attrs:dict, envvar_values:Union[str, Sequence[str]], expected:Union[str, Sequence[Any]]):
+    os.environ["TEST_CLICKQT_ENVVAR"] = os.path.pathsep.join(envvar_values if isinstance(envvar_values, Sequence) and not isinstance(envvar_values, str) else [envvar_values])
 
     param = click.Option(param_decls=["--test"], envvar="TEST_CLICKQT_ENVVAR", **click_attrs)
     cli = click.Command("cli", params=[param])
@@ -43,8 +44,8 @@ def test_set_envvar(click_attrs:dict, envvar_values:str|list[str], expected:str|
         (ClickAttrs.tuple_widget(types=(click.types.File(), click.types.File())), ["a", "b", "c", "d"], "Takes 2 values but 4 were given."),
     ]
 )
-def test_set_envvar_fail(click_attrs:dict, envvar_values:str|list[str], expected:str|list[str]):
-    os.environ["TEST_CLICKQT_ENVVAR"] = os.path.pathsep.join(envvar_values if isinstance(envvar_values, list) else [envvar_values])
+def test_set_envvar_fail(click_attrs:dict, envvar_values:Union[str, Sequence[str]], expected:Union[str, Sequence[str]]):
+    os.environ["TEST_CLICKQT_ENVVAR"] = os.path.pathsep.join(envvar_values if isinstance(envvar_values, Sequence) else [envvar_values])
 
     param = click.Option(param_decls=["--test"], envvar="TEST_CLICKQT_ENVVAR", **click_attrs)
     cli = click.Command("cli", params=[param])

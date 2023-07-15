@@ -1,4 +1,4 @@
-from typing import Any, ClassVar, Type
+from typing import Any, ClassVar, Type, Optional, Union, Iterable, Tuple
 from abc import ABC, abstractmethod
 from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout
 from clickqt.core.error import ClickQtError
@@ -22,12 +22,12 @@ class BaseWidget(ABC):
 
     widget_type: ClassVar[Type] #: The Qt-type of this widget.
 
-    def __init__(self, otype:ParamType, param:Parameter, parent:"BaseWidget|None"=None, **kwargs):
+    def __init__(self, otype:ParamType, param:Parameter, parent:Optional["BaseWidget"]=None, **kwargs):
         assert isinstance(otype, ParamType)
         assert isinstance(param, Parameter)
-        self.type:ParamType = otype
-        self.param:Parameter = param
-        self.parent_widget:BaseWidget|None = parent
+        self.type = otype
+        self.param = param
+        self.parent_widget = parent
         self.click_command:Command = kwargs.get("com")
         self.widget_name = param.name
         self.container = QWidget()
@@ -72,7 +72,7 @@ class BaseWidget(ABC):
         """
         return False
 
-    def getValue(self) -> tuple[Any, ClickQtError]:
+    def getValue(self) -> Tuple[Any, ClickQtError]:
         """Validates the value of the Qt-widget and returns the result.
 
         :return: Valid: (widget value or the value of a callback, :class:`~clickqt.core.error.ClickQtError.ErrorType.NO_ERROR`)\n
@@ -135,7 +135,7 @@ class BaseWidget(ABC):
 
         return self.handleCallback(value)
     
-    def handleCallback(self, value:Any) -> tuple[Any, ClickQtError]:
+    def handleCallback(self, value:Any) -> Tuple[Any, ClickQtError]:
         """Validates **value** in the user-defined callback (if provided) and returns the result.
          
         :param value: The value that should be validated in the callback
@@ -161,7 +161,7 @@ class BaseWidget(ABC):
     def getWidgetValue(self) -> Any:
         """Returns the value of the Qt-widget without any checks."""
     
-    def handleValid(self, valid: bool):
+    def handleValid(self, valid:bool):
         """Changes the border of the widget dependent on **valid**. If **valid** == False, the border will be colored red, otherwise black.
         
         :param valid: Specifies whether there was no error when validating the widget
@@ -194,20 +194,20 @@ class NumericField(BaseWidget):
                     :class:`~clickqt.widgets.basewidget.MultiWidget`- / :class:`~clickqt.widgets.confirmationwidget.ConfirmationWidget`-widgets
     """
 
-    def setValue(self, value: Any):
+    def setValue(self, value:Any):
         self.widget.setValue(self.type.convert(value=str(value), param=self.click_command, ctx=Context(self.click_command)))
 
-    def setMinimum(self, min: int|float):
+    def setMinimum(self, min:Union[int,float]):
         """Sets the minimum value."""
         
         self.widget.setMinimum(min)
 
-    def setMaximum(self, max: int|float):
+    def setMaximum(self, max:Union[int,float]):
         """Sets the maximum value."""
 
         self.widget.setMaximum(max)
     
-    def getWidgetValue(self) -> int|float:
+    def getWidgetValue(self) -> Union[int,float]:
         return self.widget.value()
     
 
@@ -228,7 +228,7 @@ class ComboBoxBase(BaseWidget):
         self.addItems(otype.choices)
 
     @abstractmethod
-    def addItems(self, items:list[str]):
+    def addItems(self, items:Iterable[str]):
         """Adds each of the strings in **items** to the checkable combobox."""
 
 class MultiWidget(BaseWidget):
@@ -243,7 +243,7 @@ class MultiWidget(BaseWidget):
     def __init__(self, otype:ParamType, param:Parameter, **kwargs):
         super().__init__(otype, param, **kwargs)
         
-        self.children:list[BaseWidget]|dict_values[BaseWidget] = []
+        self.children:Union[Iterable[BaseWidget],dict_values[BaseWidget]] = []
 
     def init(self):
         """Sets the value of the (child-)widgets according to envvar or default values. 
@@ -258,7 +258,7 @@ class MultiWidget(BaseWidget):
             elif (default := BaseWidget.getParamDefault(self.param, None)) is not None: # Consider default value
                 self.setValue(default)
 
-    def setValue(self, value):
+    def setValue(self, value:Iterable[Any]):
         if len(value) != self.param.nargs:
             raise BadParameter(ngettext("Takes {nargs} values but 1 was given.", "Takes {nargs} values but {len} were given.",len(value))
                                .format(nargs=self.param.nargs, len=len(value)),
@@ -268,7 +268,7 @@ class MultiWidget(BaseWidget):
         for i,c in enumerate(self.children):
             c.setValue(value[i])
 
-    def handleValid(self, valid: bool):
+    def handleValid(self, valid:bool):
         for c in self.children:
             c.handleValid(valid)
 
@@ -287,5 +287,5 @@ class MultiWidget(BaseWidget):
         
         return False
     
-    def getWidgetValue(self) -> list[Any]:
+    def getWidgetValue(self) -> Iterable[Any]:
         return [c.getWidgetValue() for c in self.children]
