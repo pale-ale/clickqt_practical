@@ -2,7 +2,7 @@ import click
 import pytest
 import clickqt
 
-from tests.testutils import ClickAttrs, raise_
+from tests.testutils import ClickAttrs, raise_, wait_process_Events
 from PySide6.QtWidgets import QTabWidget, QPushButton, QSplitter, QWidget, QApplication
 from PySide6.QtCore import Qt, SIGNAL, QThread
 from PySide6.QtTest import QSignalSpy
@@ -188,29 +188,20 @@ def test_gui_stop_execution():
     assert control.worker is None and control.worker_thread is None
 
     run_button.click() # Start execution
-
-    for _ in range(10):  # Wait for starting the worker
-        QApplication.processEvents()
-        QThread.msleep(1)
+    wait_process_Events(1) # Wait for starting the worker
 
     assert not run_button.isEnabled() and stop_button.isEnabled()
     assert control.worker is not None and control.worker_thread is not None
 
     stop_button.click() # Stop execution
-
-    for _ in range(10):  # Wait for stopping the worker
-        QApplication.processEvents()
-        QThread.msleep(1)
+    wait_process_Events(1) # Wait for stopping the worker
 
     assert run_button.isEnabled() and not stop_button.isEnabled()
     assert control.worker is None and control.worker_thread is None
     assert "Execution stopped!\n" in control.gui.terminal_output.toPlainText()
 
     run_button.click() # Start execution
-
-    for _ in range(10):  # Wait for starting the worker
-        QApplication.processEvents()
-        QThread.msleep(1)
+    wait_process_Events(1) # Wait for starting the worker
     
     wait_for_worker_to_finish(control.worker)
 
@@ -232,10 +223,7 @@ def test_gui_exception(exception:Exception, output_expected:str):
     run_button = control.gui.run_button
 
     run_button.click() # Start execution
-
-    for _ in range(10):  # Wait for starting the worker
-        QApplication.processEvents()
-        QThread.msleep(1)
+    wait_process_Events(1) # Wait for starting the worker
 
     wait_for_worker_to_finish(control.worker)
 

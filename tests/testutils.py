@@ -2,9 +2,16 @@ import click
 from typing import Sequence, Type, Union, Any, Optional
 import inspect
 from collections import defaultdict
+from PySide6.QtWidgets import QApplication
+from PySide6.QtCore import QThread
 
 def raise_(ex:Exception):
     raise ex
+
+def wait_process_Events(ms:int, x_times:int=3):
+    for _ in range(x_times):
+        QApplication.processEvents()
+        QThread.msleep(ms)
 
 # Credits to https://stackoverflow.com/questions/15788725/how-to-determine-the-closest-common-ancestor-class
 def clcoancl(*cls_list):

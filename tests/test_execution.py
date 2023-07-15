@@ -2,13 +2,12 @@ import click
 from click.testing import CliRunner
 import pytest
 
-from tests.testutils import ClickAttrs, clcoancl, raise_
-from PySide6.QtWidgets import QMessageBox, QInputDialog, QApplication
+from tests.testutils import ClickAttrs, clcoancl, raise_, wait_process_Events
+from PySide6.QtWidgets import QMessageBox, QInputDialog
 from pytest import MonkeyPatch
 import clickqt.widgets
 from clickqt.core.error import ClickQtError
 from typing import Any, Optional, Tuple, Sequence
-import time
 import os
 
 clickqt_res:Any = None
@@ -180,9 +179,7 @@ def test_execution(monkeypatch:MonkeyPatch, runner:CliRunner, click_attrs:dict, 
 
             clickqt_res = None # Reset the stored click result
             control.gui.run_button.click()
-            for i in range(10):  # Wait for worker thread to finish the execution
-                QApplication.processEvents()
-                time.sleep(0.0001)
+            wait_process_Events(1)  # Wait for worker thread to finish the execution
             val = clickqt_res
 
 @pytest.mark.parametrize(
@@ -247,9 +244,7 @@ def test_execution_nvalue_widget(runner:CliRunner, click_attrs:dict, value:Seque
 
             clickqt_res = None # Reset the stored click result
             control.gui.run_button.click()
-            for i in range(10):  # Wait for worker thread to finish the execution
-                QApplication.processEvents()
-                time.sleep(0.001)
+            wait_process_Events(1) # Wait for worker thread to finish the execution
             val = clickqt_res
 
 def test_execution_context():
@@ -270,9 +265,7 @@ def test_execution_context():
     control = clickqt.qtgui_from_click(cli)
     control.gui.run_button.click()
 
-    for i in range(10):  # Wait for worker thread to finish the execution
-        QApplication.processEvents()
-        time.sleep(0.001)
+    wait_process_Events(1) # Wait for worker thread to finish the execution
 
     assert len(clickqt_res) == 2 and isinstance(clickqt_res[0], click.Context) and clickqt_res[1] == "test1"
 
@@ -289,9 +282,7 @@ def test_execution_expose_value_kwargs():
     control = clickqt.qtgui_from_click(cli)
     control.gui.run_button.click()
 
-    for i in range(10):  # Wait for worker thread to finish the execution
-        QApplication.processEvents()
-        time.sleep(0.001)
+    wait_process_Events(1) # Wait for worker thread to finish the execution
 
     assert len(clickqt_res.values()) == 1
     assert clickqt_res.get("p3") == "c"

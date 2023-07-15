@@ -8,7 +8,6 @@ from tests.testutils import ClickAttrs
 from typing import Iterable
 import clickqt.widgets
 import sys
-import time
 
 
 class CustomParamType(click.ParamType):
@@ -178,7 +177,6 @@ def test_pathfield(qtbot:QtBot, click_attrs:dict, value:str, expected:str):
             QApplication.processEvents()
             messagebox = QApplication.activeModalWidget()
             tries += 1
-            #time.sleep(0.001)
 
         if messagebox is not None and isinstance(messagebox, QMessageBox):
             messagebox.close()
@@ -195,7 +193,6 @@ def test_pathfield(qtbot:QtBot, click_attrs:dict, value:str, expected:str):
             QApplication.processEvents()
             file_dialog = QApplication.activeModalWidget()
             tries += 1
-            #time.sleep(0.001)
         
         if file_dialog is not None:
             file_dialog.findChild(QLineEdit, "fileNameEdit").setText(value) # = file_dialog.selectFile(value)
