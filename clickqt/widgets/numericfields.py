@@ -4,7 +4,17 @@ from click import Parameter, IntRange, FloatRange, ParamType, INT, FLOAT
 import sys
 
 class IntField(NumericField):
-    widget_type = QSpinBox
+    """Represents a click.types.IntParamType- and click.types.IntRange-object.
+    If the click object is of type `click.types.IntParamType`, the minimum will be set to -2**31 and the maximum to 2**31 - 1.
+    In the other case, the minimum and maximum are defined by clicks range options.
+    
+    :param otype: The type which specifies the clickqt widget type. This type may be different compared to **param**.type when dealing with click.types.CompositeParamType-objects
+    :param param: The parameter from which **otype** came from
+    :param kwargs: Additionally parameters ('widgetsource', 'parent', 'com', 'label') needed for 
+                    :class:`~clickqt.widgets.basewidget.MultiWidget`- / :class:`~clickqt.widgets.confirmationwidget.ConfirmationWidget`-widgets
+    """
+
+    widget_type = QSpinBox #: The Qt-type of this widget.
 
     def __init__(self, otype:ParamType, param:Parameter, **kwargs):
         super().__init__(otype, param, **kwargs)
@@ -26,7 +36,17 @@ class IntField(NumericField):
 
 
 class RealField(NumericField):
-    widget_type = QDoubleSpinBox
+    """Represents a click.types.FloatParamType- and click.types.FloatRange-object. Two decimals will be displayed by default.
+    If the click object is of type `click.types.FloatParamType`, the minimum will be set to -sys.float_info.max and the maximum to sys.float_info.max.
+    In the other case, the minimum and maximum are defined by clicks range options.
+    
+    :param otype: The type which specifies the clickqt widget type. This type may be different compared to **param**.type when dealing with click.types.CompositeParamType-objects
+    :param param: The parameter from which **otype** came from
+    :param kwargs: Additionally parameters ('widgetsource', 'parent', 'com', 'label') needed for 
+                    :class:`~clickqt.widgets.basewidget.MultiWidget`- / :class:`~clickqt.widgets.confirmationwidget.ConfirmationWidget`-widgets
+    """
+
+    widget_type = QDoubleSpinBox #: The Qt-type of this widget.
 
     def __init__(self, otype:ParamType, param:Parameter, **kwargs):
         super().__init__(otype, param, **kwargs)

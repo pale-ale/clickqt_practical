@@ -4,7 +4,7 @@ from click import Parameter, Context, ParamType, BOOL
 from typing import Any
 
 class CheckBox(BaseWidget):
-    """Represents a click.types.BoolParamType object
+    """Represents a click.types.BoolParamType object.
     
     :param otype: The type which specifies the clickqt widget type. This type may be different compared to **param**.type when dealing with click.types.CompositeParamType-objects
     :param param: The parameter from which **otype** came from

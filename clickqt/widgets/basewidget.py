@@ -232,7 +232,7 @@ class ComboBoxBase(BaseWidget):
         """Adds each of the strings in **items** to the checkable combobox."""
 
 class MultiWidget(BaseWidget):
-    """Provides basic functionalities for click.types.CompositeParamType based widgets and multiple value widgets
+    """Provides basic functionalities for click.types.CompositeParamType based widgets and multi value widgets.
     
     :param otype: The type which specifies the clickqt widget type. This type may be different compared to **param**.type when dealing with click.types.CompositeParamType-objects
     :param param: The parameter from which **otype** came from

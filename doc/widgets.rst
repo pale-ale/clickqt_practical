@@ -33,20 +33,18 @@ Widgets
     :show-inheritance:
     :members:
 
-.. 
-    .. automodule:: clickqt.widgets.messagebox
-        :show-inheritance:
-        :members:
+.. automodule:: clickqt.widgets.messagebox
+    :show-inheritance:
+    :members:
 
-..
-    .. automodule:: clickqt.widgets.multivaluewidget
-        :show-inheritance:
-        :members:
+.. automodule:: clickqt.widgets.multivaluewidget
+     :show-inheritance:
+     :members:
 
-..
-    .. automodule:: clickqt.widgets.numericfields
-        :show-inheritance:
-        :members:
+
+.. automodule:: clickqt.widgets.numericfields
+    :show-inheritance:
+    :members:
 
 ..   
     .. automodule:: clickqt.widgets.nvaluewidget

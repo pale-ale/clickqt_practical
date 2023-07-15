@@ -5,7 +5,7 @@ from clickqt.widgets.core.QCheckableCombobox import QCheckableComboBox
 from click import Parameter, ParamType, Context
 
 class ComboBox(ComboBoxBase):
-    """Represents a click.types.Choice object
+    """Represents a click.types.Choice object.
     
     :param otype: The type which specifies the clickqt widget type. This type may be different compared to **param**.type when dealing with click.types.CompositeParamType-objects
     :param param: The parameter from which **otype** came from
@@ -32,7 +32,7 @@ class ComboBox(ComboBoxBase):
     
    
 class CheckableComboBox(ComboBoxBase):
-    """Represents a multiple click.types.Choice object
+    """Represents a multiple click.types.Choice object.
     
     :param otype: The type which specifies the clickqt widget type. This type may be different compared to **param**.type when dealing with click.types.CompositeParamType-objects
     :param param: The parameter from which **otype** came from
