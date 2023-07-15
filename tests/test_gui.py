@@ -3,12 +3,10 @@ import pytest
 import clickqt
 
 from tests.testutils import ClickAttrs, raise_, wait_process_Events
-from PySide6.QtWidgets import QTabWidget, QPushButton, QSplitter, QWidget, QApplication
-from PySide6.QtCore import Qt, SIGNAL, QThread
-from PySide6.QtTest import QSignalSpy
+from PySide6.QtWidgets import QTabWidget, QPushButton, QSplitter, QWidget
+from PySide6.QtCore import Qt, QThread
 from clickqt.core.output import TerminalOutput
 from clickqt.core.control import Control
-from clickqt.core.commandexecutor import CommandExecutor
 from typing import Iterable, Tuple
 import clickqt.widgets
 
@@ -164,7 +162,7 @@ def test_gui_construction_with_options(root_group_command: click.Command):
 
 def test_gui_start_stop_execution():
     param = click.Option(param_decls=["--p"], **ClickAttrs.checkbox())
-    cli = click.Command("cli", params=[param], callback=lambda p: QThread.msleep(200))
+    cli = click.Command("cli", params=[param], callback=lambda p: QThread.msleep(100))
 
     control = clickqt.qtgui_from_click(cli)
     run_button = control.gui.run_button
@@ -190,6 +188,8 @@ def test_gui_start_stop_execution():
     wait_process_Events(1) # Wait for starting the worker
     
     # Wait for thread to finish
+    wait_process_Events(100, 5)
+    """ # QSignalSpy problematic with Python 3.9 (core dumped)
     spy = QSignalSpy(control.worker, SIGNAL("finished()"))
     is_finished = False
 
@@ -201,6 +201,7 @@ def test_gui_start_stop_execution():
 
         if is_finished:
             break
+    """
 
     assert run_button.isEnabled() and not stop_button.isEnabled()
     assert control.worker is None and control.worker_thread is None
