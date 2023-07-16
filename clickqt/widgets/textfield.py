@@ -8,7 +8,7 @@ from enum import IntFlag
 from click import Parameter, Context, ParamType
 try:
     from enum_tools.documentation import document_enum
-except ImportError:
+except ImportError: # pragma: no cover
     document_enum = lambda x: x
 
 class TextField(BaseWidget):

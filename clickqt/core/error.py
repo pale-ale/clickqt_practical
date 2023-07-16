@@ -1,7 +1,7 @@
 from enum import IntEnum
 try:
     from enum_tools.documentation import document_enum
-except ImportError:
+except ImportError: # pragma: no cover
     document_enum = lambda x: x
 
 class ClickQtError:
