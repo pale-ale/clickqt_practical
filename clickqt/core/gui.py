@@ -1,6 +1,6 @@
 import click
 from clickqt.widgets.multivaluewidget import MultiValueWidget
-from PySide6.QtWidgets import QApplication, QSplitter, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QTabWidget, QSizePolicy
+from PySide6.QtWidgets import QApplication, QSplitter, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QSizePolicy
 from PySide6.QtGui import QColor, Qt
 from clickqt.widgets.basewidget import BaseWidget
 from clickqt.widgets.checkbox import CheckBox
@@ -62,6 +62,9 @@ class GUI:
         self.splitter.addWidget(self.widgets_container)
         self.splitter.addWidget(self.buttons_container)
         self.splitter.addWidget(self.terminal_output)
+
+        size_hint = self.window.sizeHint()
+        self.window.resize(1.5 * size_hint.width(), size_hint.height()) # Enlarge window width
 
     def createWidget(self, otype:click.ParamType, param:click.Parameter, **kwargs) -> BaseWidget:
         """Creates the clickqt widget object of the correct widget class determined by the **otype** and returns it.
