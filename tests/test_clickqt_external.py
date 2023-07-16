@@ -1,4 +1,4 @@
-from clickqt.core.__main__ import get_command_from_entrypoint, get_command_from_path
+from clickqt.__main__ import get_command_from_entrypoint, get_command_from_path
 from click import Command
 import pytest
 
