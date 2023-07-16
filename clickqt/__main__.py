@@ -47,8 +47,8 @@ def get_entrypoints_from_name(epname:str) -> List[metadata.EntryPoint]:
     '''
     grouped_eps = metadata.entry_points()
     candidates:list[metadata.EntryPoint] = []
-    for group in grouped_eps.select():
-        for entrypoint in grouped_eps.select(group=group):
+    for group in grouped_eps.values():
+        for entrypoint in group:
             if entrypoint.name == epname:
                 return [entrypoint]
             if epname in entrypoint.name or epname in entrypoint.value:
