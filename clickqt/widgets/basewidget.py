@@ -1,6 +1,7 @@
 from typing import Any, ClassVar, Type, Optional, Union, Iterable, Tuple
 from abc import ABC, abstractmethod
-from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout
+from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QHBoxLayout
+from PySide6.QtCore import Qt
 from clickqt.core.error import ClickQtError
 import clickqt.core # FocusOutValidator
 from click import Context, Parameter, Command, Choice, Option, ParamType, BadParameter, Tuple as click_type_tuple
@@ -31,12 +32,18 @@ class BaseWidget(ABC):
         self.click_command:Command = kwargs.get("com")
         self.widget_name = param.name
         self.container = QWidget()
-        self.layout = QHBoxLayout()
-        self.label = QLabel(text=f"{kwargs.get('label', '')}{self.widget_name}: ")
-        if isinstance(param, Option):
-            self.container.setToolTip(param.help)
+        self.layout = QVBoxLayout() if parent is None or kwargs.get("vboxlayout") else QHBoxLayout()
+
+        self.label = QLabel(text=f"<b>{kwargs.get('label', '')}{self.widget_name}</b>")
+        self.label.setTextFormat(Qt.TextFormat.RichText) # Bold text
+
         self.widget = self.createWidget()
+
         self.layout.addWidget(self.label)
+        if isinstance(param, Option) and param.help and (parent is None or kwargs.get("vboxlayout")): # Help text
+            help_label = QLabel(text=param.help)
+            help_label.setWordWrap(True) # Multi-line
+            self.layout.addWidget(help_label)
         self.layout.addWidget(self.widget)
         self.container.setLayout(self.layout)
 

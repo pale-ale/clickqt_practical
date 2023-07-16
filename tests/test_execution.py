@@ -152,6 +152,10 @@ def test_execution(monkeypatch:MonkeyPatch, runner:CliRunner, click_attrs:dict, 
     click_res = runner.invoke(cli, args, input, standalone_mode=standalone_mode)
     val, err = widget.getValue()
 
+    if isinstance(widget, clickqt.widgets.FileField) and "r" in widget.type.mode and widget.getWidgetValue() == "-":
+        assert callable(val)
+        val, err = val()
+
     # First compare the value from 'widget.getValue()' with the click result
     # then the clickqt result (run_button clicked) with the click result
     for i in range(2):

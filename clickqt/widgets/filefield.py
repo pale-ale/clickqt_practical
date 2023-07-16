@@ -36,14 +36,17 @@ class FileField(PathField):
         if "r" in self.type.mode and self.widget.text() == "-":
             self.handleValid(True)
 
-            user_input, ok = QInputDialog.getMultiLineText(self.widget, 'Stdin Input', self.label.text())
-            if not ok:
-                return (None, ClickQtError(ClickQtError.ErrorType.ABORTED_ERROR))
-            
-            old_stdin = sys.stdin
-            sys.stdin = BytesIO(user_input.encode(sys.stdin.encoding)) if "b" in self.type.mode else StringIO(user_input)
-            val = super(FileField, self).getValue()
-            sys.stdin = old_stdin
-            return val
+            def ret(): # FocusOutValidator should not open this dialog
+                user_input, ok = QInputDialog.getMultiLineText(self.widget, 'Stdin Input', self.label.text())
+                if not ok:
+                    return (None, ClickQtError(ClickQtError.ErrorType.ABORTED_ERROR))
+                
+                old_stdin = sys.stdin
+                sys.stdin = BytesIO(user_input.encode(sys.stdin.encoding)) if "b" in self.type.mode else StringIO(user_input)
+                val = super(FileField, self).getValue()
+                sys.stdin = old_stdin
+                return val
+
+            return (ret, ClickQtError())
         else:
             return super().getValue()

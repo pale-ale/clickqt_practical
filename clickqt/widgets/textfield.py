@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QLineEdit, QPushButton, QFileDialog
+from PySide6.QtWidgets import QLineEdit, QPushButton, QFileDialog, QHBoxLayout, QWidget
 from PySide6.QtCore import QDir
 from clickqt.widgets.core.QPathDialog import QPathDialog
 from clickqt.widgets.basewidget import BaseWidget
@@ -70,7 +70,13 @@ class PathField(TextField):
 
         self.browse_btn = QPushButton("Browse")
         self.browse_btn.clicked.connect(self.browse)
-        self.layout.addWidget(self.browse_btn)
+        self.layout.removeWidget(self.widget)
+        input_btn_container = QWidget()
+        input_btn_container.setLayout(QHBoxLayout())
+        input_btn_container.layout().setContentsMargins(0, 0, 0, 0)
+        input_btn_container.layout().addWidget(self.widget)
+        input_btn_container.layout().addWidget(self.browse_btn)
+        self.layout.addWidget(input_btn_container)
 
     def setValue(self, value:Any):
         self.widget.setText(str(value))

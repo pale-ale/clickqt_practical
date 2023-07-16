@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QVBoxLayout, QWidget
+from PySide6.QtWidgets import QWidget, QHBoxLayout
 from clickqt.widgets.basewidget import BaseWidget
 from typing import Tuple, Any, Callable
 from clickqt.core.error import ClickQtError
@@ -22,16 +22,17 @@ class ConfirmationWidget(BaseWidget):
         assert hasattr(self.param, "confirmation_prompt") and self.param.confirmation_prompt, "'param.confirmation_prompt' should be True"
         
         self.param.confirmation_prompt = False  # Stop recursion
-        self.field: BaseWidget = widgetsource(self.type, param, parent=self, **kwargs) #: First input widget.
+        self.field: BaseWidget = widgetsource(self.type, param, parent=self, vboxlayout=True, **kwargs) #: First input widget.
         kwargs["label"] = "Confirmation "
-        self.confirmation_field: BaseWidget = widgetsource(self.type, param, parent=self, **kwargs) #: Second (confirmation) input widget.
+        self.confirmation_field: BaseWidget = widgetsource(self.type, param, parent=self, vboxlayout=True, **kwargs) #: Second (confirmation) input widget.
         self.param.confirmation_prompt = True
-        self.widget.setLayout(QVBoxLayout())
+        self.widget.setLayout(QHBoxLayout())
         self.layout.removeWidget(self.label)
         self.layout.removeWidget(self.widget)
         self.label.deleteLater()
         self.container.deleteLater()
         self.container = self.widget
+        self.container.layout().setContentsMargins(0, 0, 0, 0)
         self.widget.layout().addWidget(self.field.container)
         self.widget.layout().addWidget(self.confirmation_field.container)
 

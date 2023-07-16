@@ -2,7 +2,7 @@ import click
 import inspect
 from clickqt.core.gui import GUI
 from clickqt.core.commandexecutor import CommandExecutor
-from PySide6.QtWidgets import QWidget, QFrame, QVBoxLayout, QTabWidget, QScrollArea, QApplication
+from PySide6.QtWidgets import QWidget, QFrame, QVBoxLayout, QTabWidget, QScrollArea, QApplication, QSizePolicy
 from PySide6.QtCore import QThread, QObject, Signal, Slot, Qt
 from PySide6.QtGui import QPalette, QClipboard
 from clickqt.core.error import ClickQtError
@@ -91,7 +91,10 @@ class Control(QObject):
             if len(cmd.params) > 0:
                 child_tabs = QWidget()
                 child_tabs.setLayout(QVBoxLayout())
-                child_tabs.layout().addWidget(self.parseCmd(cmd, concat_group_names))
+                group_params = self.parseCmd(cmd, concat_group_names)
+                group_params.widget().layout().setContentsMargins(0, 0, 0, 0)
+                group_params.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed) # Group params don't have to be resizable
+                child_tabs.layout().addWidget(group_params)
                 child_tabs.layout().addWidget(self.parseCmdGroup(cmd, concat_group_names))
             else:
                 child_tabs = self.parseCmdGroup(cmd, concat_group_names)
@@ -138,6 +141,7 @@ class Control(QObject):
 
         cmdbox = QWidget()
         cmdbox.setLayout(QVBoxLayout())
+        cmdbox.layout().setAlignment(Qt.AlignmentFlag.AlignTop)
 
         assert self.widget_registry.get(groups_command_name) is None, f"Not a unique group_command_name_concat ({groups_command_name})"
 
@@ -360,6 +364,10 @@ class Control(QObject):
                 # Now check the values of all dialog widgets for errors
                 for widget in dialog_widgets:
                     widget_value, err = widget.getValue()
+                    if isinstance(widget, FileField):
+                        assert callable(widget_value)
+                        widget_value, err = widget_value()
+
                     if self.checkError(err):
                         return None
 
