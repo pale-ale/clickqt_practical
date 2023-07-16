@@ -9,9 +9,5 @@ def qtgui_from_click(cmd):
     if QApplication.instance() is None: # Testing: The testing suite creates a QApplication instance
         app = QApplication([])
         app.setApplicationName("GUI for CLI")
-        app.setStyleSheet("""QToolTip { 
-                        background-color: #182035; 
-                        color: white; 
-                        border: white solid 1px
-                        }""")
+        
     return Control(cmd)

@@ -19,6 +19,8 @@ class CheckBox(BaseWidget):
 
         assert isinstance(otype, type(BOOL)), f"'otype' must be of type '{type(BOOL)}', but is '{type(otype)}'."
 
+        self.widget.setText("Enable")
+
         if self.parent_widget is None:
             self.setValue(BaseWidget.getParamDefault(param, False))
         
