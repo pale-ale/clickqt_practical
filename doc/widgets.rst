@@ -41,26 +41,22 @@ Widgets
      :show-inheritance:
      :members:
 
-
 .. automodule:: clickqt.widgets.numericfields
     :show-inheritance:
     :members:
 
-..   
-    .. automodule:: clickqt.widgets.nvaluewidget
-        :show-inheritance:
-        :members:
+.. automodule:: clickqt.widgets.nvaluewidget
+    :show-inheritance:
+    :members:
 
-..   
-    .. automodule:: clickqt.widgets.passwordfield
-        :show-inheritance:
-        :members:
+.. automodule:: clickqt.widgets.passwordfield
+    :show-inheritance:
+    :members:
     
 .. automodule:: clickqt.widgets.textfield
     :show-inheritance:
     :members:
  
-..
-    .. automodule:: clickqt.widgets.tuplewidget
-        :show-inheritance:
-        :members:
+.. automodule:: clickqt.widgets.tuplewidget
+    :show-inheritance:
+    :members:

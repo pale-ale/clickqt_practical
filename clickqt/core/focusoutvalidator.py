@@ -19,7 +19,7 @@ class FocusOutValidator(QWidget):
         
         self.widget = widget
 
-    def eventFilter(self, watched: QObject, event: QEvent) -> bool:
+    def eventFilter(self, watched:QObject, event:QEvent) -> bool:
         """Inherited from :class:`~PySide6.QtWidgets.QWidget`\n
         If the widget went out of focus, its value will be validated. 
         Print-statements that may occur in user-defined callbacks will not be printed.
@@ -41,7 +41,7 @@ class FocusOutValidator(QWidget):
         return QWidget.eventFilter(self, watched, event)
     
     def __validate(self, widget: BaseWidget):
-        """Validates the value of the widget, which went out of focus"""
+        """Validates the value of the widget that went out of focus."""
 
         if widget.parent_widget is not None and not isinstance(widget.parent_widget, NValueWidget):
             return self.__val(widget)
@@ -58,7 +58,7 @@ class FocusOutValidator(QWidget):
             widget.handleValid(False)
 
     def __val(self, widget: BaseWidget) -> Tuple[Any, ClickQtError]: 
-        """Calls getValue() on the widget with no parent"""
+        """Calls getValue() on the widget with no parent."""
 
         if widget.parent_widget is not None:
             return self.__val(widget.parent_widget)

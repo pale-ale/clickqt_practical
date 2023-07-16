@@ -4,7 +4,16 @@ from clickqt.widgets.textfield import TextField
 from click import Parameter, ParamType
 
 class PasswordField(TextField):
-    widget_type = QLineEdit
+    """Represents a click.types.StringParamType-object with hide_input==True. 
+    The input will be hidden by default, but can be made visible by clicking on the "eye-show" icon.
+    
+    :param otype: The type which specifies the clickqt widget type. This type may be different compared to **param**.type when dealing with click.types.CompositeParamType-objects
+    :param param: The parameter from which **otype** came from
+    :param kwargs: Additionally parameters ('parent', 'widgetsource', 'com', 'label') needed for 
+                    :class:`~clickqt.widgets.basewidget.MultiWidget`- / :class:`~clickqt.widgets.confirmationwidget.ConfirmationWidget`-widgets
+    """
+
+    widget_type = QLineEdit #: The Qt-type of this widget.
 
     def __init__(self, otype:ParamType, param:Parameter, **kwargs):
         super().__init__(otype, param, **kwargs)
@@ -23,6 +32,3 @@ class PasswordField(TextField):
             self.show_hide_action.setText(self.icon_text[show][1])
 
         self.show_hide_action.toggled.connect(showPassword)
-
-    def getWidgetValue(self) -> str:
-        return self.widget.text()

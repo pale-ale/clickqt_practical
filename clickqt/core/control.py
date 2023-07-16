@@ -112,7 +112,7 @@ class Control(QObject):
                 tab_widget.addTab(self.parseCmd(cmd, self.concat(group_names_concatenated, cmd.name) if group_names_concatenated else cmd.name), group_name)
         
     def parseCmdGroup(self, cmdgroup:click.Group, group_names_concatenated:str) -> QTabWidget:
-        """ Creates for every group in **cmdgroup** a QTabWidget instance and adds every command in **cmdgroup** as a tab to it. 
+        """Creates for every group in **cmdgroup** a QTabWidget instance and adds every command in **cmdgroup** as a tab to it. 
         The creation of the content of every tab is realized by calling :func:`~clickqt.core.control.Control.parseCmd`.
         To realize command hierachies, this method is called recursively.
 
