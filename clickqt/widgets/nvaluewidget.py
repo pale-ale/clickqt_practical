@@ -7,7 +7,18 @@ from click import Context, Parameter, ParamType, Choice
 
 
 class NValueWidget(MultiWidget):
-    widget_type = QScrollArea
+    """Represents a multiple click.Parameter-object. 
+    The child widgets are set according to :func:`~clickqt.widgets.basewidget.MultiWidget.init`.
+    
+    :param otype: The type which specifies the clickqt widget type. This type may be different compared to **param**.type when dealing with click.types.CompositeParamType-objects
+    :param param: The parameter from which **otype** came from
+    :param widgetsource: A reference to :func:`~clickqt.core.gui.GUI.createWidget`
+    :param parent: The parent BaseWidget of **otype**, defaults to None. Needed for :class:`~clickqt.widgets.basewidget.MultiWidget`-widgets
+    :param kwargs: Additionally parameters ('com', 'label') needed for 
+                    :class:`~clickqt.widgets.basewidget.MultiWidget`- / :class:`~clickqt.widgets.confirmationwidget.ConfirmationWidget`-widgets
+    """
+
+    widget_type = QScrollArea #: The Qt-type of this widget.
     
     def __init__(self, otype:ParamType, param:Parameter, widgetsource:Callable[[Any], BaseWidget], parent:Optional[BaseWidget]=None, **kwargs):
         super().__init__(otype, param, parent=parent, **kwargs)
@@ -32,6 +43,12 @@ class NValueWidget(MultiWidget):
         self.init()
         
     def addPair(self, value:Any=None):
+        """Adds a new (child-)widget of type **otype** with a remove button to this widget. 
+        If **value** is not None, it will be the initial value of the new added widget. 
+
+        :param value: The initial value of the new widget, defaults to None (=widget will be zero initialized)
+        """
+        
         if len(self.children) == 0:
             self.handleValid(True)
 
@@ -49,16 +66,28 @@ class NValueWidget(MultiWidget):
         self.buttondict[removebtn] = clickqtwidget
         self.widget.setWidget(self.vbox)
     
-    def removeButtonPair(self, btntoremove):
-        if btntoremove in self.buttondict:
-            cqtwidget = self.buttondict.pop(btntoremove)
+    def removeButtonPair(self, btn_to_remove:QPushButton):
+        """Removes the widget assoziated with **btn_to_remove**.
+
+        :param btn_to_remove: The remove-button that was clicked
+        """
+
+        if btn_to_remove in self.buttondict:
+            cqtwidget = self.buttondict.pop(btn_to_remove)
             self.vbox.layout().removeWidget(cqtwidget.container)
             cqtwidget.layout.removeWidget(cqtwidget.widget)
             cqtwidget.container.deleteLater()
-            btntoremove.deleteLater()
+            btn_to_remove.deleteLater()
             QScrollArea.updateGeometry(self.widget)
 
     def getValue(self) -> Tuple[Any, ClickQtError]:
+        """Validates the value of the children-widgets and returns the result. If multiple errors occured then they will be concatenated and returned.
+
+        :return: Valid: (children-widget values or the value of a callback, :class:`~clickqt.core.error.ClickQtError.ErrorType.NO_ERROR`)\n
+                 Invalid: (None, :class:`~clickqt.core.error.ClickQtError.ErrorType.CONVERTING_ERROR` or 
+                 :class:`~clickqt.core.error.ClickQtError.ErrorType.PROCESSING_VALUE_ERROR` or :class:`~clickqt.core.error.ClickQtError.ErrorType.REQUIRED_ERROR`)
+        """
+
         value_missing = False
         if len(self.children) == 0:
             default = BaseWidget.getParamDefault(self.param, None)
@@ -113,6 +142,12 @@ class NValueWidget(MultiWidget):
         return self.handleCallback(values)
 
     def setValue(self, value:Iterable[Any]):
+        """Sets the values of the (child-)widgets. 
+        The number of (child-)widgets are adjusted to the length of **value**. This means that (child-)widgets may be added, but also removed.
+
+        :param value: The list of new values that should be stored in the (child-)widgets
+        """
+
         if len(value) < len(self.children): # Remove pairs
             for btns in list(self.buttondict.keys())[len(value):]:   
                 self.removeButtonPair(btns)  
