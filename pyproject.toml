@@ -48,7 +48,7 @@ docs = [
 
 # The external "standalone" version
 [project.scripts]
-clickqtfy = "clickqt.core.__main__:clickqtfy"
+clickqtfy = "clickqt.__main__:clickqtfy"
 
 # The following section contains setuptools-specific configuration
 # options. For a full reference of available options, check the overview

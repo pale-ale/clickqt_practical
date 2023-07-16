@@ -4,30 +4,25 @@ from clickqt.core.core import qtgui_from_click
 from importlib import util, metadata
 from typing import List
 
-@click.group('clickqtfy')
-def clickqtfy():
-	''' Generate a GUI for an entry point. '''
 
-@clickqtfy.command('ep')
-@click.argument('epname')
-def ep(epname):
-	''' Use the endpoint called EPNAME for the GUI. '''
-	qtgui_from_click(get_command_from_entrypoint(epname))()
-
-@clickqtfy.command('file')
-@click.argument('epfile', type=click.Path(exists=True))
-@click.argument('epname')
-def file(epfile, epname):
+@click.command('clickqtfy')
+@click.argument('entrypoint')
+@click.argument('funcname', default=None, required=False)
+def clickqtfy(entrypoint, funcname):
 	''' 
-	Use the function named EPNAME, with its definition in EPFILE. 
+	Generate a GUI for an entry point or a file + click.command combinaiton. 
 	
-	EPFILE is path to the file which contains the click.Command
-
-	EPNAME is the name of the click.Command's function
-	
+	ENTRYPOINT: Name of an installed entry point or a file path.\n
+	FUNCNAME: Name of the click.command inside the file at ENTRYPOINT.\n
+	If FUNCNAME is provided, ENTRYPOINT is interpreted as a file. Otherwise, as an entry point.
 	'''
-	qtgui_from_click(get_command_from_path(epfile, epname))()
-
+	if funcname:
+		fileparam = click.types.File()
+		fileparam.convert(entrypoint, None, None)
+		qtgui_from_click(get_command_from_path(entrypoint, funcname))()
+	else:
+		qtgui_from_click(get_command_from_entrypoint(entrypoint))()
+		
 def get_command_from_entrypoint(epname:str) -> click.Command:
 	'''
 	Returns the click.Command specified by `epname`. If `epname` is not a click.Command, raises `ImportError`.
@@ -40,14 +35,14 @@ def get_command_from_entrypoint(epname:str) -> click.Command:
 		raise ImportError(f"No entry point named '{epname}' found. Did you mean one of the following:\n{concateps}")
 	return validate_entrypoint(eps[0].load())
 
-def get_entrypoints_from_name(epname:str) -> List[metadata.EntryPoint]:	
+def get_entrypoints_from_name(epname:str) -> List[metadata.EntryPoint]:
 	'''
 	Returns the entrypoints that include `epname` in their name.
 	'''
 	grouped_eps = metadata.entry_points()
 	candidates:list[metadata.EntryPoint] = []
-	for group in grouped_eps.keys():
-		for ep in grouped_eps.get(group):
+	for group in grouped_eps.select():
+		for ep in grouped_eps.select(group=group):
 			if ep.name == epname:
 				return [ep]
 			if epname in ep.name or epname in ep.value:
