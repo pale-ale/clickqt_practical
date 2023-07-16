@@ -2,7 +2,7 @@ import click
 import inspect
 from clickqt.core.gui import GUI
 from clickqt.core.commandexecutor import CommandExecutor
-from PySide6.QtWidgets import QWidget, QFrame, QVBoxLayout, QTabWidget, QScrollArea, QApplication, QSizePolicy
+from PySide6.QtWidgets import QWidget, QFrame, QVBoxLayout, QTabWidget, QScrollArea, QApplication, QSizePolicy, QLabel
 from PySide6.QtCore import QThread, QObject, Signal, Slot, Qt
 from PySide6.QtGui import QPalette, QClipboard
 from clickqt.core.error import ClickQtError
@@ -130,7 +130,8 @@ class Control(QObject):
         return group_tab_widget
     
     def parseCmd(self, cmd:click.Command, groups_command_name:str) -> QScrollArea:
-        """ Creates for every click parameter in **cmd** a clickqt widget and returns them stored in a QScrollArea
+        """Creates for every click parameter in **cmd** a clickqt widget and returns them stored in a QScrollArea.
+        The widgets are divided into a "Required arguments" and "Optional arguments" part.
 
         :param cmd: The command from which a QTabWidget with content should be created
         :param groups_command_name: The hierarchy of **cmd** as string whereby the names of the components are 
@@ -142,6 +143,23 @@ class Control(QObject):
         cmdbox = QWidget()
         cmdbox.setLayout(QVBoxLayout())
         cmdbox.layout().setAlignment(Qt.AlignmentFlag.AlignTop)
+
+        required_optional_box:list[QWidget] = []
+
+        for i in range(2):
+            box = QWidget()
+            box.setLayout(QVBoxLayout())
+            box_label = QLabel(text=f"<b>{'Required arguments' if i == 0 else 'Optional arguments'}</b>")
+            box_label.setTextFormat(Qt.TextFormat.RichText) # Bold text
+            box.layout().addWidget(box_label)
+            line = QFrame()
+            line.setFrameShape(QFrame.Shape.HLine)
+            box.layout().addWidget(line)
+            box.layout().setAlignment(Qt.AlignmentFlag.AlignTop)
+
+            required_optional_box.append(box)
+        
+        INITIAL_CHILD_WIDGETS = len(required_optional_box[0].children()) # layout, label, line
 
         assert self.widget_registry.get(groups_command_name) is None, f"Not a unique group_command_name_concat ({groups_command_name})"
 
@@ -159,14 +177,18 @@ class Control(QObject):
                         feature_switches[param.name] = []
                     feature_switches[param.name].append(param)
                 else:
-                    cmdbox.layout().addWidget(self.parameter_to_widget(cmd, groups_command_name, param))
+                    required_optional_box[0 if param.required or isinstance(param, click.Argument) else 1].layout().addWidget(self.parameter_to_widget(cmd, groups_command_name, param))
         
         # Create for every feature switch a ComboBox
         for param_name, switch_names in feature_switches.items():
             choice = click.Option([f"--{param_name}"], type=click.Choice([x.flag_value for x in switch_names]), required=reduce(lambda x,y: x | y.required, switch_names, False))
             default = next((x.flag_value for x in switch_names if x.default), switch_names[0].flag_value) # First param with default==True is the default
-            cmdbox.layout().addWidget(self.parameter_to_widget(cmd, groups_command_name, choice))
+            required_optional_box[0 if param.required or isinstance(param, click.Argument) else 1].layout().addWidget(self.parameter_to_widget(cmd, groups_command_name, choice))
             self.widget_registry[groups_command_name][param_name].setValue(default)
+
+        for box in required_optional_box:
+            if len(box.children()) > INITIAL_CHILD_WIDGETS:
+                cmdbox.layout().addWidget(box)
 
         cmd_tab_widget = QScrollArea()
         cmd_tab_widget.setFrameShape(QFrame.Shape.NoFrame) # Remove black border
