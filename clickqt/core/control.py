@@ -364,6 +364,10 @@ class Control(QObject):
                 # Now check the values of all dialog widgets for errors
                 for widget in dialog_widgets:
                     widget_value, err = widget.getValue()
+                    if isinstance(widget, FileField):
+                        assert callable(widget_value)
+                        widget_value, err = widget_value()
+
                     if self.checkError(err):
                         return None
 
