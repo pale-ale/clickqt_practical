@@ -380,7 +380,7 @@ class Control(QObject):
                     args.append(kwargs.pop(ca)) # Remove explicitly mentioned args from kwargs
 
                     print(f"For command details, please call '{self.command_to_string(hierarchy_command)} --help'")
-                    #print(f"python {self.ep_or_path} {self.command_to_string_to_copy(hierarchy_command, command)}")
+                    print(self.command_to_string_to_copy(hierarchy_command, command))
                     print(f"Current Command: {self.function_call_formatter(hierarchy_command, command, kwargs)} \n" + f"Output:") 
                     return lambda: command.callback(*args, **kwargs)
             else:
