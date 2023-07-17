@@ -99,10 +99,11 @@ class Control(QObject):
             else:
                 child_tabs = self.parseCmdGroup(cmd, concat_group_names)
 
+            child_tabs.setAutoFillBackground(True) 
+            child_tabs.setBackgroundRole(QPalette.ColorRole.Window) # Remove white spacing between widgets
+
             if tab_widget == self.gui.widgets_container:
                 self.gui.widgets_container = child_tabs
-                self.gui.widgets_container.setAutoFillBackground(True) 
-                self.gui.widgets_container.setPalette(Qt.GlobalColor.white) # Remove gray spacing between widgets
             else:
                 tab_widget.addTab(child_tabs, group_name)
         else:
@@ -192,7 +193,7 @@ class Control(QObject):
 
         cmd_tab_widget = QScrollArea()
         cmd_tab_widget.setFrameShape(QFrame.Shape.NoFrame) # Remove black border
-        cmd_tab_widget.setBackgroundRole(QPalette.ColorRole.Light)
+        cmd_tab_widget.setBackgroundRole(QPalette.ColorRole.Window)
         cmd_tab_widget.setWidgetResizable(True) # Widgets should use the whole area
         cmd_tab_widget.setWidget(cmdbox)
 
