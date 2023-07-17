@@ -1,6 +1,6 @@
 from io import BytesIO, TextIOWrapper 
 from PySide6.QtWidgets import QPlainTextEdit, QMenu
-from PySide6.QtGui import QTextCursor, QColor, QContextMenuEvent, QAction
+from PySide6.QtGui import QTextCursor, QContextMenuEvent, QAction, QColor
 from PySide6.QtCore import Signal
 from typing import Union
 import html
@@ -10,10 +10,10 @@ class OutputStream(TextIOWrapper):
     
     :param output: The object to which the content of **stream** should be sent 
     :param stream: The stream-object from which the content should be taken
-    :param color: The display color used in **output**, defaults to :class:`~PySide6.QtGui.QColor('black')`
+    :param color: The display color used in **output**
     """
 
-    def __init__(self, output:"TerminalOutput", stream:TextIOWrapper, color:QColor=QColor("black")):
+    def __init__(self, output:"TerminalOutput", stream:TextIOWrapper, color:QColor):
         super().__init__(BytesIO(), "utf-8")
         self.output = output
         self.stream = stream

@@ -1,7 +1,7 @@
 import click
 from clickqt.widgets.multivaluewidget import MultiValueWidget
 from PySide6.QtWidgets import QApplication, QSplitter, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QSizePolicy
-from PySide6.QtGui import QColor, Qt
+from PySide6.QtGui import QColor, Qt, QPalette
 from clickqt.widgets.basewidget import BaseWidget
 from clickqt.widgets.checkbox import CheckBox
 from clickqt.widgets.textfield import TextField
@@ -47,7 +47,7 @@ class GUI:
         self.terminal_output.setToolTip("Terminal output")
         self.terminal_output.newHtmlMessage.connect(self.terminal_output.writeHtml)
 
-        sys.stdout = OutputStream(self.terminal_output, sys.stdout)
+        sys.stdout = OutputStream(self.terminal_output, sys.stdout, QPalette().color(QPalette.ColorRole.Text))
         sys.stderr = OutputStream(self.terminal_output, sys.stderr, QColor("red"))
 
     def __call__(self):
