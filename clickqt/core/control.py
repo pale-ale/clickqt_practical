@@ -363,7 +363,7 @@ class Control(QObject):
         hierarchy_selected_command_name = self.clean_command_string(
             self.cmd.name, hierarchy_selected_command_name
         )
-        return hierarchy_selected_command_name
+        return self.ep_or_path + " " + hierarchy_selected_command_name
 
     def command_to_string_to_copy(self, hierarchy_selected_name: str, selected_command):
         """Returns a string representing the click command if one actually would actually execute it in the shell."""
