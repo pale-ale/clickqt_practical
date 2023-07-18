@@ -1,7 +1,18 @@
+""" Contains the GUI class. """
+
+import sys
 import click
+from PySide6.QtWidgets import (  # pylint: disable=E0611
+    QApplication,
+    QSplitter,
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QPushButton,
+    QSizePolicy,
+)
+from PySide6.QtGui import QColor, Qt, QPalette, QScreen  # pylint: disable=E0611
 from clickqt.widgets.multivaluewidget import MultiValueWidget
-from PySide6.QtWidgets import QApplication, QSplitter, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QSizePolicy
-from PySide6.QtGui import QColor, Qt, QPalette
 from clickqt.widgets.basewidget import BaseWidget
 from clickqt.widgets.checkbox import CheckBox
 from clickqt.widgets.textfield import TextField
@@ -16,24 +27,30 @@ from clickqt.widgets.nvaluewidget import NValueWidget
 from clickqt.widgets.confirmationwidget import ConfirmationWidget
 from clickqt.widgets.messagebox import MessageBox
 from clickqt.core.output import OutputStream, TerminalOutput
-import sys
 
 
-class GUI:
-    """ Responsible for setting up the components for the Qt-GUI that is used to navigate through the different kind of commands and their execution. """
+class GUI:  # pylint: disable=too-many-instance-attributes
+    """
+    Responsible for setting up the components for the Qt-GUI,
+    which is used to navigate through the different kind of commands and execute them.
+    """
 
     def __init__(self):
         self.window = QWidget()
         self.window.setLayout(QVBoxLayout())
         self.splitter = QSplitter(Qt.Orientation.Vertical)
-        self.splitter.setChildrenCollapsible(False) # Child widgets can't be resized down to size 0
+        self.splitter.setChildrenCollapsible(
+            False
+        )  # Child widgets can't be resized down to size 0
         self.window.layout().addWidget(self.splitter)
-        
-        self.widgets_container:QWidget = None # Control constructs this Qt-widget
-        
+
+        self.widgets_container: QWidget = None  # Control constructs this Qt-widget
+
         self.buttons_container = QWidget()
         self.buttons_container.setLayout(QHBoxLayout())
-        self.buttons_container.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed) # Not resizable in vertical direction
+        self.buttons_container.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
+        )  # Not resizable in vertical direction
         self.run_button = QPushButton("&Run")  # Shortcut Alt+R
         self.stop_button = QPushButton("&Stop")  # Shortcut Alt+S
         self.stop_button.setEnabled(False)
@@ -41,13 +58,15 @@ class GUI:
         self.buttons_container.layout().addWidget(self.run_button)
         self.buttons_container.layout().addWidget(self.stop_button)
         self.buttons_container.layout().addWidget(self.copy_button)
-        
+
         self.terminal_output = TerminalOutput()
         self.terminal_output.setReadOnly(True)
         self.terminal_output.setToolTip("Terminal output")
         self.terminal_output.newHtmlMessage.connect(self.terminal_output.writeHtml)
 
-        sys.stdout = OutputStream(self.terminal_output, sys.stdout, QPalette().color(QPalette.ColorRole.Text))
+        sys.stdout = OutputStream(
+            self.terminal_output, sys.stdout, QPalette().color(QPalette.ColorRole.Text)
+        )
         sys.stderr = OutputStream(self.terminal_output, sys.stderr, QColor("red"))
 
     def __call__(self):
@@ -57,6 +76,7 @@ class GUI:
         QApplication.instance().exec()
 
     def construct(self):
+        """Resize and reposition the window."""
         assert self.widgets_container is not None
 
         self.splitter.addWidget(self.widgets_container)
@@ -64,31 +84,54 @@ class GUI:
         self.splitter.addWidget(self.terminal_output)
 
         size_hint = self.window.sizeHint()
-        self.window.resize(1.5 * size_hint.width(), size_hint.height()) # Enlarge window width
+        self.window.resize(
+            1.5 * size_hint.width(), size_hint.height()
+        )  # Enlarge window width
 
-    def createWidget(self, otype:click.ParamType, param:click.Parameter, **kwargs) -> BaseWidget:
-        """Creates the clickqt widget object of the correct widget class determined by the **otype** and returns it.
-        
-        :param otype: The type which specifies the clickqt widget type. This type may be different compared to **param**.type when dealing with click.types.CompositeParamType-objects
+        center = QScreen.availableGeometry(QApplication.primaryScreen()).center()
+        geo = self.window.geometry()
+        geo.moveCenter(center)
+        self.window.move(geo.topLeft())
+
+    def create_widget(
+        self, otype: click.ParamType, param: click.Parameter, **kwargs
+    ) -> BaseWidget:
+        """
+        Creates the clickqt widget object of the correct widget class determined by the **otype**
+        and returns it.
+
+        :param otype: The type which specifies the clickqt widget type.
+        This type may be differ from the **param**.type when dealing with
+        click.types.CompositeParamType-objects
+
         :param param: The parameter from which **otype** came from
-        :param kwargs: Additionally parameters ('widgetsource', 'parent', 'com') needed for :class:`~clickqt.widgets.basewidget.MultiWidget`-widgets
+
+        :param kwargs: Additional parameters ('widgetsource', 'parent', 'com')
+        needed for :class:`~clickqt.widgets.basewidget.MultiWidget`-widgets
         """
 
         typedict = {
-            click.types.BoolParamType: MessageBox if hasattr(param, "is_flag") and param.is_flag and hasattr(param, "prompt") and param.prompt else CheckBox,
+            click.types.BoolParamType: MessageBox
+            if hasattr(param, "is_flag")
+            and param.is_flag
+            and hasattr(param, "prompt")
+            and param.prompt
+            else CheckBox,
             click.types.IntParamType: IntField,
             click.types.FloatParamType: RealField,
-            click.types.StringParamType: PasswordField if hasattr(param, "hide_input") and param.hide_input else TextField,
+            click.types.StringParamType: PasswordField
+            if hasattr(param, "hide_input") and param.hide_input
+            else TextField,
             click.types.UUIDParameterType: TextField,
             click.types.UnprocessedParamType: TextField,
             click.types.DateTime: DateTimeEdit,
             click.types.Tuple: TupleWidget,
             click.types.Choice: ComboBox,
             click.types.Path: FilePathField,
-            click.types.File: FileField
+            click.types.File: FileField,
         }
 
-        def get_multiarg_version(otype:click.ParamType):
+        def get_multiarg_version(otype: click.ParamType):
             if isinstance(otype, click.types.Choice):
                 return CheckableComboBox
             return NValueWidget
@@ -105,5 +148,5 @@ class GUI:
         for t, widgetclass in typedict.items():
             if isinstance(otype, t):
                 return widgetclass(otype, param, **kwargs)
-            
-        return TextField(otype, param, **kwargs) # Custom types are mapped to TextField
+
+        return TextField(otype, param, **kwargs)  # Custom types are mapped to TextField

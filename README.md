@@ -6,6 +6,21 @@
 
 **This is currently under active development between myself and a group of students**
 
+## What is `clickqt`?
+`clickqt` is a python package which turns `click`'s CLIs into `Qt`-GUIs.
+Effectively, it turns
+```
+Usage: example_cli greet [OPTIONS]
+
+Options:
+  --userinfo <TEXT INTEGER DATETIME>...
+  --help                          Show this message and exit.
+```
+into
+
+![test](readme_resources/clickqt_interface.png)
+
+
 ## Installation
 
 The Python package `clickqt` can be installed from PyPI:
@@ -33,18 +48,21 @@ python -m pytest
 
 ## Usage
 
-`clickqt` is designed to allow two ways of usage: 
+![test](readme_resources/preview.gif)
+
+
+`clickqt` is designed to allow two ways of usage:
   ### External
 To use `clickqt` externally, you can run the entry point created by installing `clickqt`, called `clickqtfy`.
 There are two ways to use this entry point:
 - ```
-  clickqtfy ep EPNAME
+  clickqtfy ENTRYPOINT
   ```
 This way works if you have an installed entry point.
 - ```
-  clickqtfy file EPFILE EPNAME 
+  clickqtfy ENTRYPOINT FUNCNAME
   ```
-In cases where there is no installed entry point, you can use this method instead, providing a path/filename and a function name within that file.
+In cases where there is no installed entry point, you can use this method instead, providing a path/filename for ENTRYPOINT and a function name within that file for FUNCNAME.
 
   ### Wrapper
 You can create your own python file using `clickqt` like this:
