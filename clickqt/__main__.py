@@ -24,10 +24,15 @@ def clickqtfy(entrypoint, funcname):
     if funcname:
         fileparam = click.types.File()
         fileparam.convert(entrypoint, None, None)
-        qtgui_from_click(get_command_from_path(entrypoint, funcname))()
+        control = qtgui_from_click(get_command_from_path(entrypoint, funcname))
+        control.set_ep_or_path(entrypoint)
+        control.set_is_ep(False)
+        return control()
     else:
-        qtgui_from_click(get_command_from_entrypoint(entrypoint))()
-
+        control = qtgui_from_click(get_command_from_entrypoint(entrypoint))
+        control.set_ep_or_path(entrypoint)
+        control.set_is_ep(True)
+        return control()
 def get_command_from_entrypoint(epname:str) -> click.Command:
     '''
     Returns the click.Command specified by `epname`.

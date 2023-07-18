@@ -26,13 +26,16 @@ class Control(QObject):
     #: Internal Qt-signal, which will be emitted when the :func:`~clickqt.core.control.Control.startExecution`-Slot was triggered and executed successfully.
     requestExecution:Signal = Signal(list, click.Context) # Generics do not work here
 
-    def __init__(self, cmd:click.Command):
+    def __init__(self, cmd:click.Command, is_ep:bool=True, ep_or_path:str=None):
         """ Initializing the GUI object and the registries together with the differentiation of a group command and a simple command. """
 
         super().__init__()
 
         self.gui = GUI()
         self.cmd = cmd
+
+        self.is_ep = is_ep
+        self.ep_or_path = ep_or_path
 
         # Create a worker in another thread when the user clicks the run button
         # Don't destroy a thread when no command is running and the user closes the application
@@ -58,6 +61,12 @@ class Control(QObject):
         """Shows the GUI according to :func:`~clickqt.core.gui.GUI.__call__` of :class:`~clickqt.core.gui.GUI`."""
 
         self.gui()
+
+    def set_ep_or_path(self, ep_or_path):
+        self.ep_or_path = ep_or_path
+
+    def set_is_ep(self, is_ep):
+        self.is_ep = is_ep
     
     def parameter_to_widget(self, command:click.Command, groups_command_name:str, param:click.Parameter) -> QWidget:
         """Creates a clickqt widget according to :func:`~clickqt.core.gui.GUI.createWidget` and returns the container of the widget (label-element + Qt-widget).
@@ -322,6 +331,10 @@ class Control(QObject):
         message = hierarchy_selected_name + " " + " ".join(parameter_strings)
         message = re.sub(r'\b{}\b'.format(re.escape(self.cmd.name)), '', message)
         message = message.replace(":", " ")
+        if not self.is_ep:
+            message = "python " + self.ep_or_path + " " + message
+        else:
+            message = self.ep_or_path + " " + message
         return message
                         
     def function_call_formatter(self, hierarchy_selected_command_name:str, selected_command_name:str, args):
