@@ -23,7 +23,7 @@ from clickqt.widgets.confirmationwidget import ConfirmationWidget
 from clickqt.widgets.basewidget import BaseWidget
 from clickqt.widgets.messagebox import MessageBox
 from clickqt.widgets.filefield import FileField
-from clickqt.core.utils import is_file_path, is_file_path
+from clickqt.core.utils import is_nested_list, is_file_path
 
 
 class Control(QObject):
