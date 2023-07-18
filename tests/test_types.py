@@ -45,7 +45,7 @@ def test_type_assignment(click_attrs:dict, expected_clickqt_type:clickqt.widgets
     control = clickqt.qtgui_from_click(cli)
     gui = control.gui
     
-    assert type(gui.createWidget(param.type, param, widgetsource=gui.createWidget, com=cli)) is expected_clickqt_type , "directly" # Perfect type match
+    assert type(gui.create_widget(param.type, param, widgetsource=gui.create_widget, com=cli)) is expected_clickqt_type , "directly" # Perfect type match
     assert type(control.widget_registry[cli.name][param.name]) is expected_clickqt_type, "clickqt" # Perfect type match
 
 @pytest.mark.parametrize(
