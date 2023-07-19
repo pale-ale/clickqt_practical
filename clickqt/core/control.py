@@ -584,7 +584,7 @@ class Control(QObject):
         This function is responsible
         """
         hierarchy_selected_command = self.currentCommandHierarchy(
-            self.gui.main_tab.currentWidget(), self.cmd
+            self.gui.widgets_container, self.cmd
         )
         selected_command = hierarchy_selected_command[-1]
         hierarchy_selected_command_name = reduce(
