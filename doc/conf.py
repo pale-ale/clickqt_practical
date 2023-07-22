@@ -49,3 +49,19 @@ html_theme = 'sphinx_rtd_theme'
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = []
+
+
+# Copy readme_resources images into documentation so they show up when
+# markdown files with relative paths are transcluded
+import os
+import shutil
+
+def copy_readme_resources(app, docname=None):
+    if app.builder.name == 'html':
+        output_dir = os.path.join(app.outdir, 'readme_resources')
+        source_dir = os.path.join(app.srcdir, '..', 'readme_resources')
+        if not os.path.exists(output_dir):
+            shutil.copytree(source_dir, output_dir)
+
+def setup(app):
+    app.connect('builder-inited', copy_readme_resources)
