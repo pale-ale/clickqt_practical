@@ -1,5 +1,5 @@
 from typing import Any, Optional, Tuple
-from collections.abc import Callable
+from typing import Callable
 from typing import Iterable
 from click import Context, Parameter, ParamType, Choice
 from PySide6.QtWidgets import QVBoxLayout, QScrollArea, QPushButton, QWidget

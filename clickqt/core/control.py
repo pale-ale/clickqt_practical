@@ -1,5 +1,5 @@
 from typing import Dict, List, Any, Tuple, Optional
-from collections.abc import Callable
+from typing import Callable
 import sys
 from functools import reduce
 import re

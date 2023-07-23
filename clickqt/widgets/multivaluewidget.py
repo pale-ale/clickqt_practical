@@ -1,5 +1,5 @@
 from typing import Any, Optional
-from collections.abc import Callable
+from typing import Callable
 
 from click import Parameter, ParamType
 from PySide6.QtWidgets import QGroupBox, QVBoxLayout
