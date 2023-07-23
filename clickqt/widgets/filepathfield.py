@@ -1,6 +1,7 @@
 """ Contains the FilePathField class """
+from __future__ import annotations
 
-from click import Parameter, Path, ParamType
+import click
 from PySide6.QtWidgets import QLineEdit
 
 from clickqt.widgets.textfield import PathField
@@ -19,12 +20,12 @@ class FilePathField(PathField):
 
     widget_type = QLineEdit  #: The Qt-type of this widget.
 
-    def __init__(self, otype: ParamType, param: Parameter, **kwargs):
+    def __init__(self, otype: click.ParamType, param: click.Parameter, **kwargs):
         super().__init__(otype, param, **kwargs)
 
         assert isinstance(
-            otype, Path
-        ), f"'otype' must be of type '{Path}', but is '{type(otype)}'."
+            otype, click.Path
+        ), f"'otype' must be of type '{click.Path}', but is '{type(otype)}'."
 
         #: File type is
         #   :attr:`~clickqt.widgets.textfield.PathField.FileType.File`

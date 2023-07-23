@@ -1,8 +1,11 @@
-from typing import Any, Iterable
+from __future__ import annotations
+
+import typing as t
+import click
 from PySide6.QtWidgets import QComboBox
+
 from clickqt.widgets.basewidget import ComboBoxBase, BaseWidget
 from clickqt.widgets.core.QCheckableCombobox import QCheckableComboBox
-from click import Parameter, ParamType, Context
 
 
 class ComboBox(ComboBoxBase):
@@ -16,7 +19,7 @@ class ComboBox(ComboBoxBase):
 
     widget_type = QComboBox  #: The Qt-type of this widget.
 
-    def __init__(self, otype: ParamType, param: Parameter, **kwargs):
+    def __init__(self, otype: click.ParamType, param: click.Parameter, **kwargs):
         super().__init__(otype, param, **kwargs)
 
         if (
@@ -25,16 +28,16 @@ class ComboBox(ComboBoxBase):
         ):
             self.setValue(default)
 
-    def setValue(self, value: Any):
+    def setValue(self, value: t.Any):
         self.widget.setCurrentText(
             str(
                 self.type.convert(
-                    str(value), self.click_command, Context(self.click_command)
+                    str(value), self.click_command, click.Context(self.click_command)
                 )
             )
         )
 
-    def addItems(self, items: Iterable[str]):
+    def addItems(self, items: t.Iterable[str]):
         self.widget.addItems(items)
 
     def getWidgetValue(self) -> str:
@@ -52,7 +55,7 @@ class CheckableComboBox(ComboBoxBase):
 
     widget_type = QCheckableComboBox  #: The Qt-type of this widget.
 
-    def __init__(self, otype: ParamType, param: Parameter, **kwargs):
+    def __init__(self, otype: click.ParamType, param: click.Parameter, **kwargs):
         super().__init__(otype, param, **kwargs)
 
         assert param.multiple, "'param.multiple' should be True"
@@ -60,24 +63,24 @@ class CheckableComboBox(ComboBoxBase):
         if self.parent_widget is None:
             self.setValue(BaseWidget.getParamDefault(param, []))
 
-    def setValue(self, value: Iterable[Any]):
+    def setValue(self, value: t.Iterable[t.Any]):
         check_values: list[str] = []
         for v in value:
             check_values.append(
                 str(
                     self.type.convert(
-                        str(v), self.click_command, Context(self.click_command)
+                        str(v), self.click_command, click.Context(self.click_command)
                     )
                 )
             )
 
         self.widget.checkItems(check_values)
 
-    def addItems(self, items: Iterable[str]):
+    def addItems(self, items: t.Iterable[str]):
         self.widget.addItems(items)
 
     # def isEmpty(self) -> bool:
     #    return len(self.getWidgetValue()) == 0
 
-    def getWidgetValue(self) -> Iterable[str]:
+    def getWidgetValue(self) -> t.Iterable[str]:
         return self.widget.getData()

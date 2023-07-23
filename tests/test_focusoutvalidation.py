@@ -1,4 +1,6 @@
-from typing import Any, Callable
+from __future__ import annotations
+
+import typing as t
 
 import click
 import pytest
@@ -11,11 +13,11 @@ from tests.testutils import ClickAttrs, raise_
 def evaluate(
     clickqt_widget: clickqt.widgets.BaseWidget,
     clickqt_child_widget: clickqt.widgets.BaseWidget,
-    invalid_value: Any,
-    valid_value: Any,
+    invalid_value: t.Any,
+    valid_value: t.Any,
 ):
     value = [invalid_value, valid_value]
-    border: list[Callable] = [
+    border: list[t.Callable] = [
         lambda widget: f"QWidget#{clickqt_widget.widget_name}{{ border: 1px solid red }}"
         in widget.styleSheet(),  # red border
         lambda widget: f"QWidget#{clickqt_widget.widget_name}{{ }}"
@@ -88,7 +90,7 @@ def evaluate(
         ),
     ],
 )
-def test_focus_out_validation(click_attrs: dict, invalid_value: Any, valid_value: Any):
+def test_focus_out_validation(click_attrs: dict, invalid_value: t.Any, valid_value: t.Any):
     param = click.Option(param_decls=["--test"], **click_attrs)
     cli = click.Command("cli", params=[param])
 
@@ -119,7 +121,7 @@ def test_focus_out_validation(click_attrs: dict, invalid_value: Any, valid_value
     ],
 )
 def test_focus_out_validation_child(
-    click_attrs: dict, invalid_value: Any, valid_value: Any
+    click_attrs: dict, invalid_value: t.Any, valid_value: t.Any
 ):
     param = click.Option(param_decls=["--test"], **click_attrs)
     cli = click.Command("cli", params=[param])

@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import inspect
 from collections import defaultdict
-from typing import Sequence, Type, Union, Any, Optional
+import typing as t
 
 import click
 
@@ -109,7 +111,7 @@ class ClickAttrs:
 
     @staticmethod
     def combobox(
-        choices: Sequence[str], case_sensitive: bool = True, **attrs_dict
+        choices: t.Sequence[str], case_sensitive: bool = True, **attrs_dict
     ) -> dict:
         return {
             "type": click.types.Choice(choices=choices, case_sensitive=case_sensitive),
@@ -118,7 +120,7 @@ class ClickAttrs:
 
     @staticmethod
     def checkable_combobox(
-        choices: Sequence[str], case_sensitive: bool = True, **attrs_dict
+        choices: t.Sequence[str], case_sensitive: bool = True, **attrs_dict
     ) -> dict:
         return {
             "type": click.types.Choice(choices=choices, case_sensitive=case_sensitive),
@@ -135,12 +137,12 @@ class ClickAttrs:
         return {"type": click.types.Path(**type_dict), **attrs_dict}
 
     @staticmethod
-    def datetime(formats: Optional[Sequence[str]] = None, **attrs_dict) -> dict:
+    def datetime(formats: t.Optional[t.Sequence[str]] = None, **attrs_dict) -> dict:
         return {"type": click.types.DateTime(formats), **attrs_dict}
 
     @staticmethod
     def tuple_widget(
-        types: Sequence[Union[Type[Any], click.ParamType]], **attrs_dict
+        types: t.Sequence[t.Union[t.Type[t.Any], click.ParamType]], **attrs_dict
     ) -> dict:
         return {"type": click.types.Tuple(types), **attrs_dict}
 

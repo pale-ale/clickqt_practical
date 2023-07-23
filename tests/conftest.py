@@ -3,7 +3,7 @@ Configures the test setup
 """
 
 import re
-from typing import Iterable
+import typing as t
 
 import pytest
 
@@ -16,7 +16,7 @@ def runner(request):
     return CliRunner()
 
 
-def pytest_collection_modifyitems(items: Iterable[pytest.Function]):
+def pytest_collection_modifyitems(items: t.Iterable[pytest.Function]):
     """
     Change the default test execution order
     Fundamental tests should be executed first

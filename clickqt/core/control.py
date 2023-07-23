@@ -1,4 +1,6 @@
-from typing import Dict, Callable, List, Any, Tuple, Optional
+from __future__ import annotations
+
+import typing as t
 import sys
 from functools import reduce
 import re
@@ -16,6 +18,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import QThread, QObject, Signal, Slot, Qt
 from PySide6.QtGui import QPalette, QClipboard
+
 from clickqt.core.gui import GUI
 from clickqt.core.commandexecutor import CommandExecutor
 from clickqt.core.error import ClickQtError
@@ -60,8 +63,8 @@ class Control(QObject):
         self.gui.copy_button.clicked.connect(self.construct_command_string)
 
         # Groups-Command-name concatinated with ":" to command-option-names to BaseWidget
-        self.widget_registry: Dict[str, Dict[str, BaseWidget]] = {}
-        self.command_registry: Dict[str, Dict[str, Tuple[int, Callable]]] = {}
+        self.widget_registry: dict[str, dict[str, BaseWidget]] = {}
+        self.command_registry: dict[str, dict[str, tuple[int, t.Callable]]] = {}
 
         # Add all widgets
         self.parse(self.gui.widgets_container, cmd, cmd.name)
@@ -149,19 +152,18 @@ class Control(QObject):
                 self.gui.widgets_container = child_tabs
             else:
                 tab_widget.addTab(child_tabs, group_name)
+        elif tab_widget == self.gui.widgets_container:
+            self.gui.widgets_container = self.parseCmd(cmd, cmd.name)
         else:
-            if tab_widget == self.gui.widgets_container:
-                self.gui.widgets_container = self.parseCmd(cmd, cmd.name)
-            else:
-                tab_widget.addTab(
-                    self.parseCmd(
-                        cmd,
-                        self.concat(group_names_concatenated, cmd.name)
-                        if group_names_concatenated
-                        else cmd.name,
-                    ),
-                    group_name,
-                )
+            tab_widget.addTab(
+                self.parseCmd(
+                    cmd,
+                    self.concat(group_names_concatenated, cmd.name)
+                    if group_names_concatenated
+                    else cmd.name,
+                ),
+                group_name,
+            )
 
     def parseCmdGroup(
         self, cmdgroup: click.Group, group_names_concatenated: str
@@ -262,7 +264,7 @@ class Control(QObject):
                 switch_names[0].flag_value,
             )  # First param with default==True is the default
             required_optional_box[
-                0 if param.required or isinstance(param, click.Argument) else 1
+                0 if switch_names[0].required or isinstance(switch_names[0], click.Argument) else 1
             ].layout().addWidget(
                 self.parameter_to_widget(cmd, groups_command_name, choice)
             )
@@ -294,7 +296,7 @@ class Control(QObject):
 
     def currentCommandHierarchy(
         self, tab_widget: QWidget, cmd: click.Command
-    ) -> List[click.Command]:
+    ) -> list[click.Command]:
         """Returns the hierarchy of the command of the selected tab as list whereby the order of the list is from root command
         to the selected command.
 
@@ -317,8 +319,8 @@ class Control(QObject):
             return [cmd] + self.currentCommandHierarchy(
                 tab_widget.currentWidget(), command
             )
-        else:
-            return [cmd]
+       
+        return [cmd]
 
     def get_option_names(self, cmd):
         """Returns an array of all the parameters used for the current command togeter with their properties."""
@@ -482,8 +484,8 @@ class Control(QObject):
 
         def run_command(
             command: click.Command, hierarchy_command: str
-        ) -> "Callable|None":
-            kwargs: dict[str, Any] = {}
+        ) -> t.Optional[t.Callable]:
+            kwargs: dict[str, t.Any] = {}
             has_error = False
             dialog_widgets: list[BaseWidget] = []  # widgets that will show a dialog
 
@@ -530,7 +532,7 @@ class Control(QObject):
                         kwargs[widget.param.name] = widget_value
 
             if len(callback_args := inspect.getfullargspec(command.callback).args) > 0:
-                args: list[Any] = []
+                args: list[t.Any] = []
                 for ca in callback_args:  # Bring the args in the correct order
                     args.append(
                         kwargs.pop(ca)
@@ -542,13 +544,13 @@ class Control(QObject):
                     print(self.command_to_string_to_copy(hierarchy_command, command))
                     print(
                         f"Current Command: {self.function_call_formatter(hierarchy_command, command, kwargs)} \n"
-                        + f"Output:"
+                        + "Output:"
                     )
                     return lambda: command.callback(*args, **kwargs)
             else:
-                return lambda: command.callback(**kwargs)
+                return lambda: command.callback(**kwargs) # pylint: disable=unnecessary-lambda
 
-        callables: list[Callable] = []
+        callables: list[t.Callable] = []
         for i, command in enumerate(hierarchy_selected_command, 1):
             if (
                 c := run_command(
@@ -588,9 +590,9 @@ class Control(QObject):
             self.concat, [g.name for g in hierarchy_selected_command]
         )
 
-        kwargs: Dict[str, Any] = {}
+        kwargs: dict[str, t.Any] = {}
         has_error = False
-        unused_options: List[BaseWidget] = []  # parameters with expose_value==False
+        unused_options: list[BaseWidget] = []  # parameters with expose_value==False
 
         # Check all values for errors
         for option_name, widget in self.widget_registry[

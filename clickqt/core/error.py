@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 from enum import IntEnum
 
 try:
     from enum_tools.documentation import document_enum
 except ImportError:  # pragma: no cover
-    document_enum = lambda x: x
+    document_enum = lambda x: x # pylint: disable=unnecessary-lambda-assignment
 
 
 class ClickQtError:
@@ -19,20 +21,16 @@ class ClickQtError:
         """Specifies the possible error types."""
 
         NO_ERROR = 0  # doc: No error occured.
-        CONFIRMATION_INPUT_NOT_EQUAL_ERROR = (
-            1  # doc: The values of the elements of a ConfirmationWidget do not match.
-        )
+        CONFIRMATION_INPUT_NOT_EQUAL_ERROR = 1  # doc: The values of the elements of a ConfirmationWidget do not match.
         ABORTED_ERROR = 2  # doc: A clickqt dialog / the click.Context-object of the command was aborted.
         PROCESSING_VALUE_ERROR = 3  # doc: An error was triggered in a (user-defined) callback of a click.Parameter.
-        CONVERTING_ERROR = (
-            4  # doc: A value could not be converted into a click.ParamType.
-        )
+        CONVERTING_ERROR = 4  # doc: A value could not be converted into a click.ParamType.
         REQUIRED_ERROR = 5  # doc: The value of a required option is missing.
         EXIT_ERROR = 6  # doc: exit() was called on click.Context-object of the command.
 
     def __init__(
         self,
-        type: ErrorType = ErrorType.NO_ERROR,
+        type: "ErrorType" = ErrorType.NO_ERROR,
         trigger: str = "",
         click_error_message: str = "",
     ):
@@ -47,21 +45,21 @@ class ClickQtError:
 
         if self.type.value == ClickQtError.ErrorType.NO_ERROR:
             return ""
-        elif (
+        if (
             self.type.value == ClickQtError.ErrorType.CONFIRMATION_INPUT_NOT_EQUAL_ERROR
         ):
             return f"Confirmation input ({self.trigger}) is not equal"
-        elif self.type.value == ClickQtError.ErrorType.ABORTED_ERROR:
+        if self.type.value == ClickQtError.ErrorType.ABORTED_ERROR:
             return "Aborted!"
-        elif self.type.value == ClickQtError.ErrorType.PROCESSING_VALUE_ERROR:
+        if self.type.value == ClickQtError.ErrorType.PROCESSING_VALUE_ERROR:
             return (
                 f"Processing value error ({self.trigger}): {self.click_error_message}"
             )
-        elif self.type.value == ClickQtError.ErrorType.CONVERTING_ERROR:
+        if self.type.value == ClickQtError.ErrorType.CONVERTING_ERROR:
             return f"Converting error ({self.trigger}): {self.click_error_message}"
-        elif self.type.value == ClickQtError.ErrorType.REQUIRED_ERROR:
+        if self.type.value == ClickQtError.ErrorType.REQUIRED_ERROR:
             return f"Required error ({self.trigger}): {self.click_error_message} is empty"  # Argument/Option
-        elif self.type.value == ClickQtError.ErrorType.EXIT_ERROR:
+        if self.type.value == ClickQtError.ErrorType.EXIT_ERROR:
             return ""  # Don't print an error (click behaviour)
 
         raise NotImplementedError(

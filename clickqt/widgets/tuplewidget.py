@@ -1,5 +1,8 @@
-from typing import Callable, Any, Optional
-from click import Parameter, ParamType, Tuple as ClickTuple
+from __future__ import annotations
+
+import typing as t
+
+import click
 from PySide6.QtWidgets import QGroupBox, QHBoxLayout
 
 from clickqt.widgets.basewidget import BaseWidget, MultiWidget
@@ -21,26 +24,26 @@ class TupleWidget(MultiWidget):
 
     def __init__(
         self,
-        otype: ParamType,
-        param: Parameter,
-        widgetsource: Callable[[Any], BaseWidget],
-        parent: Optional[BaseWidget] = None,
+        otype: click.ParamType,
+        param: click.Parameter,
+        widgetsource: t.Callable[[t.Any], BaseWidget],
+        parent: t.Optional[BaseWidget] = None,
         **kwargs,
     ):
         super().__init__(otype, param, parent=parent, **kwargs)
 
         assert isinstance(
-            otype, ClickTuple
-        ), f"'otype' must be of type '{ClickTuple}', but is '{type(otype)}'."
+            otype, click.Tuple
+        ), f"'otype' must be of type '{click.Tuple}', but is '{type(otype)}'."
         assert otype.is_composite, "otype.is_composite should be True"
 
         self.widget.setLayout(QHBoxLayout())
 
-        for t in otype.types if hasattr(otype, "types") else otype:
+        for child_type in otype.types if hasattr(otype, "types") else otype:
             nargs = self.param.nargs
             self.param.nargs = 1
             bw: BaseWidget = widgetsource(
-                t, self.param, widgetsource=widgetsource, parent=self, **kwargs
+                child_type, self.param, widgetsource=widgetsource, parent=self, **kwargs
             )
             self.param.nargs = nargs
             bw.layout.removeWidget(bw.label)

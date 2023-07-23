@@ -1,10 +1,10 @@
 """
 Contains the entry point for clickqt, called clickqtfy, allowing external use.
 """
+from __future__ import annotations
 
 import sys
 from importlib import util, metadata
-from typing import List
 
 import click
 from clickqt.core.core import qtgui_from_click
@@ -27,12 +27,12 @@ def clickqtfy(entrypoint, funcname):
         control = qtgui_from_click(get_command_from_path(entrypoint, funcname))
         control.set_ep_or_path(entrypoint)
         control.set_is_ep(False)
-        return control()
     else:
         control = qtgui_from_click(get_command_from_entrypoint(entrypoint))
         control.set_ep_or_path(entrypoint)
         control.set_is_ep(True)
-        return control()
+    
+    return control()
 
 
 def get_command_from_entrypoint(epname: str) -> click.Command:
@@ -51,7 +51,7 @@ def get_command_from_entrypoint(epname: str) -> click.Command:
     return validate_entrypoint(eps[0].load())
 
 
-def get_entrypoints_from_name(epname: str) -> List[metadata.EntryPoint]:
+def get_entrypoints_from_name(epname: str) -> list[metadata.EntryPoint]:
     """
     Returns the entrypoints that include `epname` in their name.
     """

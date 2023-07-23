@@ -1,9 +1,10 @@
 """
 Tests the external use of clickqt.
 """
+from __future__ import annotations
 
 import pytest
-from click import Command
+import click
 from clickqt.__main__ import get_command_from_entrypoint, get_command_from_path
 
 
@@ -16,7 +17,7 @@ def test_clickqt_external():
         get_command_from_entrypoint("example")
     with pytest.raises(TypeError):
         get_command_from_entrypoint("example_gui")
-    assert isinstance(get_command_from_entrypoint("example_cli"), Command)
+    assert isinstance(get_command_from_entrypoint("example_cli"), click.Command)
 
     # test with file
     with pytest.raises(ImportError):
@@ -28,5 +29,5 @@ def test_clickqt_external():
             "example/example/afwizard.py", "validate_spatial_reference"
         )
     assert isinstance(
-        get_command_from_path("example/example/afwizard.py", "main"), Command
+        get_command_from_path("example/example/afwizard.py", "main"), click.Command
     )

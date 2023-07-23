@@ -1,6 +1,8 @@
-from typing import Tuple, Any, Callable
+from __future__ import annotations
 
-from click import Parameter, ParamType
+import typing as t
+
+import click
 from PySide6.QtWidgets import QWidget, QHBoxLayout
 
 from clickqt.widgets.basewidget import BaseWidget
@@ -21,9 +23,9 @@ class ConfirmationWidget(BaseWidget):
 
     def __init__(
         self,
-        otype: ParamType,
-        param: Parameter,
-        widgetsource: Callable[[Any], BaseWidget],
+        otype: click.ParamType,
+        param: click.Parameter,
+        widgetsource: t.Callable[[t.Any], BaseWidget],
         **kwargs
     ):
         super().__init__(otype, param, **kwargs)
@@ -55,7 +57,7 @@ class ConfirmationWidget(BaseWidget):
         if self.parent_widget is None:
             self.setValue(BaseWidget.getParamDefault(param, None))
 
-    def setValue(self, value: Any):
+    def setValue(self, value: t.Any):
         """Sets **value** as widget value for :attr:`~clickqt.widgets.confirmationwidget.ConfirmationWidget.field` and
         :attr:`~clickqt.widgets.confirmationwidget.ConfirmationWidget.confirmation_field` according to :func:`~clickqt.widgets.basewidget.BaseWidget.setValue`."""
 
@@ -73,7 +75,7 @@ class ConfirmationWidget(BaseWidget):
     # def isEmpty(self) -> bool:
     #    return self.field.isEmpty() and self.confirmation_field.isEmpty() # If only one is empty (=inputs are different), clickqt rejects it
 
-    def getValue(self) -> Tuple[Any, ClickQtError]:
+    def getValue(self) -> tuple[t.Any, ClickQtError]:
         """Calls :func:`~clickqt.widgets.basewidget.BaseWidget.getValue` on :attr:`~clickqt.widgets.confirmationwidget.ConfirmationWidget.field` and
         :attr:`~clickqt.widgets.confirmationwidget.ConfirmationWidget.confirmation_field`, validates the result and returns it.
 
@@ -106,5 +108,5 @@ class ConfirmationWidget(BaseWidget):
         self.handleValid(True)
         return (val1, ClickQtError())
 
-    def getWidgetValue(self) -> Any:
+    def getWidgetValue(self) -> t.Any:
         return self.field.getWidgetValue()

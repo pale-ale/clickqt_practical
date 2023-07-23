@@ -1,4 +1,6 @@
-from typing import Any
+from __future__ import annotations
+
+import typing as t
 
 import click
 import pytest
@@ -62,7 +64,7 @@ from clickqt.core.error import ClickQtError
         ),
     ],
 )
-def test_callback(click_attrs: dict, value: Any, expected: Any):
+def test_callback(click_attrs: dict, value: t.Any, expected: t.Any):
     param = click.Option(param_decls=["--test"], **click_attrs)
     cli = click.Command("cli", params=[param])
 
@@ -100,7 +102,7 @@ def test_callback(click_attrs: dict, value: Any, expected: Any):
         ),
     ],
 )
-def test_callback_fail(click_attrs: dict, value: Any, expected: Any):
+def test_callback_fail(click_attrs: dict, value: t.Any, expected: t.Any):
     param = click.Option(param_decls=["--test"], **click_attrs)
     cli = click.Command("cli", params=[param])
 
@@ -124,7 +126,7 @@ def test_callback_fail(click_attrs: dict, value: Any, expected: Any):
         ),
     ],
 )
-def test_callback_abort(click_attrs: dict, value: Any, expected: Any):
+def test_callback_abort(click_attrs: dict, value: t.Any, expected: t.Any):
     param = click.Option(param_decls=["--test"], **click_attrs)
     cli = click.Command("cli", params=[param])
 
@@ -152,7 +154,7 @@ def test_callback_abort(click_attrs: dict, value: Any, expected: Any):
         ),
     ],
 )
-def test_callback_exit(click_attrs: dict, value: Any, expected: Any):
+def test_callback_exit(click_attrs: dict, value: t.Any, expected: t.Any):
     param = click.Option(param_decls=["--test"], **click_attrs)
     cli = click.Command("cli", params=[param])
 

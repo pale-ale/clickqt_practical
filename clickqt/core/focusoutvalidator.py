@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 import sys
 from io import BytesIO, TextIOWrapper
-from typing import Tuple, Any
+import typing as t
 
-from click import Context
+import click
 from PySide6.QtWidgets import QWidget
 from PySide6.QtCore import QObject, QEvent
 
@@ -43,7 +45,7 @@ class FocusOutValidator(QWidget):
 
         return QWidget.eventFilter(self, watched, event)
 
-    def __validate(self, widget: BaseWidget):
+    def __validate(self, widget: BaseWidget) -> tuple[t.Any, ClickQtError]:
         """Validates the value of the widget that went out of focus."""
 
         if widget.parent_widget is not None and not isinstance(
@@ -56,17 +58,19 @@ class FocusOutValidator(QWidget):
         # self.widget.parent_widget == NValueWidget -> We have a child here
 
         try:  # Try to convert the provided value into the corresponding click object type
-            widget.type.convert(
+            ret_val = widget.type.convert(
                 value=widget.getWidgetValue(),
                 param=widget.param,
-                ctx=Context(widget.click_command),
+                ctx=click.Context(widget.click_command),
             )
             # Don't consider callbacks because we have only one child here
             widget.handleValid(True)
-        except Exception as _:
+            return (ret_val, ClickQtError())
+        except Exception as e: # pylint: disable=broad-exception-caught
             widget.handleValid(False)
+            return (None, ClickQtError(ClickQtError.ErrorType.CONVERTING_ERROR, widget.widget_name, e))
 
-    def __val(self, widget: BaseWidget) -> Tuple[Any, ClickQtError]:
+    def __val(self, widget: BaseWidget) -> tuple[t.Any, ClickQtError]:
         """Calls getValue() on the widget with no parent."""
 
         if widget.parent_widget is not None:

@@ -1,8 +1,11 @@
-from typing import Any, Tuple
+from __future__ import annotations
+
+import typing as t
+import click
 from PySide6.QtWidgets import QMessageBox, QWidget
+
 from clickqt.core.error import ClickQtError
 from clickqt.widgets.basewidget import BaseWidget
-from click import Parameter, ParamType, Context
 
 
 class MessageBox(BaseWidget):
@@ -17,7 +20,7 @@ class MessageBox(BaseWidget):
 
     widget_type = QWidget  #: The Qt-type of this widget. Its just a container for storing the messagebox.
 
-    def __init__(self, otype: ParamType, param: Parameter, **kwargs):
+    def __init__(self, otype: click.ParamType, param: click.Parameter, **kwargs):
         super().__init__(otype, param, **kwargs)
 
         assert (
@@ -39,14 +42,14 @@ class MessageBox(BaseWidget):
         self.container = self.widget
         self.container.setVisible(False)
 
-    def setValue(self, value: Any):
+    def setValue(self, value: t.Any):
         self.yes = bool(
             self.type.convert(
-                str(value), self.click_command, Context(self.click_command)
+                str(value), self.click_command, click.Context(self.click_command)
             )
         )
 
-    def getValue(self) -> Tuple[Any, ClickQtError]:
+    def getValue(self) -> tuple[t.Any, ClickQtError]:
         """Opens a confirmation dialog, passes the decision to :func:`~clickqt.widgets.basewidget.BaseWidget.getValue`
         and returns the result. See also :func:`~clickqt.widgets.messagebox.MessageBox.getWidgetValue`
 

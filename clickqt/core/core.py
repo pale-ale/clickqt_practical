@@ -1,10 +1,13 @@
+from __future__ import annotations
+
+import click
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QIcon
 
 from clickqt.core.control import Control
 
 
-def qtgui_from_click(cmd, **kwargs):
+def qtgui_from_click(cmd:click.Command, **kwargs):
     """This function is used to generate the GUI for a given command. It takes a click command as its argument and returns a Control object
     that contains the GUI, execution logic, and the generated widgets used for the parameters of the command.
 

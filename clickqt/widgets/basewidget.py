@@ -1,21 +1,13 @@
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 import os
-from typing import Any, ClassVar, Type, Optional, Union, Iterable, Tuple
+import typing as t
 from gettext import ngettext
 
 from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QHBoxLayout
 from PySide6.QtCore import Qt
-from click import (
-    Context,
-    Parameter,
-    Command,
-    Choice,
-    Option,
-    ParamType,
-    BadParameter,
-    Tuple as click_type_tuple,
-)
-from click.exceptions import Abort, Exit
+import click
 
 from clickqt.core.error import ClickQtError
 import clickqt.core  # FocusOutValidator
@@ -32,21 +24,21 @@ class BaseWidget(ABC):
                     :class:`~clickqt.widgets.basewidget.MultiWidget`- / :class:`~clickqt.widgets.confirmationwidget.ConfirmationWidget`-widgets
     """
 
-    widget_type: ClassVar[Type]  #: The Qt-type of this widget.
+    widget_type: t.ClassVar[t.Type]  #: The Qt-type of this widget.
 
     def __init__(
         self,
-        otype: ParamType,
-        param: Parameter,
-        parent: Optional["BaseWidget"] = None,
+        otype: click.ParamType,
+        param: click.Parameter,
+        parent: t.Optional["BaseWidget"] = None,
         **kwargs,
     ):
-        assert isinstance(otype, ParamType)
-        assert isinstance(param, Parameter)
+        assert isinstance(otype, click.ParamType)
+        assert isinstance(param, click.Parameter)
         self.type = otype
         self.param = param
         self.parent_widget = parent
-        self.click_command: Command = kwargs.get("com")
+        self.click_command: click.Command = kwargs.get("com")
         self.widget_name = param.name
         self.container = QWidget()
         self.layout = (
@@ -62,7 +54,7 @@ class BaseWidget(ABC):
 
         self.layout.addWidget(self.label)
         if (
-            isinstance(param, Option)
+            isinstance(param, click.Option)
             and param.help
             and (parent is None or kwargs.get("vboxlayout"))
         ):  # Help text
@@ -90,7 +82,7 @@ class BaseWidget(ABC):
         return self.widget_type()
 
     @abstractmethod
-    def setValue(self, value: Any):
+    def setValue(self, value: t.Any):
         """Sets the value of the Qt-widget.
 
         :param value: The new value that should be stored in the widget
@@ -106,21 +98,21 @@ class BaseWidget(ABC):
         """
         return False
 
-    def getValue(self) -> Tuple[Any, ClickQtError]:
+    def getValue(self) -> tuple[t.Any, ClickQtError]:
         """Validates the value of the Qt-widget and returns the result.
 
         :return: Valid: (widget value or the value of a callback, :class:`~clickqt.core.error.ClickQtError.ErrorType.NO_ERROR`)\n
                  Invalid: (None, :class:`~clickqt.core.error.ClickQtError.ErrorType.CONVERTING_ERROR` or
                  :class:`~clickqt.core.error.ClickQtError.ErrorType.PROCESSING_VALUE_ERROR` or :class:`~clickqt.core.error.ClickQtError.ErrorType.REQUIRED_ERROR`)
         """
-        value: Any = None
+        value: t.Any = None
 
         # Try to convert the provided value into the corresponding click object type
-        try:  # pylint: disable=too-many-try-statements
+        try:  # pylint: disable=too-many-try-statements, too-many-nested-blocks
             default = BaseWidget.getParamDefault(self.param, None)
             # if statement is obtained by creating the corresponding truth table
             if self.param.multiple or (
-                not isinstance(self.type, click_type_tuple) and self.param.nargs != 1
+                not isinstance(self.type, click.Tuple) and self.param.nargs != 1
             ):
                 value_missing = False
                 widget_values: list = self.getWidgetValue()
@@ -177,7 +169,7 @@ class BaseWidget(ABC):
                             self.type.convert(
                                 value=v,
                                 param=self.param,
-                                ctx=Context(self.click_command),
+                                ctx=click.Context(self.click_command),
                             )
                         )
             else:
@@ -202,9 +194,9 @@ class BaseWidget(ABC):
                     value = self.type.convert(
                         value=self.getWidgetValue(),
                         param=self.param,
-                        ctx=Context(self.click_command),
+                        ctx=click.Context(self.click_command),
                     )
-        except Exception as e:
+        except Exception as e: # pylint: disable=broad-exception-caught
             self.handleValid(False)
             return (
                 None,
@@ -215,7 +207,7 @@ class BaseWidget(ABC):
 
         return self.handleCallback(value)
 
-    def handleCallback(self, value: Any) -> Tuple[Any, ClickQtError]:
+    def handleCallback(self, value: t.Any) -> tuple[t.Any, ClickQtError]:
         """Validates **value** in the user-defined callback (if provided) and returns the result.
 
         :param value: The value that should be validated in the callback
@@ -227,16 +219,16 @@ class BaseWidget(ABC):
 
         try:  # Consider callbacks
             ret_val = (
-                self.param.process_value(Context(self.click_command), value),
+                self.param.process_value(click.Context(self.click_command), value),
                 ClickQtError(),
             )
             self.handleValid(True)
             return ret_val
-        except Abort as e:
+        except click.exceptions.Abort:
             return (None, ClickQtError(ClickQtError.ErrorType.ABORTED_ERROR))
-        except Exit as e:
+        except click.exceptions.Exit:
             return (None, ClickQtError(ClickQtError.ErrorType.EXIT_ERROR))
-        except Exception as e:
+        except Exception as e: # pylint: disable=broad-exception-caught
             self.handleValid(False)
             return (
                 None,
@@ -246,7 +238,7 @@ class BaseWidget(ABC):
             )
 
     @abstractmethod
-    def getWidgetValue(self) -> Any:
+    def getWidgetValue(self) -> t.Any:
         """Returns the value of the Qt-widget without any checks."""
 
     def handleValid(self, valid: bool):
@@ -264,7 +256,7 @@ class BaseWidget(ABC):
             self.widget.setStyleSheet(f"QWidget#{self.widget.objectName()}{{ }}")
 
     @staticmethod
-    def getParamDefault(param: Parameter, alternative=None):
+    def getParamDefault(param: click.Parameter, alternative:t.Any=None):
         """Returns the default value of **param**. If there is no default value, **alternative** will be returned."""
 
         # TODO: Replace with param.get_default(ctx=click.Context(command), call=True)
@@ -284,26 +276,26 @@ class NumericField(BaseWidget):
                     :class:`~clickqt.widgets.basewidget.MultiWidget`- / :class:`~clickqt.widgets.confirmationwidget.ConfirmationWidget`-widgets
     """
 
-    def setValue(self, value: Any):
+    def setValue(self, value: t.Any):
         self.widget.setValue(
             self.type.convert(
                 value=str(value),
                 param=self.click_command,
-                ctx=Context(self.click_command),
+                ctx=click.Context(self.click_command),
             )
         )
 
-    def setMinimum(self, minval: Union[int, float]):
+    def setMinimum(self, minval: t.Union[int, float]):
         """Sets the minimum value."""
 
         self.widget.setMinimum(minval)
 
-    def setMaximum(self, maxval: Union[int, float]):
+    def setMaximum(self, maxval: t.Union[int, float]):
         """Sets the maximum value."""
 
         self.widget.setMaximum(maxval)
 
-    def getWidgetValue(self) -> Union[int, float]:
+    def getWidgetValue(self) -> t.Union[int, float]:
         return self.widget.value()
 
 
@@ -316,17 +308,17 @@ class ComboBoxBase(BaseWidget):
                     :class:`~clickqt.widgets.basewidget.MultiWidget`- / :class:`~clickqt.widgets.confirmationwidget.ConfirmationWidget`-widgets
     """
 
-    def __init__(self, otype: ParamType, param: Parameter, **kwargs):
+    def __init__(self, otype: click.ParamType, param: click.Parameter, **kwargs):
         super().__init__(otype, param, **kwargs)
 
         assert isinstance(
-            otype, Choice
-        ), f"'otype' must be of type '{Choice}', but is '{type(otype)}'."
+            otype, click.Choice
+        ), f"'otype' must be of type '{click.Choice}', but is '{type(otype)}'."
 
         self.addItems(otype.choices)
 
     @abstractmethod
-    def addItems(self, items: Iterable[str]):
+    def addItems(self, items: t.Iterable[str]):
         """Adds each of the strings in **items** to the checkable combobox."""
 
 
@@ -339,10 +331,10 @@ class MultiWidget(BaseWidget):
                     :class:`~clickqt.widgets.basewidget.MultiWidget`- / :class:`~clickqt.widgets.confirmationwidget.ConfirmationWidget`-widgets
     """
 
-    def __init__(self, otype: ParamType, param: Parameter, **kwargs):
+    def __init__(self, otype: click.ParamType, param: click.Parameter, **kwargs):
         super().__init__(otype, param, **kwargs)
 
-        self.children: "Iterable[BaseWidget] | dict_values[BaseWidget]" = []
+        self.children: t.Union[t.Iterable[BaseWidget],t.dict_values[BaseWidget]] = []
 
     def init(self):
         """Sets the value of the (child-)widgets according to envvar or default values.
@@ -353,7 +345,7 @@ class MultiWidget(BaseWidget):
             # Consider envvar
             if (
                 envvar_values := self.param.resolve_envvar_value(
-                    Context(self.click_command)
+                    click.Context(self.click_command)
                 )
             ) is not None:
                 # self.type.split_envvar_value(envvar_values) does not work because clicks "self.envvar_list_splitter" is not set corrently
@@ -363,15 +355,15 @@ class MultiWidget(BaseWidget):
             ) is not None:  # Consider default value
                 self.setValue(default)
 
-    def setValue(self, value: Iterable[Any]):
+    def setValue(self, value: t.Iterable[t.Any]):
         if len(value) != self.param.nargs:
-            raise BadParameter(
+            raise click.BadParameter(
                 ngettext(
                     "Takes {nargs} values but 1 was given.",
                     "Takes {nargs} values but {len} were given.",
                     len(value),
                 ).format(nargs=self.param.nargs, len=len(value)),
-                ctx=Context(self.click_command),
+                ctx=click.Context(self.click_command),
                 param=self.param,
             )
 
@@ -393,5 +385,5 @@ class MultiWidget(BaseWidget):
 
         return any([c.isEmpty() for c in self.children])
 
-    def getWidgetValue(self) -> Iterable[Any]:
+    def getWidgetValue(self) -> t.Iterable[t.Any]:
         return [c.getWidgetValue() for c in self.children]

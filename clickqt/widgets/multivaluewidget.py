@@ -1,6 +1,8 @@
-from typing import Any, Callable, Optional
+from __future__ import annotations
 
-from click import Parameter, ParamType
+import typing as t
+
+import click
 from PySide6.QtWidgets import QGroupBox, QVBoxLayout
 
 from clickqt.widgets.basewidget import BaseWidget, MultiWidget
@@ -22,10 +24,10 @@ class MultiValueWidget(MultiWidget):
 
     def __init__(
         self,
-        otype: ParamType,
-        param: Parameter,
-        widgetsource: Callable[[Any], BaseWidget],
-        parent: Optional[BaseWidget] = None,
+        otype: click.ParamType,
+        param: click.Parameter,
+        widgetsource: t.Callable[[t.Any], BaseWidget],
+        parent: t.Optional[BaseWidget] = None,
         **kwargs,
     ):
         super().__init__(otype, param, parent=parent, **kwargs)

@@ -1,9 +1,10 @@
 """
 Contains tests for widget default values
 """
+from __future__ import annotations
 
 import datetime
-from typing import Any
+import typing as t
 
 import click
 import pytest
@@ -111,7 +112,7 @@ import clickqt.widgets
         ),  # callable as default
     ],
 )
-def test_set_default(click_attrs: dict, default: Any, expected: Any):
+def test_set_default(click_attrs: dict, default: t.Any, expected: t.Any):
     """Shorthand to check that the correct default is set"""
     param = click.Option(param_decls=["--test"], default=default, **click_attrs)
     cli = click.Command("cli", params=[param])
@@ -198,7 +199,7 @@ def test_set_default(click_attrs: dict, default: Any, expected: Any):
         ),  # First wrong value fails the test
     ],
 )
-def test_set_default_fail(click_attrs: dict, default: Any, expected: Any):
+def test_set_default_fail(click_attrs: dict, default: t.Any, expected: t.Any):
     """Shorthand to check that the correct error is returned"""
     param = click.Option(param_decls=["--test"], default=default, **click_attrs)
     cli = click.Command("cli", params=[param])

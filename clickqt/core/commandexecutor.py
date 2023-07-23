@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import sys
-from typing import Callable, Iterable
+import typing as t
 
 import click
 from PySide6.QtCore import Signal, QObject, Slot
@@ -13,7 +15,7 @@ class CommandExecutor(QObject):
 
     @Slot(list, click.Context)
     def run(
-        self, tasks: Iterable[Callable], ctx: click.Context
+        self, tasks: t.Iterable[t.Callable], ctx: click.Context
     ):  # pragma: no cover; Tested in test_execution.py
         """Pushes the current context on the click internal stack and executes the received tasks.
         When the execution is done, the finished signal will be emitted
@@ -30,7 +32,7 @@ class CommandExecutor(QObject):
                 task()
             except SystemExit as e:
                 print(f"SystemExit-Exception, return code: {e.code}", file=sys.stderr)
-            except Exception as e:
+            except Exception as e: # pylint: disable=broad-exception-caught
                 print(f"Exception: {str(e)}", file=sys.stderr)
 
         self.finished.emit()

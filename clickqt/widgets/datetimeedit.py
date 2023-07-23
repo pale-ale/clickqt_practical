@@ -1,7 +1,9 @@
-import datetime
-from typing import Any
+from __future__ import annotations
 
-from click import Parameter, ParamType, Context, DateTime
+import datetime
+import typing as t
+
+import click
 from PySide6.QtWidgets import QDateTimeEdit
 from PySide6.QtCore import QDateTime, Qt
 from PySide6.QtGui import QAction, QActionGroup
@@ -20,12 +22,12 @@ class DateTimeEdit(BaseWidget):
 
     widget_type = QDateTimeEdit  #: The Qt-type of this widget.
 
-    def __init__(self, otype: ParamType, param: Parameter, **kwargs):
+    def __init__(self, otype: click.ParamType, param: click.Parameter, **kwargs):
         super().__init__(otype, param, **kwargs)
 
         assert isinstance(
-            otype, DateTime
-        ), f"'otype' must be of type '{DateTime}', but is '{type(otype)}'."
+            otype, click.DateTime
+        ), f"'otype' must be of type '{click.DateTime}', but is '{type(otype)}'."
 
         self.widget.setContextMenuPolicy(Qt.ContextMenuPolicy.ActionsContextMenu)
 
@@ -71,13 +73,13 @@ class DateTimeEdit(BaseWidget):
         ):
             self.setValue(default)
 
-    def setValue(self, value: Any):
+    def setValue(self, value: t.Any):
         """Sets the value of the Qt-widget according to the selected format stored in :attr:`~clickqt.widgets.datetimeedit.DateTimeEdit.format_group`."""
         # value -> datetime -> str -> QDateTime
         self.widget.setDateTime(
             QDateTime.fromString(
                 self.type.convert(
-                    str(value), self.click_command, Context(self.click_command)
+                    str(value), self.click_command, click.Context(self.click_command)
                 ).strftime(self.format_group.checkedAction().data()),
                 self.format_group.checkedAction().text(),
             )

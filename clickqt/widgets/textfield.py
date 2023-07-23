@@ -1,7 +1,9 @@
-from typing import Any
-from enum import IntFlag
+from __future__ import annotations
 
-from click import Parameter, Context, ParamType
+from enum import IntFlag
+import typing as t
+
+import click
 from PySide6.QtWidgets import QLineEdit, QPushButton, QFileDialog, QHBoxLayout, QWidget
 from PySide6.QtCore import QDir
 
@@ -12,7 +14,7 @@ from clickqt.core.utils import remove_prefix
 try:
     from enum_tools.documentation import document_enum
 except ImportError:  # pragma: no cover
-    document_enum = lambda x: x
+    document_enum = lambda x: x # pylint: disable=unnecessary-lambda-assignment
 
 
 class TextField(BaseWidget):
@@ -26,18 +28,18 @@ class TextField(BaseWidget):
 
     widget_type = QLineEdit
 
-    def __init__(self, otype: ParamType, param: Parameter, **kwargs):
+    def __init__(self, otype: click.ParamType, param: click.Parameter, **kwargs):
         super().__init__(otype, param, **kwargs)
 
         if self.parent_widget is None:
             if (
-                envvar_value := param.resolve_envvar_value(Context(self.click_command))
+                envvar_value := param.resolve_envvar_value(click.Context(self.click_command))
             ) is not None:  # Consider envvar
                 self.setValue(envvar_value)
             else:  # Consider default value
                 self.setValue(BaseWidget.getParamDefault(param, ""))
 
-    def setValue(self, value: Any):
+    def setValue(self, value: t.Any):
         if isinstance(value, str):
             self.widget.setText(value)
         else:
@@ -45,7 +47,7 @@ class TextField(BaseWidget):
                 self.type.convert(
                     value=value,
                     param=self.click_command,
-                    ctx=Context(self.click_command),
+                    ctx=click.Context(self.click_command),
                 )
             )
 
@@ -75,7 +77,7 @@ class PathField(TextField):
         File = 1  # doc: The widget accepts files.
         Directory = 2  # doc: The widget accepts directories.
 
-    def __init__(self, otype: ParamType, param: Parameter, **kwargs):
+    def __init__(self, otype: click.ParamType, param: click.Parameter, **kwargs):
         super().__init__(otype, param, **kwargs)
 
         self.file_type: PathField.FileType = (
@@ -92,7 +94,7 @@ class PathField(TextField):
         input_btn_container.layout().addWidget(self.browse_btn)
         self.layout.addWidget(input_btn_container)
 
-    def setValue(self, value: Any):
+    def setValue(self, value: t.Any):
         self.widget.setText(str(value))
 
     def browse(self):

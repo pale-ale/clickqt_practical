@@ -1,4 +1,6 @@
-from typing import Iterable
+from __future__ import annotations
+
+import typing as t
 
 import click
 import pytest
@@ -31,10 +33,10 @@ import clickqt.widgets
     ],
 )
 def test_widget_registry_command_names(
-    click_attrs_list: Iterable[Iterable[dict]],
+    click_attrs_list: t.Iterable[t.Iterable[dict]],
     group_name: str,
-    cli_names_list: Iterable[str],
-    expected: Iterable[str],
+    cli_names_list: t.Iterable[str],
+    expected: t.Iterable[str],
 ):
     clis = []
 

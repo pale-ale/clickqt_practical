@@ -1,9 +1,10 @@
 """ Contains the checkbox widget """
+from __future__ import annotations
 
-from typing import Any
+import typing as t
 
 from PySide6.QtWidgets import QCheckBox
-from click import Parameter, Context, ParamType, BOOL
+import click
 
 from clickqt.widgets.basewidget import BaseWidget
 
@@ -22,23 +23,23 @@ class CheckBox(BaseWidget):
 
     widget_type = QCheckBox  #: The Qt-type of this widget.
 
-    def __init__(self, otype: ParamType, param: Parameter, **kwargs):
+    def __init__(self, otype: click.ParamType, param: click.Parameter, **kwargs):
         super().__init__(otype, param, **kwargs)
 
         assert isinstance(
-            otype, type(BOOL)
-        ), f"'otype' must be of type '{type(BOOL)}', but is '{type(otype)}'."
+            otype, type(click.BOOL)
+        ), f"'otype' must be of type '{type(click.BOOL)}', but is '{type(otype)}'."
 
         self.widget.setText("Enable")
 
         if self.parent_widget is None:
             self.setValue(BaseWidget.getParamDefault(param, False))
 
-    def setValue(self, value: Any):
+    def setValue(self, value: t.Any):
         self.widget.setChecked(
             bool(
                 self.type.convert(
-                    str(value), self.click_command, Context(self.click_command)
+                    str(value), self.click_command, click.Context(self.click_command)
                 )
             )
         )

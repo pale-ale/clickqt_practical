@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import sys
-from typing import Iterable
+import typing as t
 
 import click
 import pytest
@@ -143,8 +145,8 @@ def test_feature_switch(value: str):
     ],
 )
 def test_type_assignment_multiple_options(
-    click_attrs_list: Iterable[dict],
-    expected_clickqt_type_list: Iterable[clickqt.widgets.BaseWidget],
+    click_attrs_list: t.Iterable[dict],
+    expected_clickqt_type_list: t.Iterable[clickqt.widgets.BaseWidget],
 ):
     params = []
 
@@ -204,8 +206,8 @@ def test_type_assignment_multiple_options(
     ],
 )
 def test_type_assignment_multiple_commands(
-    click_attrs_list: Iterable[Iterable[dict]],
-    expected_clickqt_type_list: Iterable[Iterable[clickqt.widgets.BaseWidget]],
+    click_attrs_list: t.Iterable[t.Iterable[dict]],
+    expected_clickqt_type_list: t.Iterable[t.Iterable[clickqt.widgets.BaseWidget]],
 ):
     clis = []
 

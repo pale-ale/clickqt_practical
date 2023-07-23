@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import os
-from typing import Any, Tuple, Sequence
+import typing as t
 
 import pytest
 import click
@@ -11,7 +13,7 @@ import clickqt.widgets
 from clickqt.core.error import ClickQtError
 from tests.testutils import ClickAttrs, clcoancl, raise_, wait_process_Events
 
-clickqt_res: Any = None
+clickqt_res: t.Any = None
 
 
 def callback(p):
@@ -22,8 +24,8 @@ def callback(p):
 
 
 def prepare_execution(
-    monkeypatch: MonkeyPatch, value: Any, widget: clickqt.widgets.BaseWidget
-) -> Tuple[str, "str|None"]:
+    monkeypatch: MonkeyPatch, value: t.Any, widget: clickqt.widgets.BaseWidget
+) -> tuple[str, t.Optional[str]]:
     if isinstance(widget, clickqt.widgets.MessageBox):
         # Mock the QMessageBox.information-function
         # User clicked on button "Yes" or "No"
@@ -256,7 +258,7 @@ def test_execution(
     monkeypatch: MonkeyPatch,
     runner: CliRunner,
     click_attrs: dict,
-    value: Any,
+    value: t.Any,
     error: ClickQtError,
 ):
     global clickqt_res
@@ -398,8 +400,8 @@ def test_execution_confirmation_widget_fail(
 def test_execution_nvalue_widget(
     runner: CliRunner,
     click_attrs: dict,
-    value: Sequence[str],
-    envvar_values: Sequence[str],
+    value: t.Sequence[str],
+    envvar_values: t.Sequence[str],
 ):
     global clickqt_res
     os.environ["TEST_CLICKQT_ENVVAR"] = os.path.pathsep.join(envvar_values)

@@ -1,10 +1,11 @@
 """ Contains the FileField class """
+from __future__ import annotations
 
 import sys
 from io import StringIO, BytesIO
-from typing import Tuple, Any
+import typing as t
 
-from click import Parameter, ParamType, File
+import click
 from PySide6.QtWidgets import QLineEdit, QInputDialog
 
 from clickqt.core.error import ClickQtError
@@ -25,18 +26,18 @@ class FileField(PathField):
 
     widget_type = QLineEdit  #: The Qt-type of this widget.
 
-    def __init__(self, otype: ParamType, param: Parameter, **kwargs):
+    def __init__(self, otype: click.ParamType, param: click.Parameter, **kwargs):
         super().__init__(otype, param, **kwargs)
 
         assert isinstance(
-            otype, File
-        ), f"'otype' must be of type '{File}', but is '{type(otype)}'."
+            otype, click.File
+        ), f"'otype' must be of type '{click.File}', but is '{type(otype)}'."
 
         self.file_type: PathField.FileType = (
             PathField.FileType.File
         )  #: File type is a :attr:`~clickqt.widgets.textfield.PathField.FileType.File`.
 
-    def getValue(self) -> Tuple[Any, ClickQtError]:
+    def getValue(self) -> tuple[t.Any, ClickQtError]:
         """
         Opens an input dialogue that represents sys.stdin if 'r' is in **otype**.mode
             and the current widget value is '-', passes the input to

@@ -1,6 +1,7 @@
-from typing import Any, Callable, Optional, Iterable, Tuple
+from __future__ import annotations
 
-from click import Context, Parameter, ParamType, Choice
+import typing as t
+import click
 from PySide6.QtWidgets import QVBoxLayout, QScrollArea, QPushButton, QWidget
 from PySide6.QtCore import Qt
 
@@ -24,17 +25,17 @@ class NValueWidget(MultiWidget):
 
     def __init__(
         self,
-        otype: ParamType,
-        param: Parameter,
-        widgetsource: Callable[[Any], BaseWidget],
-        parent: Optional[BaseWidget] = None,
+        otype: click.ParamType,
+        param: click.Parameter,
+        widgetsource: t.Callable[[t.Any], BaseWidget],
+        parent: t.Optional[BaseWidget] = None,
         **kwargs,
     ):
         super().__init__(otype, param, parent=parent, **kwargs)
 
         assert not isinstance(
-            otype, Choice
-        ), f"'otype' is of type '{Choice}', but there is a better version for this type"
+            otype, click.Choice
+        ), f"'otype' is of type '{click.Choice}', but there is a better version for this type"
         assert param.multiple, "'param.multiple' should be True"
 
         self.widget.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
@@ -44,7 +45,8 @@ class NValueWidget(MultiWidget):
         self.vbox.setLayout(QVBoxLayout())
         self.widget.setWidgetResizable(True)
         addfieldbtn = QPushButton("+", self.widget)
-        addfieldbtn.clicked.connect(lambda: self.addPair())  # Add an empty widget
+        # Add an empty widget
+        addfieldbtn.clicked.connect(lambda: self.addPair())  # pylint: disable=unnecessary-lambda
         self.vbox.layout().addWidget(addfieldbtn)
         self.widget.setWidget(self.vbox)
         self.buttondict: dict[QPushButton, BaseWidget] = {}
@@ -53,7 +55,7 @@ class NValueWidget(MultiWidget):
 
         self.init()
 
-    def addPair(self, value: Any = None):
+    def addPair(self, value: t.Any = None):
         """Adds a new (child-)widget of type **otype** with a remove button to this widget.
         If **value** is not None, it will be the initial value of the new added widget.
 
@@ -99,7 +101,7 @@ class NValueWidget(MultiWidget):
             btn_to_remove.deleteLater()
             QScrollArea.updateGeometry(self.widget)
 
-    def getValue(self) -> Tuple[Any, ClickQtError]:
+    def getValue(self) -> tuple[t.Any, ClickQtError]:
         """Validates the value of the children-widgets and returns the result. If multiple errors occured then they will be concatenated and returned.
 
         :return: Valid: (children-widget values or the value of a callback, :class:`~clickqt.core.error.ClickQtError.ErrorType.NO_ERROR`)\n
@@ -123,7 +125,7 @@ class NValueWidget(MultiWidget):
                 )
             if (
                 envvar_values := self.param.value_from_envvar(
-                    Context(self.click_command)
+                    click.Context(self.click_command)
                 )
             ) is not None:
                 for ev in envvar_values:
@@ -138,7 +140,7 @@ class NValueWidget(MultiWidget):
             else:  # param is not required and there is no default -> value is None
                 value_missing = True  # But callback should be considered
 
-        values: "Iterable|None" = None
+        values: t.Optional[t.Iterable] = None
 
         if not value_missing:
             values = []
@@ -148,38 +150,38 @@ class NValueWidget(MultiWidget):
             # len(self.children)) < len(default): We set at most len(self.children)) defaults
             # len(self.children)) >= len(default): All defaults will be considered
             for i, child in enumerate(self.children):
-                try:  # Try to convert the provided value into the corresponding click object type
-                    if child.isEmpty():
-                        if child.param.required and default is None:
-                            self.handleValid(False)
-                            return (
-                                None,
-                                ClickQtError(
-                                    ClickQtError.ErrorType.REQUIRED_ERROR,
-                                    child.widget_name,
-                                    child.param.param_type_name,
-                                ),
-                            )
-                        if default is not None and i < len(
-                            default
-                        ):  # Overwrite the empty widget with the default value (if one exists)
-                            child.setValue(
-                                default[i]
-                            )  # If the widget is a tuple, all values will be overwritten
-                        else:  # No default exists -> Don't consider the value of this child
-                            # We can't remove the child because there would be a problem with out-of-focus-validation when
-                            # having multiple string based widgets (the validator would remove the widget before all child-widgets could be filled)
-                            continue
+                if child.isEmpty():
+                    if child.param.required and default is None:
+                        self.handleValid(False)
+                        return (
+                            None,
+                            ClickQtError(
+                                ClickQtError.ErrorType.REQUIRED_ERROR,
+                                child.widget_name,
+                                child.param.param_type_name,
+                            ),
+                        )
+                    if default is not None and i < len(
+                        default
+                    ):  # Overwrite the empty widget with the default value (if one exists)
+                        child.setValue(
+                            default[i]
+                        )  # If the widget is a tuple, all values will be overwritten
+                    else:  # No default exists -> Don't consider the value of this child
+                        # We can't remove the child because there would be a problem with out-of-focus-validation when
+                        # having multiple string based widgets (the validator would remove the widget before all child-widgets could be filled)
+                        continue
 
+                try:  # Try to convert the provided value into the corresponding click object type
                     values.append(
                         self.type.convert(
                             value=child.getWidgetValue(),
                             param=self.param,
-                            ctx=Context(self.click_command),
+                            ctx=click.Context(self.click_command),
                         )
                     )
                     child.handleValid(True)
-                except Exception as e:
+                except Exception as e: # pylint: disable=broad-exception-caught
                     child.handleValid(False)
                     err_messages.append(str(e))
 
@@ -201,7 +203,7 @@ class NValueWidget(MultiWidget):
 
         return self.handleCallback(values)
 
-    def setValue(self, value: Iterable[Any]):
+    def setValue(self, value: t.Iterable[t.Any]):
         """Sets the values of the (child-)widgets.
         The number of (child-)widgets are adjusted to the length of **value**. This means that (child-)widgets may be added, but also removed.
 

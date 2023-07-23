@@ -1,4 +1,6 @@
-from typing import Sequence, Tuple
+from __future__ import annotations
+
+import typing as t
 
 import pytest
 import click
@@ -16,11 +18,11 @@ def findChildren(
     widget: QWidget,
     child_type: QWidget,
     options=Qt.FindChildOption.FindDirectChildrenOnly,
-) -> Sequence:
+) -> t.Sequence:
     return widget.findChildren(child_type, options=options)
 
 
-def checkLen(children: Sequence, expected_len: int) -> Sequence:
+def checkLen(children: t.Sequence, expected_len: int) -> t.Sequence:
     assert len(children) == expected_len
     return children
 
@@ -29,8 +31,8 @@ def hasWidgets(
     tab_widget_content: QWidget,
     control: Control,
     group_hierarchy_name: str,
-    params: Sequence[click.Parameter],
-) -> Tuple[bool, str]:
+    params: t.Sequence[click.Parameter],
+) -> tuple[bool, str]:
     for param in params:
         # Search for the widget of type 'widget_type' and name 'widget_name' recursively
         children = tab_widget_content.findChildren(
@@ -56,10 +58,10 @@ def hasWidgets(
 
 def isIncluded(
     tab_widget: QWidget,
-    expected_group_command: Sequence[click.Command],
+    expected_group_command: t.Sequence[click.Command],
     control: Control,
     group_hierarchy_name: str,
-) -> Tuple[bool, str]:
+) -> tuple[bool, str]:
     # exact type check needed
     if type(tab_widget) is QWidget:  # Group has options
         tab_widget = checkLen(findChildren(tab_widget, QTabWidget), 1)[0]

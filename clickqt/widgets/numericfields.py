@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import sys
 
 from PySide6.QtWidgets import QSpinBox, QDoubleSpinBox
-from click import Parameter, IntRange, FloatRange, ParamType, INT, FLOAT
+import click
 
 from clickqt.widgets.basewidget import NumericField, BaseWidget
 
@@ -19,14 +21,14 @@ class IntField(NumericField):
 
     widget_type = QSpinBox  #: The Qt-type of this widget.
 
-    def __init__(self, otype: ParamType, param: Parameter, **kwargs):
+    def __init__(self, otype: click.ParamType, param: click.Parameter, **kwargs):
         super().__init__(otype, param, **kwargs)
 
         assert isinstance(
-            otype, (IntRange, type(INT))
-        ), f"'otype' must be of type '{IntRange}' or '{type(INT)}', but is '{type(otype)}'."
+            otype, (click.IntRange, type(click.INT))
+        ), f"'otype' must be of type '{click.IntRange}' or '{type(click.INT)}', but is '{type(otype)}'."
 
-        if not isinstance(otype, IntRange):
+        if not isinstance(otype, click.IntRange):
             # QSpinBox is limited to [-2**31; 2**31 - 1], but sys.maxsize returns 2**63 - 1
             self.setMinimum(-(2**31))  # Default is 0
             self.setMaximum(2**31 - 1)  # Default is 99
@@ -53,14 +55,14 @@ class RealField(NumericField):
 
     widget_type = QDoubleSpinBox  #: The Qt-type of this widget.
 
-    def __init__(self, otype: ParamType, param: Parameter, **kwargs):
+    def __init__(self, otype: click.ParamType, param: click.Parameter, **kwargs):
         super().__init__(otype, param, **kwargs)
 
         assert isinstance(
-            otype, (FloatRange, type(FLOAT))
-        ), f"'otype' must be of type '{FloatRange}' or '{type(FLOAT)}', but is '{type(otype)}'."
+            otype, (click.FloatRange, type(click.FLOAT))
+        ), f"'otype' must be of type '{click.FloatRange}' or '{type(click.FLOAT)}', but is '{type(otype)}'."
 
-        if not isinstance(otype, FloatRange):
+        if not isinstance(otype, click.FloatRange):
             self.setMinimum(-sys.float_info.max)  # Default is 0.0
             self.setMaximum(sys.float_info.max)  # Default is 99.0
         else:

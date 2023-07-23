@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import os
-from typing import Union, Sequence, Any
+import typing as t
 
 import click
 import pytest
@@ -55,12 +57,12 @@ import clickqt.widgets
 )
 def test_set_envvar(
     click_attrs: dict,
-    envvar_values: "str| Sequence[str]",
-    expected: "str| Sequence[Any]",
+    envvar_values: "str| t.Sequence[str]",
+    expected: "str| t.Sequence[t.Any]",
 ):
     os.environ["TEST_CLICKQT_ENVVAR"] = os.path.pathsep.join(
         envvar_values
-        if isinstance(envvar_values, Sequence) and not isinstance(envvar_values, str)
+        if isinstance(envvar_values, t.Sequence) and not isinstance(envvar_values, str)
         else [envvar_values]
     )
 
@@ -110,11 +112,11 @@ def test_set_envvar(
 )
 def test_set_envvar_fail(
     click_attrs: dict,
-    envvar_values: Union[str, Sequence[str]],
-    expected: Union[str, Sequence[str]],
+    envvar_values: t.Union[str, t.Sequence[str]],
+    expected: t.Union[str, t.Sequence[str]],
 ):
     os.environ["TEST_CLICKQT_ENVVAR"] = os.path.pathsep.join(
-        envvar_values if isinstance(envvar_values, Sequence) else [envvar_values]
+        envvar_values if isinstance(envvar_values, t.Sequence) else [envvar_values]
     )
 
     param = click.Option(

@@ -1,4 +1,6 @@
-from click import Parameter, ParamType
+from __future__ import annotations
+
+import click
 from PySide6.QtWidgets import QLineEdit
 from PySide6.QtGui import QIcon, QAction
 
@@ -17,7 +19,7 @@ class PasswordField(TextField):
 
     widget_type = QLineEdit  #: The Qt-type of this widget.
 
-    def __init__(self, otype: ParamType, param: Parameter, **kwargs):
+    def __init__(self, otype: click.ParamType, param: click.Parameter, **kwargs):
         super().__init__(otype, param, **kwargs)
 
         assert (
