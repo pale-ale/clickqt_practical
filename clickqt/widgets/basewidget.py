@@ -107,7 +107,7 @@ class BaseWidget(ABC):
         """
         return False
 
-    def getValue(self) -> tuple[Any, ClickQtError]:
+    def getValue(self) -> Tuple[Any, ClickQtError]:
         """Validates the value of the Qt-widget and returns the result.
 
         :return: Valid: (widget value or the value of a callback, :class:`~clickqt.core.error.ClickQtError.ErrorType.NO_ERROR`)\n
@@ -217,7 +217,7 @@ class BaseWidget(ABC):
 
         return self.handleCallback(value)
 
-    def handleCallback(self, value: Any) -> tuple[Any, ClickQtError]:
+    def handleCallback(self, value: Any) -> Tuple[Any, ClickQtError]:
         """Validates **value** in the user-defined callback (if provided) and returns the result.
 
         :param value: The value that should be validated in the callback

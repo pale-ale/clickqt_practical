@@ -62,7 +62,7 @@ class Control(QObject):
 
         # Groups-Command-name concatinated with ":" to command-option-names to BaseWidget
         self.widget_registry: dict[str, dict[str, BaseWidget]] = {}
-        self.command_registry: dict[str, dict[str, tuple[int, Callable]]] = {}
+        self.command_registry: dict[str, dict[str, Tuple[int, Callable]]] = {}
 
         # Add all widgets
         self.parse(self.gui.widgets_container, cmd, cmd.name)

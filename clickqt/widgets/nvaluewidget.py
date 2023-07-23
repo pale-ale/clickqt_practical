@@ -99,7 +99,7 @@ class NValueWidget(MultiWidget):
             btn_to_remove.deleteLater()
             QScrollArea.updateGeometry(self.widget)
 
-    def getValue(self) -> tuple[Any, ClickQtError]:
+    def getValue(self) -> Tuple[Any, ClickQtError]:
         """Validates the value of the children-widgets and returns the result. If multiple errors occured then they will be concatenated and returned.
 
         :return: Valid: (children-widget values or the value of a callback, :class:`~clickqt.core.error.ClickQtError.ErrorType.NO_ERROR`)\n
