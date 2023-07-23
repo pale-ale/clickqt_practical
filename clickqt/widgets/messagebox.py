@@ -3,7 +3,6 @@ from __future__ import annotations
 import typing as t
 import click
 from PySide6.QtWidgets import QMessageBox, QWidget
-
 from clickqt.core.error import ClickQtError
 from clickqt.widgets.basewidget import BaseWidget
 

@@ -128,6 +128,7 @@ class BaseWidget(ABC):
                                 self.param.param_type_name,
                             ),
                         )
+                    #self.handle_parameter_missing_default(default)
                     if default is not None:
                         self.setValue(default)
                         widget_values = self.getWidgetValue()

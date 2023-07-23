@@ -381,13 +381,13 @@ class Control(QObject):
             if param[0] == "Argument":
                 parameter_strings.append(str(widget_values[i]))
                 continue
-            if (not isinstance(widget_values[i], list)) and param[2] != True:
+            if (not isinstance(widget_values[i], list)) and param[2] is not True:
                 widget_value = str(widget_values[i])
                 if is_file_path(widget_value):
-                    parameter_strings.append(parameter_list[i][0] + " " + widget_value)
+                    parameter_strings.append(param[0] + " " + widget_value)
                 else:
                     parameter_strings.append(
-                        parameter_list[i][0]
+                        param[0]
                         + " "
                         + re.sub(r"[^a-zA-Z0-9 .-]", " ", widget_value)
                     )
@@ -398,18 +398,18 @@ class Control(QObject):
                         widget_value = str(widget_values[i][j])
                         if not is_file_path(widget_value):
                             parameter_strings.append(
-                                parameter_list[i][0]
+                                param[0]
                                 + " "
                                 + re.sub(r"[^a-zA-Z0-9 .-]", " ", widget_value)
                             )
                         else:
                             parameter_strings.append(
-                                parameter_list[i][0] + " " + widget_value
+                                param[0] + " " + widget_value
                             )
                 else:
                     length = len(widget_values[i])
-                    if param[2] != True:
-                        parameter_strings.append(parameter_list[i][0])
+                    if param[2] is not True:
+                        parameter_strings.append(param[0])
                         for j in range(length):
                             widget_value = str(widget_values[i][j])
                             if not is_file_path(widget_value):
@@ -423,13 +423,13 @@ class Control(QObject):
                             widget_value = str(widget_values[i][j])
                             if not is_file_path(widget_value):
                                 parameter_strings.append(
-                                    parameter_list[i][0]
+                                    param[0]
                                     + " "
                                     + re.sub(r"[^a-zA-Z0-9 .-]", " ", widget_value)
                                 )
                             else:
                                 parameter_strings.append(
-                                    parameter_list[i][0] + " " + widget_value
+                                    param[0] + " " + widget_value
                                 )
         message = hierarchy_selected_name + " " + " ".join(parameter_strings)
         message = re.sub(r"\b{}\b".format(re.escape(self.cmd.name)), "", message)
