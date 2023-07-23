@@ -13,7 +13,7 @@ class CheckBox(BaseWidget):
     """Represents a click.types.BoolParamType object.
 
     :param otype: The type which specifies the clickqt widget type.
-    This type may be different compared to **param**.type when dealing with click.types.CompositeParamType-objects
+        This type may be different compared to **param**.type when dealing with click.types.CompositeParamType-objects
     :param param: The parameter from which **otype** came from
     :param kwargs: Additionally parameters ('parent', 'widgetsource', 'com', 'label') needed for
         :class:`~clickqt.widgets.basewidget.MultiWidget`- /

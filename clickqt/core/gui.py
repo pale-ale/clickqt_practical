@@ -107,13 +107,13 @@ class GUI:
         and returns it.
 
         :param otype: The type which specifies the clickqt widget type.
-        This type may be differ from the **param**.type when dealing with
-        click.types.CompositeParamType-objects
+            This type may be differ from the **param**.type when dealing with
+            click.types.CompositeParamType-objects
 
         :param param: The parameter from which **otype** came from
 
         :param kwargs: Additional parameters ('widgetsource', 'parent', 'com')
-        needed for :class:`~clickqt.widgets.basewidget.MultiWidget`-widgets
+            needed for :class:`~clickqt.widgets.basewidget.MultiWidget`-widgets
         """
 
         typedict = {
