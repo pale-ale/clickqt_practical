@@ -24,5 +24,12 @@ def qtgui_from_click(cmd: click.Command, application_name: t.Optional[str] = Non
         app = QApplication([])
         app.setWindowIcon(QIcon(window_icon))
         app.setApplicationName(application_name)
+        app.setStyleSheet(
+            """QToolTip { 
+                background-color: #182035; 
+                color: white; 
+                border: white solid 1px
+                }"""
+        )
 
     return Control(cmd)
