@@ -7,9 +7,9 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'clickqt'
-copyright = '2022, Dominic Kempf'
-author = 'Dominic Kempf'
+project = "clickqt"
+copyright = "2022, Dominic Kempf"
+author = "Dominic Kempf"
 
 # -- General configuration ---------------------------------------------------
 
@@ -25,7 +25,7 @@ extensions = [
 ]
 
 # Make the documentations order the same as the source order.
-autodoc_member_order = 'bysource'
+autodoc_member_order = "bysource"
 
 # Linking to PySide6 documentation on "https://doc.qt.io/qtforpython-6/"
 qt_documentation = "PySide6"
@@ -43,7 +43,7 @@ exclude_patterns = []
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'sphinx_rtd_theme'
+html_theme = "sphinx_rtd_theme"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -56,12 +56,14 @@ html_static_path = []
 import os
 import shutil
 
+
 def copy_readme_resources(app, docname=None):
-    if app.builder.name == 'html':
-        output_dir = os.path.join(app.outdir, 'readme_resources')
-        source_dir = os.path.join(app.srcdir, '..', 'readme_resources')
+    if app.builder.name == "html":
+        output_dir = os.path.join(app.outdir, "readme_resources")
+        source_dir = os.path.join(app.srcdir, "..", "readme_resources")
         if not os.path.exists(output_dir):
             shutil.copytree(source_dir, output_dir)
 
+
 def setup(app):
-    app.connect('builder-inited', copy_readme_resources)
+    app.connect("builder-inited", copy_readme_resources)

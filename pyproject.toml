@@ -76,7 +76,7 @@ testpaths = [
 omit = [
     "tests/*",
     "__init__.py",
-    "_version.py", 
+    "_version.py",
     "example/*",
 ]
 

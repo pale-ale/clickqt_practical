@@ -2,7 +2,7 @@
 
 import sys
 import click
-from PySide6.QtWidgets import (  # pylint: disable=E0611
+from PySide6.QtWidgets import (
     QApplication,
     QSplitter,
     QWidget,
@@ -11,7 +11,12 @@ from PySide6.QtWidgets import (  # pylint: disable=E0611
     QPushButton,
     QSizePolicy,
 )
-from PySide6.QtGui import QColor, Qt, QPalette, QScreen  # pylint: disable=E0611
+from PySide6.QtGui import (
+    QColor,
+    Qt,
+    QPalette,
+    QScreen,
+)
 from clickqt.widgets.multivaluewidget import MultiValueWidget
 from clickqt.widgets.basewidget import BaseWidget
 from clickqt.widgets.checkbox import CheckBox
@@ -29,7 +34,7 @@ from clickqt.widgets.messagebox import MessageBox
 from clickqt.core.output import OutputStream, TerminalOutput
 
 
-class GUI:  # pylint: disable=too-many-instance-attributes
+class GUI:
     """
     Responsible for setting up the components for the Qt-GUI,
     which is used to navigate through the different kind of commands and execute them.
@@ -93,7 +98,7 @@ class GUI:  # pylint: disable=too-many-instance-attributes
         geo.moveCenter(center)
         self.window.move(geo.topLeft())
 
-    def create_widget(
+    def create_widget(  # pylint: disable=no-self-use
         self, otype: click.ParamType, param: click.Parameter, **kwargs
     ) -> BaseWidget:
         """

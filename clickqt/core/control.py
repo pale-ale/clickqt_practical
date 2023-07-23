@@ -106,7 +106,7 @@ class Control(QObject):
 
         return widget.container
 
-    def concat(self, a: str, b: str) -> str:
+    def concat(self, a: str, b: str) -> str:  # pylint: disable=no-self-use
         """Concatenates the strings a and b with ':' and returns the result."""
 
         return a + ":" + b
@@ -372,27 +372,52 @@ class Control(QObject):
         widgets = self.widget_registry[hierarchy_selected_name]
         widget_values = []
         for widget in widgets:
-            if type(widget) != ConfirmationWidget and widget != "yes":
+            if (not isinstance(widget, ConfirmationWidget)) and widget != "yes":
                 widget_values.append(widgets[widget].getWidgetValue())
         parameter_strings = []
         for i, param in enumerate(parameter_list):
-            if param[0] != "Argument":
-                if type(widget_values[i]) != list and param[2] != True:
-                    widget_value = str(widget_values[i])
-                    if not is_file_path(widget_value):
-                        parameter_strings.append(
-                            parameter_list[i][0]
-                            + " "
-                            + re.sub(r"[^a-zA-Z0-9 .-]", " ", widget_value)
-                        )
-                    else:
-                        parameter_strings.append(
-                            parameter_list[i][0] + " " + widget_value
-                        )
+            if param[0] == "Argument":
+                parameter_strings.append(str(widget_values[i]))
+                continue
+            if (not isinstance(widget_values[i], list)) and param[2] != True:
+                widget_value = str(widget_values[i])
+                if is_file_path(widget_value):
+                    parameter_strings.append(parameter_list[i][0] + " " + widget_value)
                 else:
-                    if is_nested_list(widget_values[i]):
-                        depth = len(widget_values[i])
-                        for j in range(depth):
+                    parameter_strings.append(
+                        parameter_list[i][0]
+                        + " "
+                        + re.sub(r"[^a-zA-Z0-9 .-]", " ", widget_value)
+                    )
+            else:
+                if is_nested_list(widget_values[i]):
+                    depth = len(widget_values[i])
+                    for j in range(depth):
+                        widget_value = str(widget_values[i][j])
+                        if not is_file_path(widget_value):
+                            parameter_strings.append(
+                                parameter_list[i][0]
+                                + " "
+                                + re.sub(r"[^a-zA-Z0-9 .-]", " ", widget_value)
+                            )
+                        else:
+                            parameter_strings.append(
+                                parameter_list[i][0] + " " + widget_value
+                            )
+                else:
+                    length = len(widget_values[i])
+                    if param[2] != True:
+                        parameter_strings.append(parameter_list[i][0])
+                        for j in range(length):
+                            widget_value = str(widget_values[i][j])
+                            if not is_file_path(widget_value):
+                                parameter_strings.append(
+                                    " " + re.sub(r"[^a-zA-Z0-9 .-]", " ", widget_value)
+                                )
+                            else:
+                                parameter_strings.append(" " + widget_value)
+                    else:
+                        for j in range(length):
                             widget_value = str(widget_values[i][j])
                             if not is_file_path(widget_value):
                                 parameter_strings.append(
@@ -404,34 +429,6 @@ class Control(QObject):
                                 parameter_strings.append(
                                     parameter_list[i][0] + " " + widget_value
                                 )
-                    else:
-                        length = len(widget_values[i])
-                        if param[2] != True:
-                            parameter_strings.append(parameter_list[i][0])
-                            for j in range(length):
-                                widget_value = str(widget_values[i][j])
-                                if not is_file_path(widget_value):
-                                    parameter_strings.append(
-                                        " "
-                                        + re.sub(r"[^a-zA-Z0-9 .-]", " ", widget_value)
-                                    )
-                                else:
-                                    parameter_strings.append(" " + widget_value)
-                        else:
-                            for j in range(length):
-                                widget_value = str(widget_values[i][j])
-                                if not is_file_path(widget_value):
-                                    parameter_strings.append(
-                                        parameter_list[i][0]
-                                        + " "
-                                        + re.sub(r"[^a-zA-Z0-9 .-]", " ", widget_value)
-                                    )
-                                else:
-                                    parameter_strings.append(
-                                        parameter_list[i][0] + " " + widget_value
-                                    )
-            else:
-                parameter_strings.append(str(widget_values[i]))
         message = hierarchy_selected_name + " " + " ".join(parameter_strings)
         message = re.sub(r"\b{}\b".format(re.escape(self.cmd.name)), "", message)
         message = message.replace(":", " ")
@@ -446,7 +443,7 @@ class Control(QObject):
     ):
         params = self.get_params(hierarchy_selected_command_name, args)
         message = f"{selected_command_name} \n"
-        parameter_message = f"Current Command parameters: \n" + "\n".join(params)
+        parameter_message = "Current Command parameters: \n" + "\n".join(params)
         return message + parameter_message
 
     @Slot()
@@ -485,10 +482,10 @@ class Control(QObject):
 
         def run_command(
             command: click.Command, hierarchy_command: str
-        ) -> Optional[Callable]:
-            kwargs: Dict[str, Any] = {}
+        ) -> "Callable|None":
+            kwargs: dict[str, Any] = {}
             has_error = False
-            dialog_widgets: List[BaseWidget] = []  # widgets that will show a dialog
+            dialog_widgets: list[BaseWidget] = []  # widgets that will show a dialog
 
             if (
                 self.widget_registry.get(hierarchy_command) is not None
