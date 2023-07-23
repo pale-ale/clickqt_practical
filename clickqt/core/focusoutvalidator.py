@@ -66,7 +66,7 @@ class FocusOutValidator(QWidget):
         except Exception as _:
             widget.handleValid(False)
 
-    def __val(self, widget: BaseWidget) -> Tuple[Any, ClickQtError]:
+    def __val(self, widget: BaseWidget) -> tuple[Any, ClickQtError]:
         """Calls getValue() on the widget with no parent."""
 
         if widget.parent_widget is not None:

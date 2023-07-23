@@ -1,5 +1,5 @@
 import sys
-from typing import Callable, Iterable
+from collections.abc import Iterable, Callable
 
 import click
 from PySide6.QtCore import Signal, QObject, Slot

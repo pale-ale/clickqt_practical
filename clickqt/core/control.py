@@ -1,4 +1,5 @@
-from typing import Dict, Callable, List, Any, Tuple, Optional
+from typing import Dict, List, Any, Tuple, Optional
+from collections.abc import Callable
 import sys
 from functools import reduce
 import re
@@ -60,8 +61,8 @@ class Control(QObject):
         self.gui.copy_button.clicked.connect(self.construct_command_string)
 
         # Groups-Command-name concatinated with ":" to command-option-names to BaseWidget
-        self.widget_registry: Dict[str, Dict[str, BaseWidget]] = {}
-        self.command_registry: Dict[str, Dict[str, Tuple[int, Callable]]] = {}
+        self.widget_registry: dict[str, dict[str, BaseWidget]] = {}
+        self.command_registry: dict[str, dict[str, tuple[int, Callable]]] = {}
 
         # Add all widgets
         self.parse(self.gui.widgets_container, cmd, cmd.name)
@@ -294,7 +295,7 @@ class Control(QObject):
 
     def currentCommandHierarchy(
         self, tab_widget: QWidget, cmd: click.Command
-    ) -> List[click.Command]:
+    ) -> list[click.Command]:
         """Returns the hierarchy of the command of the selected tab as list whereby the order of the list is from root command
         to the selected command.
 
@@ -317,8 +318,7 @@ class Control(QObject):
             return [cmd] + self.currentCommandHierarchy(
                 tab_widget.currentWidget(), command
             )
-        else:
-            return [cmd]
+        return [cmd]
 
     def get_option_names(self, cmd):
         """Returns an array of all the parameters used for the current command togeter with their properties."""
@@ -379,13 +379,13 @@ class Control(QObject):
             if param[0] == "Argument":
                 parameter_strings.append(str(widget_values[i]))
                 continue
-            if (not isinstance(widget_values[i], list)) and param[2] != True:
+            if (not isinstance(widget_values[i], list)) and param[2] is not True:
                 widget_value = str(widget_values[i])
                 if is_file_path(widget_value):
-                    parameter_strings.append(parameter_list[i][0] + " " + widget_value)
+                    parameter_strings.append(param[0] + " " + widget_value)
                 else:
                     parameter_strings.append(
-                        parameter_list[i][0]
+                        param[0]
                         + " "
                         + re.sub(r"[^a-zA-Z0-9 .-]", " ", widget_value)
                     )
@@ -396,18 +396,18 @@ class Control(QObject):
                         widget_value = str(widget_values[i][j])
                         if not is_file_path(widget_value):
                             parameter_strings.append(
-                                parameter_list[i][0]
+                                param[0]
                                 + " "
                                 + re.sub(r"[^a-zA-Z0-9 .-]", " ", widget_value)
                             )
                         else:
                             parameter_strings.append(
-                                parameter_list[i][0] + " " + widget_value
+                                param[0] + " " + widget_value
                             )
                 else:
                     length = len(widget_values[i])
-                    if param[2] != True:
-                        parameter_strings.append(parameter_list[i][0])
+                    if param[2] is not True:
+                        parameter_strings.append(param[0])
                         for j in range(length):
                             widget_value = str(widget_values[i][j])
                             if not is_file_path(widget_value):
@@ -421,13 +421,13 @@ class Control(QObject):
                             widget_value = str(widget_values[i][j])
                             if not is_file_path(widget_value):
                                 parameter_strings.append(
-                                    parameter_list[i][0]
+                                    param[0]
                                     + " "
                                     + re.sub(r"[^a-zA-Z0-9 .-]", " ", widget_value)
                                 )
                             else:
                                 parameter_strings.append(
-                                    parameter_list[i][0] + " " + widget_value
+                                    param[0] + " " + widget_value
                                 )
         message = hierarchy_selected_name + " " + " ".join(parameter_strings)
         message = re.sub(r"\b{}\b".format(re.escape(self.cmd.name)), "", message)
@@ -541,8 +541,8 @@ class Control(QObject):
                     )
                     print(self.command_to_string_to_copy(hierarchy_command, command))
                     print(
-                        f"Current Command: {self.function_call_formatter(hierarchy_command, command, kwargs)} \n"
-                        + f"Output:"
+                        "Current Command: " + self.function_call_formatter(hierarchy_command, command, kwargs) + "\n"
+                        + "Output:"
                     )
                     return lambda: command.callback(*args, **kwargs)
             else:
@@ -588,9 +588,9 @@ class Control(QObject):
             self.concat, [g.name for g in hierarchy_selected_command]
         )
 
-        kwargs: Dict[str, Any] = {}
+        kwargs: dict[str, Any] = {}
         has_error = False
-        unused_options: List[BaseWidget] = []  # parameters with expose_value==False
+        unused_options: list[BaseWidget] = []  # parameters with expose_value==False
 
         # Check all values for errors
         for option_name, widget in self.widget_registry[

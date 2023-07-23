@@ -36,7 +36,7 @@ class FileField(PathField):
             PathField.FileType.File
         )  #: File type is a :attr:`~clickqt.widgets.textfield.PathField.FileType.File`.
 
-    def getValue(self) -> Tuple[Any, ClickQtError]:
+    def getValue(self) -> tuple[Any, ClickQtError]:
         """
         Opens an input dialogue that represents sys.stdin if 'r' is in **otype**.mode
             and the current widget value is '-', passes the input to

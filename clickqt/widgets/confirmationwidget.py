@@ -1,5 +1,5 @@
-from typing import Tuple, Any, Callable
-
+from typing import Tuple, Any
+from collections.abc import Callable
 from click import Parameter, ParamType
 from PySide6.QtWidgets import QWidget, QHBoxLayout
 
@@ -73,7 +73,7 @@ class ConfirmationWidget(BaseWidget):
     # def isEmpty(self) -> bool:
     #    return self.field.isEmpty() and self.confirmation_field.isEmpty() # If only one is empty (=inputs are different), clickqt rejects it
 
-    def getValue(self) -> Tuple[Any, ClickQtError]:
+    def getValue(self) -> tuple[Any, ClickQtError]:
         """Calls :func:`~clickqt.widgets.basewidget.BaseWidget.getValue` on :attr:`~clickqt.widgets.confirmationwidget.ConfirmationWidget.field` and
         :attr:`~clickqt.widgets.confirmationwidget.ConfirmationWidget.confirmation_field`, validates the result and returns it.
 

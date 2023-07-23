@@ -1,8 +1,10 @@
-from typing import Any, Iterable
+from typing import Any
+from collections.abc import Iterable
 from PySide6.QtWidgets import QComboBox
+from click import Parameter, ParamType, Context
 from clickqt.widgets.basewidget import ComboBoxBase, BaseWidget
 from clickqt.widgets.core.QCheckableCombobox import QCheckableComboBox
-from click import Parameter, ParamType, Context
+
 
 
 class ComboBox(ComboBoxBase):

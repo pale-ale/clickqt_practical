@@ -1,5 +1,5 @@
-from typing import Any, Callable, Optional, Iterable, Tuple
-
+from typing import Any, Optional, Tuple
+from collections.abc import Callable, Iterable
 from click import Context, Parameter, ParamType, Choice
 from PySide6.QtWidgets import QVBoxLayout, QScrollArea, QPushButton, QWidget
 from PySide6.QtCore import Qt
@@ -99,7 +99,7 @@ class NValueWidget(MultiWidget):
             btn_to_remove.deleteLater()
             QScrollArea.updateGeometry(self.widget)
 
-    def getValue(self) -> Tuple[Any, ClickQtError]:
+    def getValue(self) -> tuple[Any, ClickQtError]:
         """Validates the value of the children-widgets and returns the result. If multiple errors occured then they will be concatenated and returned.
 
         :return: Valid: (children-widget values or the value of a callback, :class:`~clickqt.core.error.ClickQtError.ErrorType.NO_ERROR`)\n

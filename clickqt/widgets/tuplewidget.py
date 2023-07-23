@@ -1,4 +1,5 @@
-from typing import Callable, Any, Optional
+from typing import Any, Optional
+from collections.abc import Callable
 from click import Parameter, ParamType, Tuple as ClickTuple
 from PySide6.QtWidgets import QGroupBox, QHBoxLayout
 

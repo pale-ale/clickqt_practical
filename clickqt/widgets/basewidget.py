@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 import os
-from typing import Any, ClassVar, Type, Optional, Union, Iterable, Tuple
+from typing import Any, ClassVar, Type, Optional, Union, Tuple
+from collections.abc import Iterable
 from gettext import ngettext
 
 from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QHBoxLayout
@@ -32,7 +33,7 @@ class BaseWidget(ABC):
                     :class:`~clickqt.widgets.basewidget.MultiWidget`- / :class:`~clickqt.widgets.confirmationwidget.ConfirmationWidget`-widgets
     """
 
-    widget_type: ClassVar[Type]  #: The Qt-type of this widget.
+    widget_type: ClassVar[type]  #: The Qt-type of this widget.
 
     def __init__(
         self,
@@ -106,7 +107,7 @@ class BaseWidget(ABC):
         """
         return False
 
-    def getValue(self) -> Tuple[Any, ClickQtError]:
+    def getValue(self) -> tuple[Any, ClickQtError]:
         """Validates the value of the Qt-widget and returns the result.
 
         :return: Valid: (widget value or the value of a callback, :class:`~clickqt.core.error.ClickQtError.ErrorType.NO_ERROR`)\n
@@ -136,6 +137,7 @@ class BaseWidget(ABC):
                                 self.param.param_type_name,
                             ),
                         )
+                    #self.handle_parameter_missing_default(default)
                     if default is not None:
                         self.setValue(default)
                         widget_values = self.getWidgetValue()
@@ -215,7 +217,7 @@ class BaseWidget(ABC):
 
         return self.handleCallback(value)
 
-    def handleCallback(self, value: Any) -> Tuple[Any, ClickQtError]:
+    def handleCallback(self, value: Any) -> tuple[Any, ClickQtError]:
         """Validates **value** in the user-defined callback (if provided) and returns the result.
 
         :param value: The value that should be validated in the callback
