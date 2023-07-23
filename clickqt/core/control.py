@@ -247,7 +247,7 @@ class Control(QObject):
                     feature_switches[param.name].append(param)
                 else:
                     required_optional_box[
-                        0 if param.required or isinstance(param, click.Argument) else 1
+                        0 if (param.required or isinstance(param, click.Argument)) and param.default is None else 1
                     ].layout().addWidget(
                         self.parameter_to_widget(cmd, groups_command_name, param)
                     )
@@ -264,7 +264,7 @@ class Control(QObject):
                 switch_names[0].flag_value,
             )  # First param with default==True is the default
             required_optional_box[
-                0 if switch_names[0].required or isinstance(switch_names[0], click.Argument) else 1
+                0 if choice.required else 1
             ].layout().addWidget(
                 self.parameter_to_widget(cmd, groups_command_name, choice)
             )
