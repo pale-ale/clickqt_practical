@@ -274,30 +274,30 @@ def test_execution(
         and value == "--"
         and "r" in widget.type.mode
     ):
-        widget.setValue("-")
+        widget.set_value("-")
     elif isinstance(widget, clickqt.widgets.ConfirmationWidget):
         values = value.split(";")
-        widget.field.setValue(values[0])
-        widget.confirmation_field.setValue(values[1])
+        widget.field.set_value(values[0])
+        widget.confirmation_field.set_value(values[1])
     elif value is not None:
-        widget.setValue(value)
+        widget.set_value(value)
 
     args, inputs = prepare_execution(monkeypatch, value, widget)
     standalone_mode = False
     if error.type == ClickQtError.ErrorType.EXIT_ERROR:  #  See click/core.py#1082
         standalone_mode = True
     click_res = runner.invoke(cli, args, inputs, standalone_mode=standalone_mode)
-    val, err = widget.getValue()
+    val, err = widget.get_value()
 
     if (
         isinstance(widget, clickqt.widgets.FileField)
         and "r" in widget.type.mode
-        and widget.getWidgetValue() == "-"
+        and widget.get_widget_value() == "-"
     ):
         assert callable(val)
         val, err = val()
 
-    # First compare the value from 'widget.getValue()' with the click result
+    # First compare the value from 'widget.get_value()' with the click result
     # then the clickqt result (run_button clicked) with the click result
     for i in range(2):
         if not isinstance(widget, clickqt.widgets.FileField):
@@ -373,10 +373,10 @@ def test_execution_confirmation_widget_fail(
         param.name
     ]
 
-    widget.field.setValue(value1)
-    widget.confirmation_field.setValue(value2)
+    widget.field.set_value(value1)
+    widget.confirmation_field.set_value(value2)
 
-    val, err = widget.getValue()
+    val, err = widget.get_value()
 
     assert val is None and err.type == error.type
 
@@ -414,9 +414,9 @@ def test_execution_nvalue_widget(
     control = clickqt.qtgui_from_click(cli)
     widget: clickqt.widgets.NValueWidget = control.widget_registry[cli.name][param.name]
 
-    widget.setValue(value)
+    widget.set_value(value)
 
-    val, err = widget.getValue()
+    val, err = widget.get_value()
     args, input = prepare_execution(monkeypatch=None, value=value, widget=widget)
     click_res = runner.invoke(cli, args, input, standalone_mode=False)
     for i in range(2):

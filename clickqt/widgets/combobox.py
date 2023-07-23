@@ -24,11 +24,11 @@ class ComboBox(ComboBoxBase):
 
         if (
             self.parent_widget is None
-            and (default := BaseWidget.getParamDefault(param, None)) is not None
+            and (default := BaseWidget.get_param_default(param, None)) is not None
         ):
-            self.setValue(default)
+            self.set_value(default)
 
-    def setValue(self, value: t.Any):
+    def set_value(self, value: t.Any):
         self.widget.setCurrentText(
             str(
                 self.type.convert(
@@ -37,10 +37,10 @@ class ComboBox(ComboBoxBase):
             )
         )
 
-    def addItems(self, items: t.Iterable[str]):
+    def add_items(self, items: t.Iterable[str]):
         self.widget.addItems(items)
 
-    def getWidgetValue(self) -> str:
+    def get_widget_value(self) -> str:
         return self.widget.currentText()
 
 
@@ -61,9 +61,9 @@ class CheckableComboBox(ComboBoxBase):
         assert param.multiple, "'param.multiple' should be True"
 
         if self.parent_widget is None:
-            self.setValue(BaseWidget.getParamDefault(param, []))
+            self.set_value(BaseWidget.get_param_default(param, []))
 
-    def setValue(self, value: t.Iterable[t.Any]):
+    def set_value(self, value: t.Iterable[t.Any]):
         check_values: list[str] = []
         for v in value:
             check_values.append(
@@ -76,11 +76,8 @@ class CheckableComboBox(ComboBoxBase):
 
         self.widget.checkItems(check_values)
 
-    def addItems(self, items: t.Iterable[str]):
+    def add_items(self, items: t.Iterable[str]):
         self.widget.addItems(items)
 
-    # def isEmpty(self) -> bool:
-    #    return len(self.getWidgetValue()) == 0
-
-    def getWidgetValue(self) -> t.Iterable[str]:
+    def get_widget_value(self) -> t.Iterable[str]:
         return self.widget.getData()

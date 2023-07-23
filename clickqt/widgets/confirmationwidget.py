@@ -14,7 +14,7 @@ class ConfirmationWidget(BaseWidget):
 
     :param otype: The type which specifies the clickqt widget type. This type may be different compared to **param**.type when dealing with click.types.CompositeParamType-objects
     :param param: The parameter from which **otype** came from
-    :param widgetsource: A reference to :func:`~clickqt.core.gui.GUI.createWidget`
+    :param widgetsource: A reference to :func:`~clickqt.core.gui.GUI.create_widget`
     :param kwargs: Additionally parameters ('parent', 'com', 'label') needed for
                     :class:`~clickqt.widgets.basewidget.MultiWidget`- / :class:`~clickqt.widgets.confirmationwidget.ConfirmationWidget`-widgets
     """
@@ -55,28 +55,25 @@ class ConfirmationWidget(BaseWidget):
         self.widget.layout().addWidget(self.confirmation_field.container)
 
         if self.parent_widget is None:
-            self.setValue(BaseWidget.getParamDefault(param, None))
+            self.set_value(BaseWidget.get_param_default(param, None))
 
-    def setValue(self, value: t.Any):
+    def set_value(self, value: t.Any):
         """Sets **value** as widget value for :attr:`~clickqt.widgets.confirmationwidget.ConfirmationWidget.field` and
-        :attr:`~clickqt.widgets.confirmationwidget.ConfirmationWidget.confirmation_field` according to :func:`~clickqt.widgets.basewidget.BaseWidget.setValue`."""
+        :attr:`~clickqt.widgets.confirmationwidget.ConfirmationWidget.confirmation_field` according to :func:`~clickqt.widgets.basewidget.BaseWidget.set_value`."""
 
         if value is not None:
-            self.field.setValue(value)
-            self.confirmation_field.setValue(value)
+            self.field.set_value(value)
+            self.confirmation_field.set_value(value)
 
-    def handleValid(self, valid: bool):
+    def handle_valid(self, valid: bool):
         """Changes the widget border for :attr:`~clickqt.widgets.confirmationwidget.ConfirmationWidget.field` and
-        :attr:`~clickqt.widgets.confirmationwidget.ConfirmationWidget.confirmation_field` according to :func:`~clickqt.widgets.basewidget.BaseWidget.handleValid`."""
+        :attr:`~clickqt.widgets.confirmationwidget.ConfirmationWidget.confirmation_field` according to :func:`~clickqt.widgets.basewidget.BaseWidget.handle_valid`."""
 
-        self.field.handleValid(valid)
-        self.confirmation_field.handleValid(valid)
+        self.field.handle_valid(valid)
+        self.confirmation_field.handle_valid(valid)
 
-    # def isEmpty(self) -> bool:
-    #    return self.field.isEmpty() and self.confirmation_field.isEmpty() # If only one is empty (=inputs are different), clickqt rejects it
-
-    def getValue(self) -> tuple[t.Any, ClickQtError]:
-        """Calls :func:`~clickqt.widgets.basewidget.BaseWidget.getValue` on :attr:`~clickqt.widgets.confirmationwidget.ConfirmationWidget.field` and
+    def get_value(self) -> tuple[t.Any, ClickQtError]:
+        """Calls :func:`~clickqt.widgets.basewidget.BaseWidget.get_value` on :attr:`~clickqt.widgets.confirmationwidget.ConfirmationWidget.field` and
         :attr:`~clickqt.widgets.confirmationwidget.ConfirmationWidget.confirmation_field`, validates the result and returns it.
 
         :return: Valid: (widget value or the value of a callback, :class:`~clickqt.core.error.ClickQtError.ErrorType.NO_ERROR`)\n
@@ -84,8 +81,8 @@ class ConfirmationWidget(BaseWidget):
                  :class:`~clickqt.core.error.ClickQtError.ErrorType.PROCESSING_VALUE_ERROR` or :class:`~clickqt.core.error.ClickQtError.ErrorType.CONFIRMATION_INPUT_NOT_EQUAL_ERROR`)
         """
 
-        val1, err1 = self.field.getValue()
-        val2, err2 = self.confirmation_field.getValue()
+        val1, err1 = self.field.get_value()
+        val2, err2 = self.confirmation_field.get_value()
 
         if (
             err1.type != ClickQtError.ErrorType.NO_ERROR
@@ -97,7 +94,7 @@ class ConfirmationWidget(BaseWidget):
             )
 
         if val1 != val2:
-            self.handleValid(False)
+            self.handle_valid(False)
             return (
                 None,
                 ClickQtError(
@@ -105,8 +102,8 @@ class ConfirmationWidget(BaseWidget):
                     self.widget_name,
                 ),
             )
-        self.handleValid(True)
+        self.handle_valid(True)
         return (val1, ClickQtError())
 
-    def getWidgetValue(self) -> t.Any:
-        return self.field.getWidgetValue()
+    def get_widget_value(self) -> t.Any:
+        return self.field.get_widget_value()

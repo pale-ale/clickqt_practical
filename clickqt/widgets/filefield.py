@@ -36,11 +36,11 @@ class FileField(PathField):
             PathField.FileType.File
         )  #: File type is a :attr:`~clickqt.widgets.textfield.PathField.FileType.File`.
 
-    def getValue(self) -> tuple[t.Any, ClickQtError]:
+    def get_value(self) -> tuple[t.Any, ClickQtError]:
         """
         Opens an input dialogue that represents sys.stdin if 'r' is in **otype**.mode
             and the current widget value is '-', passes the input to
-        :func:`~clickqt.widgets.basewidget.BaseWidget.getValue`, and returns the result.
+        :func:`~clickqt.widgets.basewidget.BaseWidget.get_value`, and returns the result.
 
         :return:
             Valid: (widget value or the value of a callback,
@@ -51,7 +51,7 @@ class FileField(PathField):
         """
 
         if "r" in self.type.mode and self.widget.text() == "-":
-            self.handleValid(True)
+            self.handle_valid(True)
 
             def ret():  # FocusOutValidator should not open this dialog
                 user_input, is_ok = QInputDialog.getMultiLineText(
@@ -68,9 +68,9 @@ class FileField(PathField):
                 )
                 val = super(  # pylint: disable=super-with-arguments
                     FileField, self
-                ).getValue()
+                ).get_value()
                 sys.stdin = old_stdin
                 return val
 
             return (ret, ClickQtError())
-        return super().getValue()
+        return super().get_value()

@@ -53,26 +53,26 @@ class FocusOutValidator(QWidget):
         ):
             return self.__val(widget)
         if widget.parent_widget is None:
-            return widget.getValue()
+            return widget.get_value()
 
         # self.widget.parent_widget == NValueWidget -> We have a child here
 
         try:  # Try to convert the provided value into the corresponding click object type
             ret_val = widget.type.convert(
-                value=widget.getWidgetValue(),
+                value=widget.get_widget_value(),
                 param=widget.param,
                 ctx=click.Context(widget.click_command),
             )
             # Don't consider callbacks because we have only one child here
-            widget.handleValid(True)
+            widget.handle_valid(True)
             return (ret_val, ClickQtError())
         except Exception as e: # pylint: disable=broad-exception-caught
-            widget.handleValid(False)
+            widget.handle_valid(False)
             return (None, ClickQtError(ClickQtError.ErrorType.CONVERTING_ERROR, widget.widget_name, e))
 
     def __val(self, widget: BaseWidget) -> tuple[t.Any, ClickQtError]:
-        """Calls getValue() on the widget with no parent."""
+        """Calls get_value() on the widget with no parent."""
 
         if widget.parent_widget is not None:
             return self.__val(widget.parent_widget)
-        return widget.getValue()
+        return widget.get_value()

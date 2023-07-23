@@ -30,16 +30,16 @@ class IntField(NumericField):
 
         if not isinstance(otype, click.IntRange):
             # QSpinBox is limited to [-2**31; 2**31 - 1], but sys.maxsize returns 2**63 - 1
-            self.setMinimum(-(2**31))  # Default is 0
-            self.setMaximum(2**31 - 1)  # Default is 99
+            self.set_minimum(-(2**31))  # Default is 0
+            self.set_maximum(2**31 - 1)  # Default is 99
         else:
             if otype.min is not None:
-                self.setMinimum(otype.min + (1 if otype.min_open else 0))
+                self.set_minimum(otype.min + (1 if otype.min_open else 0))
             if otype.max is not None:
-                self.setMaximum(otype.max - (1 if otype.max_open else 0))
+                self.set_maximum(otype.max - (1 if otype.max_open else 0))
 
         if self.parent_widget is None:
-            self.setValue(BaseWidget.getParamDefault(param, 0))
+            self.set_value(BaseWidget.get_param_default(param, 0))
 
 
 class RealField(NumericField):
@@ -63,19 +63,19 @@ class RealField(NumericField):
         ), f"'otype' must be of type '{click.FloatRange}' or '{type(click.FLOAT)}', but is '{type(otype)}'."
 
         if not isinstance(otype, click.FloatRange):
-            self.setMinimum(-sys.float_info.max)  # Default is 0.0
-            self.setMaximum(sys.float_info.max)  # Default is 99.0
+            self.set_minimum(-sys.float_info.max)  # Default is 0.0
+            self.set_maximum(sys.float_info.max)  # Default is 99.0
         else:
             if otype.min is not None:
-                self.setMinimum(
+                self.set_minimum(
                     otype.min
                     + (10 ** -self.widget.decimals() if otype.min_open else 0.0)
                 )
             if otype.max is not None:
-                self.setMaximum(
+                self.set_maximum(
                     otype.max
                     - (10 ** -self.widget.decimals() if otype.max_open else 0.0)
                 )
 
         if self.parent_widget is None:
-            self.setValue(BaseWidget.getParamDefault(param, 0.0))
+            self.set_value(BaseWidget.get_param_default(param, 0.0))

@@ -72,7 +72,7 @@ def test_set_envvar(
     cli = click.Command("cli", params=[param])
 
     control = clickqt.qtgui_from_click(cli)
-    assert control.widget_registry[cli.name][param.name].getWidgetValue() == expected
+    assert control.widget_registry[cli.name][param.name].get_widget_value() == expected
 
 
 @pytest.mark.parametrize(

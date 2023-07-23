@@ -35,7 +35,7 @@ class Control(QObject):
     :param cmd: The callback function from which a GUI should be created
     """
 
-    #: Internal Qt-signal, which will be emitted when the :func:`~clickqt.core.control.Control.startExecution`-Slot was triggered and executed successfully.
+    #: Internal Qt-signal, which will be emitted when the :func:`~clickqt.core.control.Control.start_execution`-Slot was triggered and executed successfully.
     requestExecution: Signal = Signal(list, click.Context)  # Generics do not work here
 
     def __init__(
@@ -58,8 +58,8 @@ class Control(QObject):
         self.worker: CommandExecutor = None
 
         # Connect GUI buttons with slots
-        self.gui.run_button.clicked.connect(self.startExecution)
-        self.gui.stop_button.clicked.connect(self.stopExecution)
+        self.gui.run_button.clicked.connect(self.start_execution)
+        self.gui.stop_button.clicked.connect(self.stop_execution)
         self.gui.copy_button.clicked.connect(self.construct_command_string)
 
         # Groups-Command-name concatinated with ":" to command-option-names to BaseWidget
@@ -85,7 +85,7 @@ class Control(QObject):
     def parameter_to_widget(
         self, command: click.Command, groups_command_name: str, param: click.Parameter
     ) -> QWidget:
-        """Creates a clickqt widget according to :func:`~clickqt.core.gui.GUI.createWidget` and returns the container of the widget (label-element + Qt-widget).
+        """Creates a clickqt widget according to :func:`~clickqt.core.gui.GUI.create_widget` and returns the container of the widget (label-element + Qt-widget).
 
         :param command: The click command of the provided **param**
         :param groups_command_name: The hierarchy of the **command** as string whereby the names of the components are
@@ -131,17 +131,17 @@ class Control(QObject):
             if len(cmd.params) > 0:
                 child_tabs = QWidget()
                 child_tabs.setLayout(QVBoxLayout())
-                group_params = self.parseCmd(cmd, concat_group_names)
+                group_params = self.parse_cmd(cmd, concat_group_names)
                 group_params.widget().layout().setContentsMargins(0, 0, 0, 0)
                 group_params.setSizePolicy(
                     QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed
                 )  # Group params don't have to be resizable
                 child_tabs.layout().addWidget(group_params)
                 child_tabs.layout().addWidget(
-                    self.parseCmdGroup(cmd, concat_group_names)
+                    self.parse_cmd_group(cmd, concat_group_names)
                 )
             else:
-                child_tabs = self.parseCmdGroup(cmd, concat_group_names)
+                child_tabs = self.parse_cmd_group(cmd, concat_group_names)
 
             child_tabs.setAutoFillBackground(True)
             child_tabs.setBackgroundRole(
@@ -153,10 +153,10 @@ class Control(QObject):
             else:
                 tab_widget.addTab(child_tabs, group_name)
         elif tab_widget == self.gui.widgets_container:
-            self.gui.widgets_container = self.parseCmd(cmd, cmd.name)
+            self.gui.widgets_container = self.parse_cmd(cmd, cmd.name)
         else:
             tab_widget.addTab(
-                self.parseCmd(
+                self.parse_cmd(
                     cmd,
                     self.concat(group_names_concatenated, cmd.name)
                     if group_names_concatenated
@@ -165,11 +165,11 @@ class Control(QObject):
                 group_name,
             )
 
-    def parseCmdGroup(
+    def parse_cmd_group(
         self, cmdgroup: click.Group, group_names_concatenated: str
     ) -> QTabWidget:
         """Creates for every group in **cmdgroup** a QTabWidget instance and adds every command in **cmdgroup** as a tab to it.
-        The creation of the content of every tab is realized by calling :func:`~clickqt.core.control.Control.parseCmd`.
+        The creation of the content of every tab is realized by calling :func:`~clickqt.core.control.Control.parse_cmd`.
         To realize command hierachies, this method is called recursively.
 
         :param cmdgroup: The group from which a QTabWidget with content should be created
@@ -187,7 +187,7 @@ class Control(QObject):
 
         return group_tab_widget
 
-    def parseCmd(self, cmd: click.Command, groups_command_name: str) -> QScrollArea:
+    def parse_cmd(self, cmd: click.Command, groups_command_name: str) -> QScrollArea:
         """Creates for every click parameter in **cmd** a clickqt widget and returns them stored in a QScrollArea.
         The widgets are divided into a "Required arguments" and "Optional arguments" part.
 
@@ -268,7 +268,7 @@ class Control(QObject):
             ].layout().addWidget(
                 self.parameter_to_widget(cmd, groups_command_name, choice)
             )
-            self.widget_registry[groups_command_name][param_name].setValue(default)
+            self.widget_registry[groups_command_name][param_name].set_value(default)
 
         for box in required_optional_box:
             if len(box.children()) > INITIAL_CHILD_WIDGETS:
@@ -282,7 +282,7 @@ class Control(QObject):
 
         return cmd_tab_widget
 
-    def checkError(self, err: ClickQtError) -> bool:
+    def check_error(self, err: ClickQtError) -> bool:
         """Checks whether **err** contains an error and prints on error case the message of it to sys.stderr.
 
         :return: True, if **err** contains an error, False otherwise"""
@@ -294,7 +294,7 @@ class Control(QObject):
 
         return False
 
-    def currentCommandHierarchy(
+    def current_command_hierarchy(
         self, tab_widget: QWidget, cmd: click.Command
     ) -> list[click.Command]:
         """Returns the hierarchy of the command of the selected tab as list whereby the order of the list is from root command
@@ -316,7 +316,7 @@ class Control(QObject):
                 ctx=None, cmd_name=tab_widget.tabText(tab_widget.currentIndex())
             )
 
-            return [cmd] + self.currentCommandHierarchy(
+            return [cmd] + self.current_command_hierarchy(
                 tab_widget.currentWidget(), command
             )
        
@@ -375,7 +375,7 @@ class Control(QObject):
         widget_values = []
         for widget in widgets:
             if (not isinstance(widget, ConfirmationWidget)) and widget != "yes":
-                widget_values.append(widgets[widget].getWidgetValue())
+                widget_values.append(widgets[widget].get_widget_value())
         parameter_strings = []
         for i, param in enumerate(parameter_list):
             if param[0] == "Argument":
@@ -449,15 +449,15 @@ class Control(QObject):
         return message + parameter_message
 
     @Slot()
-    def stopExecution(self):
+    def stop_execution(self):
         """Qt-Slot, which stops the execution of the command(-hierarchy) which is currently running."""
 
         print("Execution stopped!", file=sys.stderr)
         self.worker_thread.terminate()
-        self.executionFinished()
+        self.execution_finished()
 
     @Slot()
-    def executionFinished(self):
+    def execution_finished(self):
         """Qt-Slot, which deletes the internal worker-object and resets the buttons of the GUI.
         This slot is automatically executed when the execution of a command has finished.
         """
@@ -472,13 +472,13 @@ class Control(QObject):
         self.gui.stop_button.setEnabled(False)
 
     @Slot()
-    def startExecution(self):
+    def start_execution(self):
         """Qt-Slot, which validates the selected command hierarchy and causes (on success) their execution in another thread by
         emitting the :func:`~clickqt.core.control.Control.requestExecution`-Signal. Widgets that will show a dialog will be validated at last.
         This slot is automatically executed when the user clicks on the 'Run'-button.
         """
 
-        hierarchy_selected_command = self.currentCommandHierarchy(
+        hierarchy_selected_command = self.current_command_hierarchy(
             self.gui.widgets_container, self.cmd
         )
 
@@ -503,14 +503,14 @@ class Control(QObject):
                     elif (
                         isinstance(widget, FileField)
                         and "r" in widget.type.mode
-                        and widget.getWidgetValue() == "-"
+                        and widget.get_widget_value() == "-"
                     ):
                         dialog_widgets.insert(
                             0, widget
                         )  # FileField widgets with input dialog should be shown at last, but before MessageBox widgets
                     else:
-                        widget_value, err = widget.getValue()
-                        has_error |= self.checkError(err)
+                        widget_value, err = widget.get_value()
+                        has_error |= self.check_error(err)
 
                         if widget.param.expose_value:
                             kwargs[option_name] = widget_value
@@ -520,12 +520,12 @@ class Control(QObject):
 
                 # Now check the values of all dialog widgets for errors
                 for widget in dialog_widgets:
-                    widget_value, err = widget.getValue()
+                    widget_value, err = widget.get_value()
                     if isinstance(widget, FileField):
                         assert callable(widget_value)
                         widget_value, err = widget_value()
 
-                    if self.checkError(err):
+                    if self.check_error(err):
                         return None
 
                     if widget.param.expose_value:
@@ -571,7 +571,7 @@ class Control(QObject):
             self.worker = CommandExecutor()
             self.worker.moveToThread(self.worker_thread)
             self.worker.finished.connect(self.worker_thread.quit)
-            self.worker.finished.connect(self.executionFinished)
+            self.worker.finished.connect(self.execution_finished)
             self.requestExecution.connect(self.worker.run)
 
             self.requestExecution.emit(
@@ -582,7 +582,7 @@ class Control(QObject):
         """
         This function is responsible
         """
-        hierarchy_selected_command = self.currentCommandHierarchy(
+        hierarchy_selected_command = self.current_command_hierarchy(
             self.gui.widgets_container, self.cmd
         )
         selected_command = hierarchy_selected_command[-1]
@@ -602,8 +602,8 @@ class Control(QObject):
                 (x for x in selected_command.params if x.name == option_name)
             )
             if param.expose_value:
-                widget_value, err = widget.getValue()
-                has_error |= self.checkError(err)
+                widget_value, err = widget.get_value()
+                has_error |= self.check_error(err)
 
                 kwargs[option_name] = widget_value
             else:  # Verify it when all options are valid
@@ -623,7 +623,7 @@ class Control(QObject):
 
         # Parameters with expose_value==False
         for widget in unused_options:
-            widget_value, err = widget.getValue()
+            widget_value, err = widget.get_value()
             has_error |= self.check_error(err)
             if callable(widget_value):
                 _, err = widget_value()

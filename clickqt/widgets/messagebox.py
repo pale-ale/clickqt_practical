@@ -32,7 +32,7 @@ class MessageBox(BaseWidget):
         self.yes: bool = False  #: Confirmation of the user, defaults to False
 
         if self.parent_widget is None:
-            self.setValue(BaseWidget.getParamDefault(param, False))
+            self.set_value(BaseWidget.get_param_default(param, False))
 
         self.layout.removeWidget(self.label)
         self.layout.removeWidget(self.widget)
@@ -41,16 +41,16 @@ class MessageBox(BaseWidget):
         self.container = self.widget
         self.container.setVisible(False)
 
-    def setValue(self, value: t.Any):
+    def set_value(self, value: t.Any):
         self.yes = bool(
             self.type.convert(
                 str(value), self.click_command, click.Context(self.click_command)
             )
         )
 
-    def getValue(self) -> tuple[t.Any, ClickQtError]:
-        """Opens a confirmation dialog, passes the decision to :func:`~clickqt.widgets.basewidget.BaseWidget.getValue`
-        and returns the result. See also :func:`~clickqt.widgets.messagebox.MessageBox.getWidgetValue`
+    def get_value(self) -> tuple[t.Any, ClickQtError]:
+        """Opens a confirmation dialog, passes the decision to :func:`~clickqt.widgets.basewidget.BaseWidget.get_value`
+        and returns the result. See also :func:`~clickqt.widgets.messagebox.MessageBox.get_widget_value`
 
         :return: Valid: (widget value or the value of a callback, :class:`~clickqt.core.error.ClickQtError.ErrorType.NO_ERROR`)\n
                  Invalid: (None, :class:`~clickqt.core.error.ClickQtError.ErrorType.CONVERTING_ERROR` or
@@ -70,9 +70,9 @@ class MessageBox(BaseWidget):
         else:
             self.yes = False
 
-        return super().getValue()
+        return super().get_value()
 
-    def getWidgetValue(self) -> bool:
+    def get_widget_value(self) -> bool:
         """Returns the user-decision of the confirmation dialog.
 
         :return: True: The user clicked on the "Yes"-button\n

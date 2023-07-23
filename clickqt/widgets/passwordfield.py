@@ -39,11 +39,11 @@ class PasswordField(TextField):
         )
         self.show_hide_action.setCheckable(True)
 
-        def showPassword(show):
+        def show_password(show):
             self.widget.setEchoMode(
                 QLineEdit.EchoMode.Normal if show else QLineEdit.EchoMode.Password
             )
             self.show_hide_action.setIcon(self.icon_text[show][0])
             self.show_hide_action.setText(self.icon_text[show][1])
 
-        self.show_hide_action.toggled.connect(showPassword)
+        self.show_hide_action.toggled.connect(show_password)

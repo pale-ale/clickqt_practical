@@ -69,11 +69,11 @@ class DateTimeEdit(BaseWidget):
 
         if (
             self.parent_widget is None
-            and (default := BaseWidget.getParamDefault(param, None)) is not None
+            and (default := BaseWidget.get_param_default(param, None)) is not None
         ):
-            self.setValue(default)
+            self.set_value(default)
 
-    def setValue(self, value: t.Any):
+    def set_value(self, value: t.Any):
         """Sets the value of the Qt-widget according to the selected format stored in :attr:`~clickqt.widgets.datetimeedit.DateTimeEdit.format_group`."""
         # value -> datetime -> str -> QDateTime
         self.widget.setDateTime(
@@ -85,5 +85,5 @@ class DateTimeEdit(BaseWidget):
             )
         )
 
-    def getWidgetValue(self) -> datetime.datetime:
+    def get_widget_value(self) -> datetime.datetime:
         return self.widget.dateTime().toPython()

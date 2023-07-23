@@ -94,9 +94,9 @@ def test_feature_switch(value: str):
         widget, clickqt.widgets.ComboBox
     )  # Feature switches are mapped to ComboBoxes
 
-    widget.setValue(value)
+    widget.set_value(value)
 
-    assert widget.getWidgetValue() == value
+    assert widget.get_widget_value() == value
 
 
 @pytest.mark.parametrize(
@@ -404,7 +404,7 @@ def test_pathfield(qtbot: QtBot, click_attrs: dict, value: str, expected: str):
     QTimer.singleShot(5, selectFile)
     widget.browse()
 
-    assert widget.getWidgetValue() == expected
+    assert widget.get_widget_value() == expected
 
 
 @pytest.mark.parametrize(
@@ -428,7 +428,7 @@ def test_nvaluewidget_add_remove_children(
     widget: clickqt.widgets.NValueWidget = control.widget_registry[cli.name][param.name]
 
     for _ in range(add_children):
-        widget.addPair(value)
+        widget.add_pair(value)
 
     amount_children = add_children + (
         len(param.default) if param.default is not None else 0
@@ -436,11 +436,11 @@ def test_nvaluewidget_add_remove_children(
 
     assert len(widget.children) == amount_children
     assert (
-        sum(1 for w in widget.buttondict.values() if w.getWidgetValue() == value)
+        sum(1 for w in widget.buttondict.values() if w.get_widget_value() == value)
         == add_children
     )
 
     for _ in range(remove_children):
-        widget.removeButtonPair(list(widget.buttondict.keys())[0])
+        widget.remove_button_pair(list(widget.buttondict.keys())[0])
 
     assert len(widget.children) == amount_children - remove_children
