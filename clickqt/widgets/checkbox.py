@@ -17,8 +17,7 @@ class CheckBox(BaseWidget):
     :param param: The parameter from which **otype** came from
     :param kwargs: Additionally parameters ('parent', 'widgetsource', 'com', 'label') needed for
         :class:`~clickqt.widgets.basewidget.MultiWidget`- /
-        :class:`~clickqt.widgets.confirmationwidget.ConfirmationWidget`-
-    widgets
+        :class:`~clickqt.widgets.confirmationwidget.ConfirmationWidget`- widgets
     """
 
     widget_type = QCheckBox  #: The Qt-type of this widget.

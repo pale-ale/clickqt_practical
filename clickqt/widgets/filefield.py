@@ -20,8 +20,7 @@ class FileField(PathField):
     :param param: The parameter from which **otype** came from
     :param kwargs: Additional parameters ('parent', 'widgetsource', 'com', 'label') needed for
         :class:`~clickqt.widgets.basewidget.MultiWidget`- /
-        :class:`~clickqt.widgets.confirmationwidget.ConfirmationWidget`-
-        widgets
+        :class:`~clickqt.widgets.confirmationwidget.ConfirmationWidget`- widgets
     """
 
     widget_type = QLineEdit  #: The Qt-type of this widget.
