@@ -1,6 +1,6 @@
 # Credits to https://gis.stackexchange.com/questions/350148/qcombobox-multiple-selection-pyqt5
 
-from collections.abc import Iterable
+from typing import Iterable
 from PySide6.QtWidgets import QComboBox, QStyledItemDelegate
 from PySide6.QtCore import Qt, QEvent, QObject
 from PySide6.QtGui import QStandardItem

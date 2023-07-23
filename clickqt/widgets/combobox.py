@@ -1,5 +1,5 @@
 from typing import Any
-from collections.abc import Iterable
+from typing import Iterable
 from PySide6.QtWidgets import QComboBox
 from click import Parameter, ParamType, Context
 from clickqt.widgets.basewidget import ComboBoxBase, BaseWidget

@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 import os
 from typing import Any, ClassVar, Type, Optional, Union, Tuple
-from collections.abc import Iterable
+from typing import Iterable
 from gettext import ngettext
 
 from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QHBoxLayout
