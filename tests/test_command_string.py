@@ -9,7 +9,16 @@ from tests.testutils import ClickAttrs
 
 @pytest.mark.parametrize(
     ("click_attrs", "value", "expected_output"),
-    [(ClickAttrs.intfield(), 12, "main  --p 12")],
+    [
+        (ClickAttrs.intfield(), 12, "main  --p 12"),
+        (ClickAttrs.textfield(), "test", "main  --p test"),
+        (ClickAttrs.realfield(), 0.8, "main  --p 0.8"),
+        (ClickAttrs.passwordfield(), "abc", "main  --p abc"),
+        (ClickAttrs.checkbox(), True, "main  --p True"),
+        (ClickAttrs.checkbox(), False, "main  --p False"),
+        (ClickAttrs.intrange(maxval=2, clamp=True), 5, "main  --p 2"),
+        (ClickAttrs.floatrange(maxval=2.05, clamp=True), 5, "main  --p 2.05"),
+    ],
 )
 def test_command_with_ep(click_attrs: dict, value: t.Any, expected_output: str):
     param = click.Option(param_decls=["--p"], **click_attrs)
