@@ -15,7 +15,7 @@ class NValueWidget(MultiWidget):
 
     :param otype: The type which specifies the clickqt widget type. This type may be different compared to **param**.type when dealing with click.types.CompositeParamType-objects
     :param param: The parameter from which **otype** came from
-    :param widgetsource: A reference to :func:`~clickqt.core.gui.GUI.createWidget`
+    :param widgetsource: A reference to :func:`~clickqt.core.gui.GUI.create_widget`
     :param parent: The parent BaseWidget of **otype**, defaults to None. Needed for :class:`~clickqt.widgets.basewidget.MultiWidget`-widgets
     :param kwargs: Additionally parameters ('com', 'label') needed for
                     :class:`~clickqt.widgets.basewidget.MultiWidget`- / :class:`~clickqt.widgets.confirmationwidget.ConfirmationWidget`-widgets
@@ -46,7 +46,7 @@ class NValueWidget(MultiWidget):
         self.widget.setWidgetResizable(True)
         addfieldbtn = QPushButton("+", self.widget)
         # Add an empty widget
-        addfieldbtn.clicked.connect(lambda: self.addPair())  # pylint: disable=unnecessary-lambda
+        addfieldbtn.clicked.connect(lambda: self.add_pair())  # pylint: disable=unnecessary-lambda
         self.vbox.layout().addWidget(addfieldbtn)
         self.widget.setWidget(self.vbox)
         self.buttondict: dict[QPushButton, BaseWidget] = {}
@@ -55,7 +55,7 @@ class NValueWidget(MultiWidget):
 
         self.init()
 
-    def addPair(self, value: t.Any = None):
+    def add_pair(self, value: t.Any = None):
         """Adds a new (child-)widget of type **otype** with a remove button to this widget.
         If **value** is not None, it will be the initial value of the new added widget.
 
@@ -63,7 +63,7 @@ class NValueWidget(MultiWidget):
         """
 
         if len(self.children) == 0:
-            self.handleValid(True)
+            self.handle_valid(True)
 
         self.param.multiple = (
             False  # nargs cannot be nested, so it is safe to turn this off for children
@@ -77,17 +77,17 @@ class NValueWidget(MultiWidget):
         )
         self.param.multiple = True  # click needs this for a correct conversion
         if value is not None:
-            clickqtwidget.setValue(value)
+            clickqtwidget.set_value(value)
         clickqtwidget.layout.removeWidget(clickqtwidget.label)
         clickqtwidget.label.deleteLater()
         removebtn = QPushButton("-", clickqtwidget.widget)
         clickqtwidget.layout.addWidget(removebtn)
-        removebtn.clicked.connect(lambda: self.removeButtonPair(removebtn))
+        removebtn.clicked.connect(lambda: self.remove_button_pair(removebtn))
         self.vbox.layout().addWidget(clickqtwidget.container)
         self.buttondict[removebtn] = clickqtwidget
         self.widget.setWidget(self.vbox)
 
-    def removeButtonPair(self, btn_to_remove: QPushButton):
+    def remove_button_pair(self, btn_to_remove: QPushButton):
         """Removes the widget assoziated with **btn_to_remove**.
 
         :param btn_to_remove: The remove-button that was clicked
@@ -101,7 +101,7 @@ class NValueWidget(MultiWidget):
             btn_to_remove.deleteLater()
             QScrollArea.updateGeometry(self.widget)
 
-    def getValue(self) -> tuple[t.Any, ClickQtError]:
+    def get_value(self) -> tuple[t.Any, ClickQtError]:
         """Validates the value of the children-widgets and returns the result. If multiple errors occured then they will be concatenated and returned.
 
         :return: Valid: (children-widget values or the value of a callback, :class:`~clickqt.core.error.ClickQtError.ErrorType.NO_ERROR`)\n
@@ -111,10 +111,10 @@ class NValueWidget(MultiWidget):
 
         value_missing = False
         if len(self.children) == 0:
-            default = BaseWidget.getParamDefault(self.param, None)
+            default = BaseWidget.get_param_default(self.param, None)
 
             if self.param.required and default is None:
-                self.handleValid(False)
+                self.handle_valid(False)
                 return (
                     None,
                     ClickQtError(
@@ -129,14 +129,14 @@ class NValueWidget(MultiWidget):
                 )
             ) is not None:
                 for ev in envvar_values:
-                    self.addPair(ev)
+                    self.add_pair(ev)
             elif default is not None:  # Add new pairs
                 for (
                     value
                 ) in (
                     default
                 ):  # All defaults will be considered if len(self.children)) == 0
-                    self.addPair(value)
+                    self.add_pair(value)
             else:  # param is not required and there is no default -> value is None
                 value_missing = True  # But callback should be considered
 
@@ -145,14 +145,14 @@ class NValueWidget(MultiWidget):
         if not value_missing:
             values = []
             err_messages: list[str] = []
-            default = BaseWidget.getParamDefault(self.param, None)
+            default = BaseWidget.get_param_default(self.param, None)
 
             # len(self.children)) < len(default): We set at most len(self.children)) defaults
             # len(self.children)) >= len(default): All defaults will be considered
             for i, child in enumerate(self.children):
-                if child.isEmpty():
+                if child.is_empty():
                     if child.param.required and default is None:
-                        self.handleValid(False)
+                        self.handle_valid(False)
                         return (
                             None,
                             ClickQtError(
@@ -164,7 +164,7 @@ class NValueWidget(MultiWidget):
                     if default is not None and i < len(
                         default
                     ):  # Overwrite the empty widget with the default value (if one exists)
-                        child.setValue(
+                        child.set_value(
                             default[i]
                         )  # If the widget is a tuple, all values will be overwritten
                     else:  # No default exists -> Don't consider the value of this child
@@ -175,14 +175,14 @@ class NValueWidget(MultiWidget):
                 try:  # Try to convert the provided value into the corresponding click object type
                     values.append(
                         self.type.convert(
-                            value=child.getWidgetValue(),
+                            value=child.get_widget_value(),
                             param=self.param,
                             ctx=click.Context(self.click_command),
                         )
                     )
-                    child.handleValid(True)
+                    child.handle_valid(True)
                 except Exception as e: # pylint: disable=broad-exception-caught
-                    child.handleValid(False)
+                    child.handle_valid(False)
                     err_messages.append(str(e))
 
             if len(err_messages) > 0:  # Join all error messages and return them
@@ -201,9 +201,9 @@ class NValueWidget(MultiWidget):
             if len(values) == 0:  # All widgets are empty
                 values = None
 
-        return self.handleCallback(values)
+        return self.handle_callback(values)
 
-    def setValue(self, value: t.Iterable[t.Any]):
+    def set_value(self, value: t.Iterable[t.Any]):
         """Sets the values of the (child-)widgets.
         The number of (child-)widgets are adjusted to the length of **value**. This means that (child-)widgets may be added, but also removed.
 
@@ -212,16 +212,16 @@ class NValueWidget(MultiWidget):
 
         if len(value) < len(self.children):  # Remove pairs
             for btns in list(self.buttondict.keys())[len(value) :]:
-                self.removeButtonPair(btns)
+                self.remove_button_pair(btns)
         if len(value) > len(self.children):  # Add pairs
             for i in range(len(value) - len(self.children)):
-                self.addPair()
+                self.add_pair()
 
         for i, c in enumerate(self.children):  # Set the value
-            c.setValue(value[i])
+            c.set_value(value[i])
 
-    def handleValid(self, valid: bool):
+    def handle_valid(self, valid: bool):
         if len(self.children) == 0:
-            BaseWidget.handleValid(self, valid)
+            BaseWidget.handle_valid(self, valid)
         else:
-            super().handleValid(valid)
+            super().handle_valid(valid)

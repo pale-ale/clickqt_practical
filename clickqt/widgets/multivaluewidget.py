@@ -14,7 +14,7 @@ class MultiValueWidget(MultiWidget):
 
     :param otype: The type which specifies the clickqt widget type. This type may be different compared to **param**.type when dealing with click.types.CompositeParamType-objects
     :param param: The parameter from which **otype** came from
-    :param widgetsource: A reference to :func:`~clickqt.core.gui.GUI.createWidget`
+    :param widgetsource: A reference to :func:`~clickqt.core.gui.GUI.create_widget`
     :param parent: The parent BaseWidget of **otype**, defaults to None. Needed for :class:`~clickqt.widgets.basewidget.MultiWidget`-widgets
     :param kwargs: Additionally parameters ('com', 'label') needed for
                     :class:`~clickqt.widgets.basewidget.MultiWidget`- / :class:`~clickqt.widgets.confirmationwidget.ConfirmationWidget`-widgets

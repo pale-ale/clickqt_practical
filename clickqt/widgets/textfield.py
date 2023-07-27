@@ -35,11 +35,11 @@ class TextField(BaseWidget):
             if (
                 envvar_value := param.resolve_envvar_value(click.Context(self.click_command))
             ) is not None:  # Consider envvar
-                self.setValue(envvar_value)
+                self.set_value(envvar_value)
             else:  # Consider default value
-                self.setValue(BaseWidget.getParamDefault(param, ""))
+                self.set_value(BaseWidget.get_param_default(param, ""))
 
-    def setValue(self, value: t.Any):
+    def set_value(self, value: t.Any):
         if isinstance(value, str):
             self.widget.setText(value)
         else:
@@ -51,12 +51,12 @@ class TextField(BaseWidget):
                 )
             )
 
-    def isEmpty(self) -> bool:
+    def is_empty(self) -> bool:
         """Returns True if the current text is an empty string, False otherwise."""
 
-        return self.getWidgetValue() == ""
+        return self.get_widget_value() == ""
 
-    def getWidgetValue(self) -> str:
+    def get_widget_value(self) -> str:
         return self.widget.text()
 
 
@@ -94,7 +94,7 @@ class PathField(TextField):
         input_btn_container.layout().addWidget(self.browse_btn)
         self.layout.addWidget(input_btn_container)
 
-    def setValue(self, value: t.Any):
+    def set_value(self, value: t.Any):
         self.widget.setText(str(value))
 
     def browse(self):
@@ -114,8 +114,8 @@ class PathField(TextField):
                 None, directory=QDir.currentPath(), exist=self.type.exists
             )
             if dialog.exec():
-                self.handleValid(True)
-                self.setValue(
+                self.handle_valid(True)
+                self.set_value(
                     remove_prefix(
                         dialog.selectedPath()
                         .replace(QDir.currentPath(), "")
@@ -143,8 +143,8 @@ class PathField(TextField):
             if dialog.exec():
                 filenames = dialog.selectedFiles()
                 if filenames and len(filenames) > 0:
-                    self.handleValid(True)
-                    self.setValue(
+                    self.handle_valid(True)
+                    self.set_value(
                         remove_prefix(
                             filenames[0]
                             .replace(QDir.currentPath(), "")

@@ -17,8 +17,7 @@ class CheckBox(BaseWidget):
     :param param: The parameter from which **otype** came from
     :param kwargs: Additionally parameters ('parent', 'widgetsource', 'com', 'label') needed for
         :class:`~clickqt.widgets.basewidget.MultiWidget`- /
-        :class:`~clickqt.widgets.confirmationwidget.ConfirmationWidget`-
-    widgets
+        :class:`~clickqt.widgets.confirmationwidget.ConfirmationWidget`- widgets
     """
 
     widget_type = QCheckBox  #: The Qt-type of this widget.
@@ -33,9 +32,9 @@ class CheckBox(BaseWidget):
         self.widget.setText("Enable")
 
         if self.parent_widget is None:
-            self.setValue(BaseWidget.getParamDefault(param, False))
+            self.set_value(BaseWidget.get_param_default(param, False))
 
-    def setValue(self, value: t.Any):
+    def set_value(self, value: t.Any):
         self.widget.setChecked(
             bool(
                 self.type.convert(
@@ -44,5 +43,5 @@ class CheckBox(BaseWidget):
             )
         )
 
-    def getWidgetValue(self) -> bool:
+    def get_widget_value(self) -> bool:
         return self.widget.isChecked()

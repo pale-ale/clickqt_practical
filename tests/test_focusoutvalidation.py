@@ -25,7 +25,7 @@ def evaluate(
     ]  # normal border
 
     for i in range(2):
-        clickqt_widget.setValue(value[i])
+        clickqt_widget.set_value(value[i])
         clickqt_child_widget.focus_out_validator.eventFilter(
             clickqt_child_widget.widget, QEvent(QEvent.Type.FocusOut)
         )  # widget goes out of focus
@@ -129,7 +129,7 @@ def test_focus_out_validation_child(
     control = clickqt.qtgui_from_click(cli)
     clickqt_widget = control.widget_registry[cli.name][param.name]
 
-    clickqt_widget.setValue(
+    clickqt_widget.set_value(
         invalid_value
     )  # Create the children for the NValueWidget-object
 

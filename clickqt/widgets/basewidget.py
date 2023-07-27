@@ -50,7 +50,7 @@ class BaseWidget(ABC):
         self.label = QLabel(text=f"<b>{kwargs.get('label', '')}{self.widget_name}</b>")
         self.label.setTextFormat(Qt.TextFormat.RichText)  # Bold text
 
-        self.widget = self.createWidget()
+        self.widget = self.create_widget()
 
         self.layout.addWidget(self.label)
         if (
@@ -76,20 +76,20 @@ class BaseWidget(ABC):
         self.focus_out_validator = clickqt.core.FocusOutValidator(self)
         self.widget.installEventFilter(self.focus_out_validator)
 
-    def createWidget(self) -> QWidget:
+    def create_widget(self) -> QWidget:
         """Creates the widget specified in :attr:`~clickqt.widgets.basewidget.BaseWidget.widget_type` and returns it."""
 
         return self.widget_type()
 
     @abstractmethod
-    def setValue(self, value: t.Any):
+    def set_value(self, value: t.Any):
         """Sets the value of the Qt-widget.
 
         :param value: The new value that should be stored in the widget
         :raises click.BadParameter: **value** could not be converted into the corresponding click.ParamType
         """
 
-    def isEmpty(self) -> bool:
+    def is_empty(self) -> bool:
         """Checks whether the widget is empty. This can be the case for string-based widgets or the
         multiple choice-widget (:class:`~clickqt.widgets.combobox.CheckableComboBox`).\n
         Subclasses may need to override this method.
@@ -98,7 +98,7 @@ class BaseWidget(ABC):
         """
         return False
 
-    def getValue(self) -> tuple[t.Any, ClickQtError]:
+    def get_value(self) -> tuple[t.Any, ClickQtError]:
         """Validates the value of the Qt-widget and returns the result.
 
         :return: Valid: (widget value or the value of a callback, :class:`~clickqt.core.error.ClickQtError.ErrorType.NO_ERROR`)\n
@@ -109,17 +109,17 @@ class BaseWidget(ABC):
 
         # Try to convert the provided value into the corresponding click object type
         try:  # pylint: disable=too-many-try-statements, too-many-nested-blocks
-            default = BaseWidget.getParamDefault(self.param, None)
+            default = BaseWidget.get_param_default(self.param, None)
             # if statement is obtained by creating the corresponding truth table
             if self.param.multiple or (
                 not isinstance(self.type, click.Tuple) and self.param.nargs != 1
             ):
                 value_missing = False
-                widget_values: list = self.getWidgetValue()
+                widget_values: list = self.get_widget_value()
 
                 if len(widget_values) == 0:  # Checkable combobox
                     if self.param.required and default is None:
-                        self.handleValid(False)
+                        self.handle_valid(False)
                         return (
                             None,
                             ClickQtError(
@@ -130,8 +130,8 @@ class BaseWidget(ABC):
                         )
                     #self.handle_parameter_missing_default(default)
                     if default is not None:
-                        self.setValue(default)
-                        widget_values = self.getWidgetValue()
+                        self.set_value(default)
+                        widget_values = self.get_widget_value()
                     else:  # param is not required and there is no default -> value is None
                         value_missing = True  # But callback should be considered
 
@@ -144,7 +144,7 @@ class BaseWidget(ABC):
                             str(v) == ""
                         ):  # Empty widget (only possible for string based widgets)
                             if self.param.required and default is None:
-                                self.handleValid(False)
+                                self.handle_valid(False)
                                 return (
                                     None,
                                     ClickQtError(
@@ -156,11 +156,11 @@ class BaseWidget(ABC):
                             if default is not None and i < len(
                                 default
                             ):  # Overwrite the empty widget with the default value and execute with this (new) value
-                                values = self.getWidgetValue()
+                                values = self.get_widget_value()
                                 values[i] = default[
                                     i
                                 ]  # Only overwrite the empty widget, not all
-                                self.setValue(values)
+                                self.set_value(values)
                                 v = default[i]
                             else:  # param is not required, widget is empty and there is no default (click equivalent: option not provided in click command cmd)
                                 value = None
@@ -175,9 +175,9 @@ class BaseWidget(ABC):
                         )
             else:
                 value_missing = False
-                if self.isEmpty():
+                if self.is_empty():
                     if self.param.required and default is None:
-                        self.handleValid(False)
+                        self.handle_valid(False)
                         return (
                             None,
                             ClickQtError(
@@ -187,18 +187,18 @@ class BaseWidget(ABC):
                             ),
                         )
                     if default is not None:
-                        self.setValue(default)
+                        self.set_value(default)
                     else:
                         value_missing = True  # -> value is None
 
                 if not value_missing:
                     value = self.type.convert(
-                        value=self.getWidgetValue(),
+                        value=self.get_widget_value(),
                         param=self.param,
                         ctx=click.Context(self.click_command),
                     )
         except Exception as e: # pylint: disable=broad-exception-caught
-            self.handleValid(False)
+            self.handle_valid(False)
             return (
                 None,
                 ClickQtError(
@@ -206,9 +206,9 @@ class BaseWidget(ABC):
                 ),
             )
 
-        return self.handleCallback(value)
+        return self.handle_callback(value)
 
-    def handleCallback(self, value: t.Any) -> tuple[t.Any, ClickQtError]:
+    def handle_callback(self, value: t.Any) -> tuple[t.Any, ClickQtError]:
         """Validates **value** in the user-defined callback (if provided) and returns the result.
 
         :param value: The value that should be validated in the callback
@@ -223,14 +223,14 @@ class BaseWidget(ABC):
                 self.param.process_value(click.Context(self.click_command), value),
                 ClickQtError(),
             )
-            self.handleValid(True)
+            self.handle_valid(True)
             return ret_val
         except click.exceptions.Abort:
             return (None, ClickQtError(ClickQtError.ErrorType.ABORTED_ERROR))
         except click.exceptions.Exit:
             return (None, ClickQtError(ClickQtError.ErrorType.EXIT_ERROR))
         except Exception as e: # pylint: disable=broad-exception-caught
-            self.handleValid(False)
+            self.handle_valid(False)
             return (
                 None,
                 ClickQtError(
@@ -239,10 +239,10 @@ class BaseWidget(ABC):
             )
 
     @abstractmethod
-    def getWidgetValue(self) -> t.Any:
+    def get_widget_value(self) -> t.Any:
         """Returns the value of the Qt-widget without any checks."""
 
-    def handleValid(self, valid: bool):
+    def handle_valid(self, valid: bool):
         """Changes the border of the widget dependent on **valid**. If **valid** == False, the border will be colored red, otherwise black.
 
         :param valid: Specifies whether there was no error when validating the widget
@@ -257,7 +257,7 @@ class BaseWidget(ABC):
             self.widget.setStyleSheet(f"QWidget#{self.widget.objectName()}{{ }}")
 
     @staticmethod
-    def getParamDefault(param: click.Parameter, alternative:t.Any=None):
+    def get_param_default(param: click.Parameter, alternative:t.Any=None):
         """Returns the default value of **param**. If there is no default value, **alternative** will be returned."""
 
         # TODO: Replace with param.get_default(ctx=click.Context(command), call=True)
@@ -277,7 +277,7 @@ class NumericField(BaseWidget):
                     :class:`~clickqt.widgets.basewidget.MultiWidget`- / :class:`~clickqt.widgets.confirmationwidget.ConfirmationWidget`-widgets
     """
 
-    def setValue(self, value: t.Any):
+    def set_value(self, value: t.Any):
         self.widget.setValue(
             self.type.convert(
                 value=str(value),
@@ -286,17 +286,17 @@ class NumericField(BaseWidget):
             )
         )
 
-    def setMinimum(self, minval: t.Union[int, float]):
+    def set_minimum(self, minval: t.Union[int, float]):
         """Sets the minimum value."""
 
         self.widget.setMinimum(minval)
 
-    def setMaximum(self, maxval: t.Union[int, float]):
+    def set_maximum(self, maxval: t.Union[int, float]):
         """Sets the maximum value."""
 
         self.widget.setMaximum(maxval)
 
-    def getWidgetValue(self) -> t.Union[int, float]:
+    def get_widget_value(self) -> t.Union[int, float]:
         return self.widget.value()
 
 
@@ -316,10 +316,10 @@ class ComboBoxBase(BaseWidget):
             otype, click.Choice
         ), f"'otype' must be of type '{click.Choice}', but is '{type(otype)}'."
 
-        self.addItems(otype.choices)
+        self.add_items(otype.choices)
 
     @abstractmethod
-    def addItems(self, items: t.Iterable[str]):
+    def add_items(self, items: t.Iterable[str]):
         """Adds each of the strings in **items** to the checkable combobox."""
 
 
@@ -350,13 +350,13 @@ class MultiWidget(BaseWidget):
                 )
             ) is not None:
                 # self.type.split_envvar_value(envvar_values) does not work because clicks "self.envvar_list_splitter" is not set corrently
-                self.setValue(envvar_values.split(os.path.pathsep))
+                self.set_value(envvar_values.split(os.path.pathsep))
             elif (
-                default := BaseWidget.getParamDefault(self.param, None)
+                default := BaseWidget.get_param_default(self.param, None)
             ) is not None:  # Consider default value
-                self.setValue(default)
+                self.set_value(default)
 
-    def setValue(self, value: t.Iterable[t.Any]):
+    def set_value(self, value: t.Iterable[t.Any]):
         if len(value) != self.param.nargs:
             raise click.BadParameter(
                 ngettext(
@@ -369,13 +369,13 @@ class MultiWidget(BaseWidget):
             )
 
         for i, c in enumerate(self.children):
-            c.setValue(value[i])
+            c.set_value(value[i])
 
-    def handleValid(self, valid: bool):
+    def handle_valid(self, valid: bool):
         for c in self.children:
-            c.handleValid(valid)
+            c.handle_valid(valid)
 
-    def isEmpty(self) -> bool:
+    def is_empty(self) -> bool:
         """ "Checks whether the widget is empty. This is the case when there are no children or when at least one (string-based) children is empty.
 
         :return: True, if this widget has no children or at least one children is empty, False otherwise
@@ -384,7 +384,7 @@ class MultiWidget(BaseWidget):
         if len(self.children) == 0:
             return True
 
-        return any([c.isEmpty() for c in self.children])
+        return any([c.is_empty() for c in self.children])
 
-    def getWidgetValue(self) -> t.Iterable[t.Any]:
-        return [c.getWidgetValue() for c in self.children]
+    def get_widget_value(self) -> t.Iterable[t.Any]:
+        return [c.get_widget_value() for c in self.children]
