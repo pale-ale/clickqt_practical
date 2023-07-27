@@ -267,13 +267,7 @@ class Control(QObject):
                 (x.flag_value for x in switch_names if x.default),
                 switch_names[0].flag_value,
             )  # First param with default==True is the default
-            required_optional_box[
-                0,
-                # if switch_names[0].required
-                # or isinstance(switch_names[0], click.Argument)
-                # else 1
-                0 if choice.required else 1,
-            ].layout().addWidget(
+            required_optional_box[0 if choice.required else 1].layout().addWidget(
                 self.parameter_to_widget(cmd, groups_command_name, choice)
             )
             self.widget_registry[groups_command_name][param_name].set_value(default)
@@ -386,7 +380,7 @@ class Control(QObject):
         widget_values = []
         for widget in widgets:
             if widget != "yes":
-                widget_values.append(widgets[widget].getWidgetValue())
+                widget_values.append(widgets[widget].get_widget_value())
         parameter_strings = []
         for i, param in enumerate(parameter_list):
             if param[0] == "Argument":

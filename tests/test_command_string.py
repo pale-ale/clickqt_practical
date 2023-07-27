@@ -27,7 +27,7 @@ def test_command_with_ep(click_attrs: dict, value: t.Any, expected_output: str):
     control.set_ep_or_path("main")
     control.set_is_ep(True)
     widget = control.widget_registry[cli.name][param.name]
-    widget.setValue(value)
+    widget.set_value(value)
 
     control.construct_command_string()
 
