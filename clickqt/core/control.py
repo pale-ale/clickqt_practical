@@ -22,8 +22,7 @@ from PySide6.QtGui import QPalette, QClipboard
 from clickqt.core.gui import GUI
 from clickqt.core.commandexecutor import CommandExecutor
 from clickqt.core.error import ClickQtError
-from clickqt.widgets.confirmationwidget import ConfirmationWidget
-from clickqt.widgets.combobox import CheckableComboBox
+from clickqt.widgets.combobox import CheckableComboBox, ComboBox
 from clickqt.widgets.basewidget import BaseWidget
 from clickqt.widgets.messagebox import MessageBox
 from clickqt.widgets.filefield import FileField
@@ -335,11 +334,23 @@ class Control(QObject):
                 short_forms = max(short_forms, key=len) if short_forms else None
                 if longest_long_form:
                     option_names.append(
-                        (longest_long_form, param.type, param.multiple, param.nargs)
+                        (
+                            longest_long_form,
+                            param.type,
+                            param.multiple,
+                            param.nargs,
+                            param.confirmation_prompt,
+                        )
                     )
                 else:
                     option_names.append(
-                        (short_forms, param.type, param.multiple, param.nargs)
+                        (
+                            short_forms,
+                            param.type,
+                            param.multiple,
+                            param.nargs,
+                            param.confirmation_prompt,
+                        )
                     )
             elif isinstance(param, click.Argument):
                 option_names.append(("Argument", param.type))
@@ -388,12 +399,26 @@ class Control(QObject):
                 continue
             if (not isinstance(widget_values[i], list)) and param[2] is not True:
                 widget_value = str(widget_values[i])
-                if is_file_path(widget_value):
-                    parameter_strings.append(param[0] + " " + widget_value)
+                if (isinstance(param[1], click.Choice) and param[4] is True) or (
+                    isinstance(param[1], click.Choice)
+                ):
+                    if is_file_path(widget_value):
+                        parameter_strings.append(param[0] + "=" + widget_value)
+                    else:
+                        parameter_strings.append(
+                            param[0]
+                            + "="
+                            + re.sub(r"[^a-zA-Z0-9 .-]", " ", widget_value)
+                        )
                 else:
-                    parameter_strings.append(
-                        param[0] + " " + re.sub(r"[^a-zA-Z0-9 .-]", " ", widget_value)
-                    )
+                    if is_file_path(widget_value):
+                        parameter_strings.append(param[0] + " " + widget_value)
+                    else:
+                        parameter_strings.append(
+                            param[0]
+                            + " "
+                            + re.sub(r"[^a-zA-Z0-9 .-]", " ", widget_value)
+                        )
             else:
                 if is_nested_list(widget_values[i]):
                     depth = len(widget_values[i])
