@@ -94,3 +94,106 @@ def test_command_with_ep(click_attrs: dict, value: t.Any, expected_output: str):
     clipboard = QApplication.clipboard()
     print(clipboard.text(QClipboard.Clipboard))
     assert clipboard.text(QClipboard.Clipboard) == expected_output
+
+
+@pytest.mark.parametrize(
+    ("click_attrs", "value", "expected_output"),
+    [
+        (ClickAttrs.intfield(), 12, "python example/example/main.py  --p 12"),
+        (ClickAttrs.textfield(), "test", "python example/example/main.py  --p test"),
+        (ClickAttrs.realfield(), 0.8, "python example/example/main.py  --p 0.8"),
+        (ClickAttrs.passwordfield(), "abc", "python example/example/main.py  --p abc"),
+        (ClickAttrs.checkbox(), True, "python example/example/main.py  --p True"),
+        (ClickAttrs.checkbox(), False, "python example/example/main.py  --p False"),
+        (
+            ClickAttrs.intrange(maxval=2, clamp=True),
+            5,
+            "python example/example/main.py  --p 2",
+        ),
+        (
+            ClickAttrs.floatrange(maxval=2.05, clamp=True),
+            5,
+            "python example/example/main.py  --p 2.05",
+        ),
+        (
+            ClickAttrs.combobox(
+                choices=["A", "B", "C"], case_sensitive=False, confirmation_prompt=True
+            ),
+            "B",
+            "python example/example/main.py  --p=B",
+        ),
+        (
+            ClickAttrs.combobox(choices=["A", "B", "C"], case_sensitive=False),
+            "B",
+            "python example/example/main.py  --p=B",
+        ),
+        (
+            ClickAttrs.checkable_combobox(choices=["A", "B", "C"]),
+            ["B", "C"],
+            "python example/example/main.py  --p=B --p=C",
+        ),
+        (
+            ClickAttrs.checkable_combobox(choices=["A", "B", "C"]),
+            ["A"],
+            "python example/example/main.py  --p=A",
+        ),
+        (
+            ClickAttrs.checkable_combobox(choices=["A", "B", "C"]),
+            ["A", "B", "C"],
+            "python example/example/main.py  --p=A --p=B --p=C",
+        ),
+        (
+            ClickAttrs.tuple_widget(types=(str, int, float)),
+            ("t", 1, -2.0),
+            "python example/example/main.py  --p  t  1  -2.0",
+        ),
+        (
+            ClickAttrs.nvalue_widget(type=(str, int)),
+            [["a", 12], ["b", 11]],
+            "python example/example/main.py  --p   a   12  --p   b   11 ",
+        ),
+        (
+            (
+                ClickAttrs.multi_value_widget(nargs=2),
+                ["foo", "bar"],
+                "python example/example/main.py  --p  foo  bar",
+            )
+        ),
+        (
+            ClickAttrs.multi_value_widget(nargs=2, default=["A", "B"]),
+            ["A", "C"],
+            "python example/example/main.py  --p  A  C",
+        ),
+        (
+            ClickAttrs.multi_value_widget(nargs=2, default=["A", "B"]),
+            [" ", " "],
+            "python example/example/main.py  --p      ",
+        ),
+        (
+            ClickAttrs.nvalue_widget(type=(click.types.File(), int)),
+            [[".gitignore", 12], ["setup.py", -1]],
+            "python example/example/main.py  --p   .gitignore   12  --p   setup.py   -1 ",
+        ),
+    ],
+)
+def test_construct_cmd_string_file(
+    click_attrs: dict, value: t.Any, expected_output: str
+):
+    param = click.Option(param_decls=["--p"], **click_attrs)
+    cli = click.Command("cli", params=[param])
+    control = clickqt.qtgui_from_click(cli)
+    control.set_ep_or_path("example/example/main.py")
+    control.set_is_ep(False)
+    widget = control.widget_registry[cli.name][param.name]
+    widget.set_value(value)
+
+    control.construct_command_string()
+
+    assert control.is_ep is False
+    assert control.ep_or_path == "example/example/main.py"
+    assert control.cmd == cli
+
+    # Simulate clipboard behavior using QApplication.clipboard()
+    clipboard = QApplication.clipboard()
+    print(clipboard.text(QClipboard.Clipboard))
+    assert clipboard.text(QClipboard.Clipboard) == expected_output
