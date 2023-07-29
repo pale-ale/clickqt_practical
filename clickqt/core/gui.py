@@ -41,6 +41,20 @@ class GUI:
     which is used to navigate through the different kind of commands and execute them.
     """
 
+    typedict = {
+        click.types.BoolParamType: CheckBox,
+        click.types.IntParamType: IntField,
+        click.types.FloatParamType: RealField,
+        click.types.StringParamType: TextField,
+        click.types.UUIDParameterType: TextField,
+        click.types.UnprocessedParamType: TextField,
+        click.types.DateTime: DateTimeEdit,
+        click.types.Tuple: TupleWidget,
+        click.types.Choice: ComboBox,
+        click.types.Path: FilePathField,
+        click.types.File: FileField,
+    }
+
     def __init__(self):
         self.window = QWidget()
         self.window.setLayout(QVBoxLayout())
@@ -108,7 +122,7 @@ class GUI:
         geo.moveCenter(center)
         self.window.move(geo.topLeft())
 
-    def create_widget(  # pylint: disable=no-self-use
+    def create_widget(
         self, otype: click.ParamType, param: click.Parameter, **kwargs
     ) -> BaseWidget:
         """
@@ -125,31 +139,21 @@ class GUI:
             needed for :class:`~clickqt.widgets.basewidget.MultiWidget`-widgets
         """
 
-        typedict = {
-            click.types.BoolParamType: MessageBox
-            if hasattr(param, "is_flag")
-            and param.is_flag
-            and hasattr(param, "prompt")
-            and param.prompt
-            else CheckBox,
-            click.types.IntParamType: IntField,
-            click.types.FloatParamType: RealField,
-            click.types.StringParamType: PasswordField
-            if hasattr(param, "hide_input") and param.hide_input
-            else TextField,
-            click.types.UUIDParameterType: TextField,
-            click.types.UnprocessedParamType: TextField,
-            click.types.DateTime: DateTimeEdit,
-            click.types.Tuple: TupleWidget,
-            click.types.Choice: ComboBox,
-            click.types.Path: FilePathField,
-            click.types.File: FileField,
-        }
-
         def get_multiarg_version(otype: click.ParamType):
             if isinstance(otype, click.types.Choice):
                 return CheckableComboBox
             return NValueWidget
+
+        if (
+            hasattr(param, "is_flag")
+            and param.is_flag
+            and hasattr(param, "prompt")
+            and param.prompt
+        ):
+            return MessageBox(otype, param, **kwargs)
+
+        if hasattr(param, "hide_input") and param.hide_input:
+            return PasswordField(otype, param, **kwargs)
 
         if hasattr(param, "confirmation_prompt") and param.confirmation_prompt:
             return ConfirmationWidget(otype, param, **kwargs)
@@ -160,7 +164,7 @@ class GUI:
                 return TupleWidget(otype, param, **kwargs)
             return MultiValueWidget(otype, param, **kwargs)
 
-        for t, widgetclass in typedict.items():
+        for t, widgetclass in GUI.typedict.items():
             if isinstance(otype, t):
                 return widgetclass(otype, param, **kwargs)
 

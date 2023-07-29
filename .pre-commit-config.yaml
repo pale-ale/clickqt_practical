@@ -23,3 +23,4 @@ repos:
         - --ignore-imports=yes
         - -d duplicate-code
         - --disable=import-error
+        - --disable=no-self-use
