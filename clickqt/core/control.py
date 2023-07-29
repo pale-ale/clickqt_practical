@@ -98,7 +98,7 @@ class Control(QObject):
         assert param.name, "No parameter name specified"
         assert self.widget_registry[groups_command_name].get(param.name) is None
 
-        widget = self.gui.create_widget(
+        widget = self.gui.create_widget( #pylint: disable=no-self-use
             param.type, param, widgetsource=self.gui.create_widget, com=command
         )
         self.widget_registry[groups_command_name][param.name] = widget
