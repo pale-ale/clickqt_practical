@@ -22,7 +22,7 @@ from PySide6.QtGui import QPalette, QClipboard
 from clickqt.core.gui import GUI
 from clickqt.core.commandexecutor import CommandExecutor
 from clickqt.core.error import ClickQtError
-from clickqt.widgets.confirmationwidget import ConfirmationWidget
+from clickqt.widgets.combobox import CheckableComboBox, ComboBox
 from clickqt.widgets.basewidget import BaseWidget
 from clickqt.widgets.messagebox import MessageBox
 from clickqt.widgets.filefield import FileField
@@ -247,7 +247,10 @@ class Control(QObject):
                     feature_switches[param.name].append(param)
                 else:
                     required_optional_box[
-                        0 if (param.required or isinstance(param, click.Argument)) and param.default is None else 1
+                        0
+                        if (param.required or isinstance(param, click.Argument))
+                        and param.default is None
+                        else 1
                     ].layout().addWidget(
                         self.parameter_to_widget(cmd, groups_command_name, param)
                     )
@@ -263,9 +266,7 @@ class Control(QObject):
                 (x.flag_value for x in switch_names if x.default),
                 switch_names[0].flag_value,
             )  # First param with default==True is the default
-            required_optional_box[
-                0 if choice.required else 1
-            ].layout().addWidget(
+            required_optional_box[0 if choice.required else 1].layout().addWidget(
                 self.parameter_to_widget(cmd, groups_command_name, choice)
             )
             self.widget_registry[groups_command_name][param_name].set_value(default)
@@ -319,7 +320,7 @@ class Control(QObject):
             return [cmd] + self.current_command_hierarchy(
                 tab_widget.currentWidget(), command
             )
-       
+
         return [cmd]
 
     def get_option_names(self, cmd):
@@ -333,11 +334,23 @@ class Control(QObject):
                 short_forms = max(short_forms, key=len) if short_forms else None
                 if longest_long_form:
                     option_names.append(
-                        (longest_long_form, param.type, param.multiple, param.nargs)
+                        (
+                            longest_long_form,
+                            param.type,
+                            param.multiple,
+                            param.nargs,
+                            param.confirmation_prompt,
+                        )
                     )
                 else:
                     option_names.append(
-                        (short_forms, param.type, param.multiple, param.nargs)
+                        (
+                            short_forms,
+                            param.type,
+                            param.multiple,
+                            param.nargs,
+                            param.confirmation_prompt,
+                        )
                     )
             elif isinstance(param, click.Argument):
                 option_names.append(("Argument", param.type))
@@ -372,9 +385,12 @@ class Control(QObject):
         parameter_list = self.get_option_names(selected_command)
         parameter_list = [param for param in parameter_list if param[0] != "--yes"]
         widgets = self.widget_registry[hierarchy_selected_name]
+        widget_keys = list(widgets.keys())
+        if "yes" in widgets:
+            widgets.pop("yes")
         widget_values = []
         for widget in widgets:
-            if (not isinstance(widget, ConfirmationWidget)) and widget != "yes":
+            if widget != "yes":
                 widget_values.append(widgets[widget].get_widget_value())
         parameter_strings = []
         for i, param in enumerate(parameter_list):
@@ -383,14 +399,26 @@ class Control(QObject):
                 continue
             if (not isinstance(widget_values[i], list)) and param[2] is not True:
                 widget_value = str(widget_values[i])
-                if is_file_path(widget_value):
-                    parameter_strings.append(param[0] + " " + widget_value)
+                if (isinstance(param[1], click.Choice) and param[4] is True) or (
+                    isinstance(param[1], click.Choice)
+                ):
+                    if is_file_path(widget_value):
+                        parameter_strings.append(param[0] + "=" + widget_value)
+                    else:
+                        parameter_strings.append(
+                            param[0]
+                            + "="
+                            + re.sub(r"[^a-zA-Z0-9 .-]", " ", widget_value)
+                        )
                 else:
-                    parameter_strings.append(
-                        param[0]
-                        + " "
-                        + re.sub(r"[^a-zA-Z0-9 .-]", " ", widget_value)
-                    )
+                    if is_file_path(widget_value):
+                        parameter_strings.append(param[0] + " " + widget_value)
+                    else:
+                        parameter_strings.append(
+                            param[0]
+                            + " "
+                            + re.sub(r"[^a-zA-Z0-9 .-]", " ", widget_value)
+                        )
             else:
                 if is_nested_list(widget_values[i]):
                     depth = len(widget_values[i])
@@ -403,9 +431,7 @@ class Control(QObject):
                                 + re.sub(r"[^a-zA-Z0-9 .-]", " ", widget_value)
                             )
                         else:
-                            parameter_strings.append(
-                                param[0] + " " + widget_value
-                            )
+                            parameter_strings.append(param[0] + " " + widget_value)
                 else:
                     length = len(widget_values[i])
                     if param[2] is not True:
@@ -419,18 +445,32 @@ class Control(QObject):
                             else:
                                 parameter_strings.append(" " + widget_value)
                     else:
-                        for j in range(length):
-                            widget_value = str(widget_values[i][j])
-                            if not is_file_path(widget_value):
-                                parameter_strings.append(
-                                    param[0]
-                                    + " "
-                                    + re.sub(r"[^a-zA-Z0-9 .-]", " ", widget_value)
-                                )
-                            else:
-                                parameter_strings.append(
-                                    param[0] + " " + widget_value
-                                )
+                        if isinstance(widgets[widget_keys[i]], CheckableComboBox):
+                            for j in range(length):
+                                widget_value = str(widget_values[i][j])
+                                if not is_file_path(widget_value):
+                                    parameter_strings.append(
+                                        param[0]
+                                        + "="
+                                        + re.sub(r"[^a-zA-Z0-9 .-]", " ", widget_value)
+                                    )
+                                else:
+                                    parameter_strings.append(
+                                        param[0] + "=" + widget_value
+                                    )
+                        else:
+                            for j in range(length):
+                                widget_value = str(widget_values[i][j])
+                                if not is_file_path(widget_value):
+                                    parameter_strings.append(
+                                        param[0]
+                                        + " "
+                                        + re.sub(r"[^a-zA-Z0-9 .-]", " ", widget_value)
+                                    )
+                                else:
+                                    parameter_strings.append(
+                                        param[0] + " " + widget_value
+                                    )
         message = hierarchy_selected_name + " " + " ".join(parameter_strings)
         message = re.sub(r"\b{}\b".format(re.escape(self.cmd.name)), "", message)
         message = message.replace(":", " ")
@@ -548,7 +588,9 @@ class Control(QObject):
                     )
                     return lambda: command.callback(*args, **kwargs)
             else:
-                return lambda: command.callback(**kwargs) # pylint: disable=unnecessary-lambda
+                return lambda: command.callback(
+                    **kwargs
+                )  # pylint: disable=unnecessary-lambda
 
         callables: list[t.Callable] = []
         for i, command in enumerate(hierarchy_selected_command, 1):
