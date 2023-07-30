@@ -124,8 +124,7 @@ class GUI:
 
     def update_typedict(self, custom_mapping):
         assert len(custom_mapping) >= 1
-        for c_key in custom_mapping:
-            GUI.typedict[c_key].append(custom_mapping[c_key])
+        GUI.typedict.update(custom_mapping)
 
     def create_widget(
         self, otype: click.ParamType, param: click.Parameter, **kwargs

@@ -22,7 +22,7 @@ from PySide6.QtGui import QPalette, QClipboard
 from clickqt.core.gui import GUI
 from clickqt.core.commandexecutor import CommandExecutor
 from clickqt.core.error import ClickQtError
-from clickqt.widgets.combobox import CheckableComboBox, ComboBox
+from clickqt.widgets.combobox import CheckableComboBox
 from clickqt.widgets.basewidget import BaseWidget
 from clickqt.widgets.messagebox import MessageBox
 from clickqt.widgets.filefield import FileField
@@ -41,9 +41,9 @@ class Control(QObject):
     def __init__(
         self,
         cmd: click.Command,
+        custom_mapping: dict = None,
         is_ep: bool = True,
         ep_or_path: str = " ",
-        custom_mapping: dict = {},
     ):
         """Initializing the GUI object and the registries together with the differentiation of a group command and a simple command."""
 
