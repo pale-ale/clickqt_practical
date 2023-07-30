@@ -39,7 +39,11 @@ class Control(QObject):
     requestExecution: Signal = Signal(list, click.Context)  # Generics do not work here
 
     def __init__(
-        self, cmd: click.Command, is_ep: bool = True, ep_or_path: str = "test"
+        self,
+        cmd: click.Command,
+        is_ep: bool = True,
+        ep_or_path: str = " ",
+        custom_mapping: dict = {},
     ):
         """Initializing the GUI object and the registries together with the differentiation of a group command and a simple command."""
 
@@ -50,6 +54,8 @@ class Control(QObject):
 
         self.is_ep = is_ep
         self.ep_or_path = ep_or_path
+
+        self.custom_mapping = custom_mapping
 
         # Create a worker in another thread when the user clicks the run button
         # Don't destroy a thread when no command is running and the user closes the application
@@ -73,7 +79,8 @@ class Control(QObject):
 
     def __call__(self):
         """Shows the GUI according to :func:`~clickqt.core.gui.GUI.__call__` of :class:`~clickqt.core.gui.GUI`."""
-
+        if len(self.custom_mapping) >= 1:
+            self.gui.update_typedict(self.custom_mapping)
         self.gui()
 
     def set_ep_or_path(self, ep_or_path):
@@ -81,6 +88,9 @@ class Control(QObject):
 
     def set_is_ep(self, is_ep):
         self.is_ep = is_ep
+
+    def set_custom_mappping(self, custom_mapping):
+        self.custom_mapping = custom_mapping
 
     def parameter_to_widget(
         self, command: click.Command, groups_command_name: str, param: click.Parameter
@@ -98,9 +108,10 @@ class Control(QObject):
         assert param.name, "No parameter name specified"
         assert self.widget_registry[groups_command_name].get(param.name) is None
 
-        widget = self.gui.create_widget( #pylint: disable=no-self-use
+        widget = self.gui.create_widget(  # pylint: disable=no-self-use
             param.type, param, widgetsource=self.gui.create_widget, com=command
         )
+
         self.widget_registry[groups_command_name][param.name] = widget
         self.command_registry[groups_command_name][param.name] = (
             param.nargs,

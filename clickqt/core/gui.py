@@ -122,6 +122,11 @@ class GUI:
         geo.moveCenter(center)
         self.window.move(geo.topLeft())
 
+    def update_typedict(self, custom_mapping):
+        assert len(custom_mapping) >= 1
+        for c_key in custom_mapping:
+            GUI.typedict[c_key].append(custom_mapping[c_key])
+
     def create_widget(
         self, otype: click.ParamType, param: click.Parameter, **kwargs
     ) -> BaseWidget:
