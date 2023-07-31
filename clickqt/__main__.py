@@ -32,21 +32,27 @@ def clickqtfy(entrypoint, gui, funcname):
             control.set_ep_or_path(entrypoint)
             control.set_is_ep(False)
         else:
-            control = qtgui_from_click(get_command_from_entrypoint(entrypoint))
-            control.set_custom_mappping(get_gui_specs_from_entrypoint(gui))
-            control.set_ep_or_path(entrypoint)
-            control.set_is_ep(True)
+            try:
+                control = qtgui_from_click(get_command_from_entrypoint(entrypoint))
+                control.set_custom_mappping(get_gui_specs_from_entrypoint(gui))
+                control.set_ep_or_path(entrypoint)
+                control.set_is_ep(True)
+            except ImportError:
+                fileparam = click.types.File()
+                fileparam.convert(entrypoint, None, None)
+                control = qtgui_from_click(get_command_from_path(entrypoint, gui))
+                control.set_ep_or_path(entrypoint)
+                control.set_is_ep(False)
+    elif funcname:
+        fileparam = click.types.File()
+        fileparam.convert(entrypoint, None, None)
+        control = qtgui_from_click(get_command_from_path(entrypoint, funcname))
+        control.set_ep_or_path(entrypoint)
+        control.set_is_ep(False)
     else:
-        if funcname:
-            fileparam = click.types.File()
-            fileparam.convert(entrypoint, None, None)
-            control = qtgui_from_click(get_command_from_path(entrypoint, funcname))
-            control.set_ep_or_path(entrypoint)
-            control.set_is_ep(False)
-        else:
-            control = qtgui_from_click(get_command_from_entrypoint(entrypoint))
-            control.set_ep_or_path(entrypoint)
-            control.set_is_ep(True)
+        control = qtgui_from_click(get_command_from_entrypoint(entrypoint))
+        control.set_ep_or_path(entrypoint)
+        control.set_is_ep(True)
 
     return control()
 
