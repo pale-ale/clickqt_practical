@@ -89,7 +89,7 @@ class Control(QObject):
     def set_is_ep(self, is_ep):
         self.is_ep = is_ep
 
-    def set_custom_mappping(self, custom_mapping):
+    def set_custom_mapping(self, custom_mapping):
         self.custom_mapping = custom_mapping
 
     def parameter_to_widget(

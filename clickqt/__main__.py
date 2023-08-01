@@ -23,32 +23,25 @@ def clickqtfy(entrypoint, gui, funcname):
     FUNCNAME: Name of the click.command inside the file at ENTRYPOINT.\n
     If FUNCNAME is provided, ENTRYPOINT is interpreted as a file. Otherwise, as an entry point.
     """
-    if gui:
-        if funcname:
-            fileparam = click.types.File()
-            fileparam.convert(entrypoint, None, None)
-            control = qtgui_from_click(get_command_from_path(entrypoint, funcname))
-            control.set_custom_mappping(get_gui_specs_from_path(entrypoint, gui))
-            control.set_ep_or_path(entrypoint)
-            control.set_is_ep(False)
-        else:
-            try:
-                control = qtgui_from_click(get_command_from_entrypoint(entrypoint))
-                control.set_custom_mappping(get_gui_specs_from_entrypoint(gui))
-                control.set_ep_or_path(entrypoint)
-                control.set_is_ep(True)
-            except ImportError:
-                fileparam = click.types.File()
-                fileparam.convert(entrypoint, None, None)
-                control = qtgui_from_click(get_command_from_path(entrypoint, gui))
-                control.set_ep_or_path(entrypoint)
-                control.set_is_ep(False)
-    elif funcname:
+    if funcname and gui:
         fileparam = click.types.File()
         fileparam.convert(entrypoint, None, None)
         control = qtgui_from_click(get_command_from_path(entrypoint, funcname))
+        control.set_custom_mapping(get_gui_specs_from_path(entrypoint, gui))
         control.set_ep_or_path(entrypoint)
         control.set_is_ep(False)
+    elif gui:
+        try:
+            control = qtgui_from_click(get_command_from_entrypoint(entrypoint))
+            control.set_custom_mapping(get_gui_specs_from_entrypoint(gui))
+            control.set_ep_or_path(entrypoint)
+            control.set_is_ep(True)
+        except ImportError:
+            fileparam = click.types.File()
+            fileparam.convert(entrypoint, None, None)
+            control = qtgui_from_click(get_command_from_path(entrypoint, gui))
+            control.set_ep_or_path(entrypoint)
+            control.set_is_ep(False)
     else:
         control = qtgui_from_click(get_command_from_entrypoint(entrypoint))
         control.set_ep_or_path(entrypoint)
