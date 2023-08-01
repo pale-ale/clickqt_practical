@@ -56,6 +56,7 @@ class Control(QObject):
         self.ep_or_path = ep_or_path
 
         self.custom_mapping = custom_mapping
+        self.update_gui_specs(self.custom_mapping)
 
         # Create a worker in another thread when the user clicks the run button
         # Don't destroy a thread when no command is running and the user closes the application
@@ -79,8 +80,7 @@ class Control(QObject):
 
     def __call__(self):
         """Shows the GUI according to :func:`~clickqt.core.gui.GUI.__call__` of :class:`~clickqt.core.gui.GUI`."""
-        if len(self.custom_mapping) >= 1:
-            self.gui.update_typedict(self.custom_mapping)
+
         self.gui()
 
     def set_ep_or_path(self, ep_or_path):
@@ -91,6 +91,7 @@ class Control(QObject):
 
     def set_custom_mapping(self, custom_mapping):
         self.custom_mapping = custom_mapping
+
 
     def parameter_to_widget(
         self, command: click.Command, groups_command_name: str, param: click.Parameter
@@ -117,8 +118,9 @@ class Control(QObject):
             param.nargs,
             type(param.type).__name__,
         )
-
-        return widget.container
+        if hasattr(widget, "container"):
+            return widget.container
+        return widget
 
     def concat(self, a: str, b: str) -> str:  # pylint: disable=no-self-use
         """Concatenates the strings a and b with ':' and returns the result."""
@@ -539,7 +541,7 @@ class Control(QObject):
             kwargs: dict[str, t.Any] = {}
             has_error = False
             dialog_widgets: list[BaseWidget] = []  # widgets that will show a dialog
-
+            print(self.gui.custom_mapping)
             if (
                 self.widget_registry.get(hierarchy_command) is not None
             ):  # Groups with no options are not in the dict

@@ -26,14 +26,17 @@ def clickqtfy(entrypoint, gui, funcname):
     if funcname and gui:
         fileparam = click.types.File()
         fileparam.convert(entrypoint, None, None)
-        control = qtgui_from_click(get_command_from_path(entrypoint, funcname))
-        control.set_custom_mapping(get_gui_specs_from_path(entrypoint, gui))
+        gui_specs = get_gui_specs_from_path(entrypoint, gui)
+        control = qtgui_from_click(
+            get_command_from_path(entrypoint, funcname), gui_specs
+        )
         control.set_ep_or_path(entrypoint)
         control.set_is_ep(False)
     elif gui:
         try:
-            control = qtgui_from_click(get_command_from_entrypoint(entrypoint))
-            control.set_custom_mapping(get_gui_specs_from_entrypoint(gui))
+            control = qtgui_from_click(
+                get_command_from_entrypoint(entrypoint), gui_specs
+            )
             control.set_ep_or_path(entrypoint)
             control.set_is_ep(True)
         except ImportError:

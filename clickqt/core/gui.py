@@ -20,19 +20,15 @@ from PySide6.QtGui import (
 )
 from clickqt.widgets.multivaluewidget import MultiValueWidget
 from clickqt.widgets.basewidget import BaseWidget
-from clickqt.widgets.checkbox import CheckBox
 from clickqt.widgets.textfield import TextField
 from clickqt.widgets.passwordfield import PasswordField
-from clickqt.widgets.numericfields import IntField, RealField
-from clickqt.widgets.combobox import ComboBox, CheckableComboBox
-from clickqt.widgets.datetimeedit import DateTimeEdit
+from clickqt.widgets.combobox import CheckableComboBox
 from clickqt.widgets.tuplewidget import TupleWidget
-from clickqt.widgets.filepathfield import FilePathField
-from clickqt.widgets.filefield import FileField
 from clickqt.widgets.nvaluewidget import NValueWidget
 from clickqt.widgets.confirmationwidget import ConfirmationWidget
 from clickqt.widgets.messagebox import MessageBox
 from clickqt.core.output import OutputStream, TerminalOutput
+from .typedict import typedict
 
 
 class GUI:
@@ -40,20 +36,6 @@ class GUI:
     Responsible for setting up the components for the Qt-GUI,
     which is used to navigate through the different kind of commands and execute them.
     """
-
-    typedict = {
-        click.types.BoolParamType: CheckBox,
-        click.types.IntParamType: IntField,
-        click.types.FloatParamType: RealField,
-        click.types.StringParamType: TextField,
-        click.types.UUIDParameterType: TextField,
-        click.types.UnprocessedParamType: TextField,
-        click.types.DateTime: DateTimeEdit,
-        click.types.Tuple: TupleWidget,
-        click.types.Choice: ComboBox,
-        click.types.Path: FilePathField,
-        click.types.File: FileField,
-    }
 
     def __init__(self):
         self.window = QWidget()
@@ -66,6 +48,8 @@ class GUI:
 
         self.widgets_container: QWidget = None  # Control constructs this Qt-widget
 
+        self.typedict = typedict
+        self.custom_mapping = {}
         self.buttons_container = QWidget()
         self.buttons_container.setLayout(QHBoxLayout())
         self.buttons_container.setSizePolicy(
@@ -124,7 +108,7 @@ class GUI:
 
     def update_typedict(self, custom_mapping):
         assert len(custom_mapping) >= 1
-        GUI.typedict.update(custom_mapping)
+        self.custom_mapping.update(custom_mapping)
 
     def create_widget(
         self, otype: click.ParamType, param: click.Parameter, **kwargs
@@ -168,8 +152,19 @@ class GUI:
                 return TupleWidget(otype, param, **kwargs)
             return MultiValueWidget(otype, param, **kwargs)
 
-        for t, widgetclass in GUI.typedict.items():
+        for t, widgetclass in self.typedict.items():
             if isinstance(otype, t):
+                # print(param)
+                # print(otype)
                 return widgetclass(otype, param, **kwargs)
+
+        for t, widgetclass in self.custom_mapping.items():
+            if isinstance(otype, t):
+                parameter = QWidget()
+                hBox = QHBoxLayout()
+                widget = widgetclass()
+                parameter.setLayout(hBox)
+                hBox.addWidget(widget)
+                return parameter
 
         return TextField(otype, param, **kwargs)  # Custom types are mapped to TextField
