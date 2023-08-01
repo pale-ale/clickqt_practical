@@ -21,7 +21,7 @@ into
 ![test](readme_resources/clickqt_interface.png)
 
 
-## Installation
+# Installation
 
 The Python package `clickqt` can be installed from PyPI:
 
@@ -46,13 +46,13 @@ Having done so, the test suite can be run using `pytest`:
 python -m pytest
 ```
 
-## Usage
+# Usage
 
 ![test](readme_resources/preview.gif)
 
 
 `clickqt` is designed to allow two ways of usage:
-  ### External
+  ## External
 To use `clickqt` externally, you can run the entry point created by installing `clickqt`, called `clickqtfy`.
 There are two ways to use this entry point:
 - ```
@@ -64,21 +64,29 @@ This way works if you have an installed entry point.
   ```
 In cases where there is no installed entry point, you can use this method instead, providing a path/filename for ENTRYPOINT and a function name within that file for FUNCNAME.
 
-  ### Wrapper
-You can create your own python file using `clickqt` like this:
-``` python
-from clickqt import qt_gui_from_click
-import click
+## Wrapper with Entry Point
+You can create entry points for `clickqt` in two steps:
+* Create the control for the GUI as a variable (in a file named `somefile.py` in the top-level directory of package `somepackage`):
+  ``` python
+  from clickqt import qt_gui_from_click
+  import click
 
-@click.command(...)
-def foo(...):
-  pass
+  @click.command(...)
+  def foo(...):
+    pass
 
-qt_gui_from_click(foo)()
-```
+  ui_handle = qt_gui_from_click(foo)
+  ```
+* Then reference `ui_handle` in the `gui_scripts` section of your `pyproject.toml` file like this:
+  ``` python
+  [project.gui-scripts]
+  gui = "somepackage.somefile:ui_handle"
+  ```
+After installing, you can run this entry point by typing `gui` in your console, create a desktop shortcut linked to it, etc..
 
 
-## Limitations
+
+# Limitations
 
 Currently clickqt only supports the built-in features from click.
 This means that any user defined behaviour (e.g., custom ParamTypes / Commands / Contexts) will propably not work as expected.
@@ -86,6 +94,6 @@ Furthermore, clickqt handles envvar options diffently from click.
 In particular clickqt always splits the envvar whereas click does this dependent on the ParamType.
 Future releases will take these issues into account.
 
-## Acknowledgments
+# Acknowledgments
 
 This repository was set up using the [SSC Cookiecutter for Python Packages](https://github.com/ssciwr/cookiecutter-python-package).
