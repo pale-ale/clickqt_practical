@@ -11,6 +11,7 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QPushButton,
     QSizePolicy,
+    QLabel,
 )
 from PySide6.QtGui import (
     QColor,
@@ -154,16 +155,15 @@ class GUI:
 
         for t, widgetclass in self.typedict.items():
             if isinstance(otype, t):
-                # print(param)
-                # print(otype)
                 return widgetclass(otype, param, **kwargs)
 
         for t, widgetclass in self.custom_mapping.items():
             if isinstance(otype, t):
                 parameter = QWidget()
-                hBox = QHBoxLayout()
+                hBox = QVBoxLayout()
                 widget = widgetclass()
                 parameter.setLayout(hBox)
+                hBox.addWidget(QLabel(f"<b>{param.name}</b> "))
                 hBox.addWidget(widget)
                 return parameter
 

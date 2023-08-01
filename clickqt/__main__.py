@@ -34,12 +34,13 @@ def clickqtfy(entrypoint, gui, funcname):
         control.set_is_ep(False)
     elif gui:
         try:
+            gui_specs = get_gui_specs_from_entrypoint(gui)
             control = qtgui_from_click(
                 get_command_from_entrypoint(entrypoint), gui_specs
             )
             control.set_ep_or_path(entrypoint)
             control.set_is_ep(True)
-        except ImportError:
+        except TypeError:
             fileparam = click.types.File()
             fileparam.convert(entrypoint, None, None)
             control = qtgui_from_click(get_command_from_path(entrypoint, gui))
