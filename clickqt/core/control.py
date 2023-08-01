@@ -56,7 +56,8 @@ class Control(QObject):
         self.ep_or_path = ep_or_path
 
         self.custom_mapping = custom_mapping
-        self.update_gui_specs(self.custom_mapping)
+        if len(custom_mapping) >= 1:
+            self.update_gui_specs(self.custom_mapping)
 
         # Create a worker in another thread when the user clicks the run button
         # Don't destroy a thread when no command is running and the user closes the application
@@ -92,6 +93,8 @@ class Control(QObject):
     def set_custom_mapping(self, custom_mapping):
         self.custom_mapping = custom_mapping
 
+    def update_gui_specs(self, custom_mapping):
+        self.gui.update_typedict(custom_mapping)
 
     def parameter_to_widget(
         self, command: click.Command, groups_command_name: str, param: click.Parameter
@@ -541,7 +544,7 @@ class Control(QObject):
             kwargs: dict[str, t.Any] = {}
             has_error = False
             dialog_widgets: list[BaseWidget] = []  # widgets that will show a dialog
-            print(self.gui.custom_mapping)
+
             if (
                 self.widget_registry.get(hierarchy_command) is not None
             ):  # Groups with no options are not in the dict
