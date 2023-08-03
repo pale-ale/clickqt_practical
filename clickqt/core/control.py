@@ -56,8 +56,8 @@ class Control(QObject):
         self.ep_or_path = ep_or_path
 
         self.custom_mapping = custom_mapping
-        if len(custom_mapping) >= 1:
-            self.update_gui_specs(self.custom_mapping)
+        if self.custom_mapping is not None and len(self.custom_mapping) >= 1:
+            self.gui.update_typedict(self.custom_mapping)
 
         # Create a worker in another thread when the user clicks the run button
         # Don't destroy a thread when no command is running and the user closes the application
@@ -92,9 +92,6 @@ class Control(QObject):
 
     def set_custom_mapping(self, custom_mapping):
         self.custom_mapping = custom_mapping
-
-    def update_gui_specs(self, custom_mapping):
-        self.gui.update_typedict(custom_mapping)
 
     def parameter_to_widget(
         self, command: click.Command, groups_command_name: str, param: click.Parameter
@@ -385,7 +382,7 @@ class Control(QObject):
 
     def clean_command_string(self, word, text):
         """Returns a string without any special characters using regex."""
-        text = re.sub(r"\b{}\b".format(re.escape(word)), "", text)
+        text = re.sub(rf"\b{re.escape(word)}\b", "", text)
         text = re.sub(r"[^a-zA-Z0-9 .-]", " ", text)
         return text
 
@@ -488,7 +485,7 @@ class Control(QObject):
                                         param[0] + " " + widget_value
                                     )
         message = hierarchy_selected_name + " " + " ".join(parameter_strings)
-        message = re.sub(r"\b{}\b".format(re.escape(self.cmd.name)), "", message)
+        message = re.sub(fr"\b{re.escape(self.cmd.name)}\b", "", message)
         message = message.replace(":", " ")
         if not self.is_ep:
             message = "python " + self.ep_or_path + " " + message

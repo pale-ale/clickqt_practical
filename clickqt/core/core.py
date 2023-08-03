@@ -11,7 +11,7 @@ from clickqt.core.control import Control
 
 def qtgui_from_click(
     cmd: click.Command,
-    custom_mapping: t.Optional[dict] = {},
+    custom_mapping: t.Optional[dict] = None,
     application_name: t.Optional[str] = None,
     window_icon: t.Optional[str] = None,
 ):
@@ -19,6 +19,7 @@ def qtgui_from_click(
     that contains the GUI, execution logic, and the generated widgets used for the parameters of the command.
 
     :param cmd: The click.Command-object to create a GUI from
+    :param custom_mapping: The dictionary containing the customized mapping from a user-defined click type to an intended Qt Widget.
     :param application_name: Name of the application, defaults to None (= 'python')
     :param window_icon: Path to an icon, changes the icon of the application, defaults to None (= no icon)
 
