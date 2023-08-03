@@ -124,7 +124,9 @@ class CustomWidget:
             getter_function = self.supported_widgets[self.widget_type]["getter"]
             return getter_function()
         except WidgetNotSupported as w:
-            raise WidgetNotSupported(f"{self.widget_type.__name__} not supported.") from w
+            raise WidgetNotSupported(
+                f"{self.widget_type.__name__} not supported."
+            ) from w
 
     def is_empty(self) -> bool:
         return False
@@ -159,8 +161,7 @@ class CustomWidget:
             # Check if the widget value is missing (empty)
             value_missing = False
             widget_value = self.get_widget_value()
-            print(self.get_widget_value())
-            # print(self.get_widget_value())
+
             # Handle single value
             if self.is_empty():
                 if self.param.required and default is None:
@@ -227,7 +228,8 @@ class CustomWidget:
                 ),
             )
 
-    def get_param_default(self, param: click.Parameter, alternative: Any = None):
+    @staticmethod
+    def get_param_default(param: click.Parameter, alternative: Any = None):
         """Returns the default value of **param**. If there is no default value, **alternative** will be returned."""
 
         # TODO: Replace with param.get_default(ctx=click.Context(command), call=True)
