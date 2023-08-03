@@ -485,7 +485,7 @@ class Control(QObject):
                                         param[0] + " " + widget_value
                                     )
         message = hierarchy_selected_name + " " + " ".join(parameter_strings)
-        message = re.sub(fr"\b{re.escape(self.cmd.name)}\b", "", message)
+        message = re.sub(rf"\b{re.escape(self.cmd.name)}\b", "", message)
         message = message.replace(":", " ")
         if not self.is_ep:
             message = "python " + self.ep_or_path + " " + message
