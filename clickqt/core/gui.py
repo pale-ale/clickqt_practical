@@ -66,8 +66,6 @@ class GUI:
         self.window.layout().addWidget(self.splitter)
 
         self.widgets_container: QWidget = None  # Control constructs this Qt-widget
-
-        self.typedict = typedict
         self.custom_mapping = {}
         self.buttons_container = QWidget()
         self.buttons_container.setLayout(QHBoxLayout())
