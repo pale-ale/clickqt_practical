@@ -40,6 +40,12 @@ def clickqtfy(entrypoint, gui, funcname):
             )
             control.set_ep_or_path(entrypoint)
             control.set_is_ep(True)
+        except ImportError:
+            fileparam = click.types.File()
+            fileparam.convert(entrypoint, None, None)
+            control = qtgui_from_click(get_command_from_path(entrypoint, gui))
+            control.set_ep_or_path(entrypoint)
+            control.set_is_ep(False)
         except TypeError:
             fileparam = click.types.File()
             fileparam.convert(entrypoint, None, None)
