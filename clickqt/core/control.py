@@ -22,7 +22,7 @@ from PySide6.QtGui import QPalette, QClipboard
 from clickqt.core.gui import GUI
 from clickqt.core.commandexecutor import CommandExecutor
 from clickqt.core.error import ClickQtError
-from clickqt.widgets.combobox import CheckableComboBox, ComboBox
+from clickqt.widgets.combobox import CheckableComboBox
 from clickqt.widgets.basewidget import BaseWidget
 from clickqt.widgets.messagebox import MessageBox
 from clickqt.widgets.filefield import FileField
@@ -39,7 +39,11 @@ class Control(QObject):
     requestExecution: Signal = Signal(list, click.Context)  # Generics do not work here
 
     def __init__(
-        self, cmd: click.Command, is_ep: bool = True, ep_or_path: str = "test"
+        self,
+        cmd: click.Command,
+        custom_mapping: dict = None,
+        is_ep: bool = True,
+        ep_or_path: str = " ",
     ):
         """Initializing the GUI object and the registries together with the differentiation of a group command and a simple command."""
 
@@ -50,6 +54,10 @@ class Control(QObject):
 
         self.is_ep = is_ep
         self.ep_or_path = ep_or_path
+
+        self.custom_mapping = custom_mapping
+        if self.custom_mapping is not None and len(self.custom_mapping) >= 1:
+            self.gui.update_typedict(self.custom_mapping)
 
         # Create a worker in another thread when the user clicks the run button
         # Don't destroy a thread when no command is running and the user closes the application
@@ -82,6 +90,9 @@ class Control(QObject):
     def set_is_ep(self, is_ep):
         self.is_ep = is_ep
 
+    def set_custom_mapping(self, custom_mapping):
+        self.custom_mapping = custom_mapping
+
     def parameter_to_widget(
         self, command: click.Command, groups_command_name: str, param: click.Parameter
     ) -> QWidget:
@@ -98,9 +109,10 @@ class Control(QObject):
         assert param.name, "No parameter name specified"
         assert self.widget_registry[groups_command_name].get(param.name) is None
 
-        widget = self.gui.create_widget(
+        widget = self.gui.create_widget(  # pylint: disable=no-self-use
             param.type, param, widgetsource=self.gui.create_widget, com=command
         )
+
         self.widget_registry[groups_command_name][param.name] = widget
         self.command_registry[groups_command_name][param.name] = (
             param.nargs,
@@ -369,7 +381,7 @@ class Control(QObject):
 
     def clean_command_string(self, word, text):
         """Returns a string without any special characters using regex."""
-        text = re.sub(r"\b{}\b".format(re.escape(word)), "", text)
+        text = re.sub(rf"\b{re.escape(word)}\b", "", text)
         text = re.sub(r"[^a-zA-Z0-9 .-]", " ", text)
         return text
 
@@ -472,7 +484,7 @@ class Control(QObject):
                                         param[0] + " " + widget_value
                                     )
         message = hierarchy_selected_name + " " + " ".join(parameter_strings)
-        message = re.sub(r"\b{}\b".format(re.escape(self.cmd.name)), "", message)
+        message = re.sub(rf"\b{re.escape(self.cmd.name)}\b", "", message)
         message = message.replace(":", " ")
         if not self.is_ep:
             message = "python " + self.ep_or_path + " " + message

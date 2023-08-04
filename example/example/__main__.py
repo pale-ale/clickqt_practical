@@ -1,6 +1,8 @@
 import os
 import click
 import clickqt
+from PySide6.QtWidgets import QSpinBox
+from clickqt.basedint import BasedIntParamType
 
 
 @click.group()
@@ -87,9 +89,11 @@ def greet(userinfo):
 
 @utilgroup.command()
 @click.option("--pos", type=int, nargs=2, default=[1, 2])
-def position(pos):
+@click.option("--custom", type=BasedIntParamType())
+def position(pos, custom):
     a, b = pos
-    click.echo(f"{a}/{b}")
+    c = custom
+    click.echo(f"{a}/{b} + {c}")
 
 
 @click.group()
@@ -157,7 +161,7 @@ def hello_ns2(ns):
 utilgroup.add_command(hello)
 hello.add_command(hello2)
 
-gui = clickqt.qtgui_from_click(utilgroup)
+gui = clickqt.qtgui_from_click(utilgroup, {BasedIntParamType: QSpinBox})
 
 if __name__ == "__main__":
-    utilgroup()
+    gui()
