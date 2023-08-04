@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import Type, Optional, Any
 import click
 from PySide6.QtWidgets import (
