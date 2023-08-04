@@ -16,12 +16,24 @@ import clickqt.core as clickqt_core
 
 
 class WidgetNotSupported(Exception):
+    """Exception stating that the a widget is not supported by clickqt yet for user defined click types."""
+
     def __init__(self, widget_name):
         super().__init__(f"{widget_name} not supported.")
         self.widget_name = widget_name
 
 
 class CustomWidget:
+    """CustomWidget class used for the creation of widgets of user defined click types by the
+    wish of the user.
+    :param widget_class: The kind of widget the user wants to map his user defined click type.
+    :param otype: The type which specifies the clickqt widget type. This type may be different compared to **param**.type when dealing with click.types.CompositeParamType-objects
+    :param param: The parameter from which **otype** came from
+    :param parent: The parent BaseWidget of **otype**, defaults to None. Needed for :class:`~clickqt.widgets.basewidget.MultiWidget`-widgets
+    :param kwargs: Additionally parameters ('widgetsource', 'com', 'label') needed for
+                    :class:`~clickqt.widgets.basewidget.MultiWidget`- / :class:`~clickqt.widgets.confirmationwidget.ConfirmationWidget`-widgets
+    """
+
     def __init__(
         self,
         widget_class: Type[QWidget],
