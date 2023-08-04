@@ -34,7 +34,6 @@ from clickqt.widgets.nvaluewidget import NValueWidget
 from clickqt.widgets.confirmationwidget import ConfirmationWidget
 from clickqt.widgets.messagebox import MessageBox
 from clickqt.core.output import OutputStream, TerminalOutput
-from .typedict import typedict
 
 
 class GUI:
