@@ -118,9 +118,8 @@ class Control(QObject):
             param.nargs,
             type(param.type).__name__,
         )
-        if hasattr(widget, "container"):
-            return widget.container
-        return widget
+
+        return widget.container
 
     def concat(self, a: str, b: str) -> str:  # pylint: disable=no-self-use
         """Concatenates the strings a and b with ':' and returns the result."""

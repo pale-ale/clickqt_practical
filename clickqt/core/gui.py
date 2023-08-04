@@ -18,12 +18,17 @@ from PySide6.QtGui import (
     QPalette,
     QScreen,
 )
+from clickqt.widgets.checkbox import CheckBox
+from clickqt.widgets.numericfields import IntField, RealField
+from clickqt.widgets.datetimeedit import DateTimeEdit
 from clickqt.widgets.customwidget import CustomWidget
 from clickqt.widgets.multivaluewidget import MultiValueWidget
 from clickqt.widgets.basewidget import BaseWidget
 from clickqt.widgets.textfield import TextField
 from clickqt.widgets.passwordfield import PasswordField
-from clickqt.widgets.combobox import CheckableComboBox
+from clickqt.widgets.combobox import CheckableComboBox, ComboBox
+from clickqt.widgets.filefield import FileField
+from clickqt.widgets.filepathfield import FilePathField
 from clickqt.widgets.tuplewidget import TupleWidget
 from clickqt.widgets.nvaluewidget import NValueWidget
 from clickqt.widgets.confirmationwidget import ConfirmationWidget
@@ -37,6 +42,20 @@ class GUI:
     Responsible for setting up the components for the Qt-GUI,
     which is used to navigate through the different kind of commands and execute them.
     """
+
+    typedict = {
+        click.types.BoolParamType: CheckBox,
+        click.types.IntParamType: IntField,
+        click.types.FloatParamType: RealField,
+        click.types.StringParamType: TextField,
+        click.types.UUIDParameterType: TextField,
+        click.types.UnprocessedParamType: TextField,
+        click.types.DateTime: DateTimeEdit,
+        click.types.Tuple: TupleWidget,
+        click.types.Choice: ComboBox,
+        click.types.Path: FilePathField,
+        click.types.File: FileField,
+    }
 
     def __init__(self):
         self.window = QWidget()
