@@ -13,9 +13,15 @@ from clickqt.core.core import qtgui_from_click
 
 @click.command("clickqtfy")
 @click.argument("entrypoint")
-@click.argument("gui", default=None, required=False)
 @click.argument("funcname", default=None, required=False)
-def clickqtfy(entrypoint, gui, funcname):
+@click.option(
+    "--custom-gui",
+    type=str,
+    required=False,
+    help="Use this to insert your own GUI entry point,"
+    "either as a standalone entry point or as a variable to a Control() object.",
+)
+def clickqtfy(entrypoint, funcname, custom_gui):
     """
     Generate a GUI for an entry point or a file + click.command combinaiton.
 
@@ -23,40 +29,30 @@ def clickqtfy(entrypoint, gui, funcname):
     FUNCNAME: Name of the click.command inside the file at ENTRYPOINT.\n
     If FUNCNAME is provided, ENTRYPOINT is interpreted as a file. Otherwise, as an entry point.
     """
-    if funcname and gui:
-        fileparam = click.types.File()
-        fileparam.convert(entrypoint, None, None)
-        gui_specs = get_gui_specs_from_path(entrypoint, gui)
-        control = qtgui_from_click(
-            get_command_from_path(entrypoint, funcname), gui_specs
-        )
-        control.set_ep_or_path(entrypoint)
-        control.set_is_ep(False)
-    elif gui:
-        try:
-            gui_specs = get_gui_specs_from_entrypoint(gui)
-            control = qtgui_from_click(
-                get_command_from_entrypoint(entrypoint), gui_specs
-            )
-            control.set_ep_or_path(entrypoint)
-            control.set_is_ep(True)
-        except ImportError:
-            fileparam = click.types.File()
-            fileparam.convert(entrypoint, None, None)
-            control = qtgui_from_click(get_command_from_path(entrypoint, gui))
-            control.set_ep_or_path(entrypoint)
-            control.set_is_ep(False)
-        except TypeError:
-            fileparam = click.types.File()
-            fileparam.convert(entrypoint, None, None)
-            control = qtgui_from_click(get_command_from_path(entrypoint, gui))
-            control.set_ep_or_path(entrypoint)
-            control.set_is_ep(False)
-    else:
-        control = qtgui_from_click(get_command_from_entrypoint(entrypoint))
-        control.set_ep_or_path(entrypoint)
-        control.set_is_ep(True)
+    appname = entrypoint + (f" - {funcname}" if funcname else "")
+    gui_specs = None
+    command = None
+    control = None
+    if custom_gui:
+        if funcname:
+            gui_specs = get_gui_specs_from_path(entrypoint, custom_gui)
+        else:
+            gui_specs = get_gui_specs_from_entrypoint(custom_gui)
 
+    if funcname:
+        click.types.File().convert(entrypoint, None, None)  # check if its real file
+        command = get_command_from_path(entrypoint, funcname)
+    else:
+        command = get_command_from_entrypoint(entrypoint)
+
+    if gui_specs:
+        control = qtgui_from_click(
+            command, custom_mapping=gui_specs, application_name=appname
+        )
+    else:
+        control = qtgui_from_click(command, application_name=appname)
+    control.set_is_ep(funcname is None)
+    control.set_ep_or_path(entrypoint)
     return control()
 
 
@@ -68,7 +64,7 @@ def get_command_from_entrypoint(epname: str) -> click.Command:
     eps = get_entrypoints_from_name(epname)
     if len(eps) == 0:
         raise ImportError(f"No entry point named '{epname}' found.")
-    if len(eps) > 1:
+    if len(eps) > 1 or (len(eps) == 1 and eps[0].name != epname):
         concateps = "\n".join([ep.name for ep in eps])
         raise ImportError(
             f"No entry point named '{epname}' found. Similar ones:\n{concateps}"
@@ -99,7 +95,7 @@ def get_gui_specs_from_entrypoint(epname: str):
     eps = get_entrypoints_from_name(epname)
     if len(eps) == 0:
         raise ImportError(f"No entry point named '{epname}' found.")
-    if len(eps) > 1:
+    if len(eps) > 1 or (len(eps) == 1 and eps[0].name != epname):
         concateps = "\n".join([ep.name for ep in eps])
         raise ImportError(
             f"No entry point named '{epname}' found. Similar ones:\n{concateps}"
@@ -125,10 +121,9 @@ def get_command_from_path(eppath: str, epname: str) -> click.Command:
     return validate_entrypoint(entrypoint)
 
 
-def get_gui_specs_from_path(eppath: str, epname: str) -> click.Command:
+def get_gui_specs_from_path(eppath: str, epname: str):
     """
-    Returns the entrypoint given by the file path and the function name,
-    or raises `ImportError` if the endpoint is not a `click.Command`.
+    Returns the entpoint pointing to a Control() object, or raises `ImportError` if it doesn't.
     """
     modulename = "clickqtfy.imported_module"
     spec = util.spec_from_file_location(modulename, eppath)
