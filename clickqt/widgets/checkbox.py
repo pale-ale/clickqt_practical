@@ -29,7 +29,9 @@ class CheckBox(BaseWidget):
             otype, type(click.BOOL)
         ), f"'otype' must be of type '{type(click.BOOL)}', but is '{type(otype)}'."
 
-        self.widget.setText("Enable")
+        if hasattr(self, "help_label"):
+            self.layout.removeWidget(self.help_label)
+            self.widget.setText(self.help_label.text()) # Set text of checkbox to help text
 
         if self.parent_widget is None:
             self.set_value(BaseWidget.get_param_default(param, False))

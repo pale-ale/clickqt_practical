@@ -58,9 +58,9 @@ class BaseWidget(ABC):
             and param.help
             and (parent is None or kwargs.get("vboxlayout"))
         ):  # Help text
-            help_label = QLabel(text=param.help)
-            help_label.setWordWrap(True)  # Multi-line
-            self.layout.addWidget(help_label)
+            self.help_label = QLabel(text=param.help)
+            self.help_label.setWordWrap(True)  # Multi-line
+            self.layout.addWidget(self.help_label)
         self.layout.addWidget(self.widget)
         self.container.setLayout(self.layout)
 
