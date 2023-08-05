@@ -64,7 +64,7 @@ This way works if you have an installed entry point.
   ```
 In cases where there is no installed entry point, you can use this method instead, providing a path/filename for ENTRYPOINT and a function name within that file for FUNCNAME.
 
-## Wrapper with Entry Point
+## Wrapper with Entry Point <a name="wrapper_with_entry_point"></a>
 You can create entry points for `clickqt` in two steps:
 * Create the control for the GUI as a variable (in a file named `somefile.py` in the top-level directory of package `somepackage`):
   ``` python
@@ -84,8 +84,27 @@ You can create entry points for `clickqt` in two steps:
   ```
 After installing, you can run this entry point by typing `gui` in your console, create a desktop shortcut linked to it, etc..
 
+## Usage with gui information
+If you decide to design your own click.type then it would be normally mapped to a simple Textfield, if you do not provide additional information in the form of a dictionary.
+```python
+from clickqt import qt_gui_from_click
+  import click
 
+  @click.command(...)
+  def foo(...):
+    pass
 
+  ui_handle = qt_gui_from_click(foo, {BasedIntParamType: QSpinBox})
+```
+This can be referenced externally:
+```
+clickqtfy ENTRYPOINT [GUI]
+```
+```
+clickqtfy ENTRYPOINT [GUI] FUNCNAME
+```
+GUI in this case can be an entrypoint, created as described in [Wrapper with Entrypoint](#wrapper_with_entrypoint) or it is the ui_handle you used to create this entrypoint.
+With this you can map your own click types to specific QtWidgets of your choice if this is your choice.
 # Limitations
 
 Currently clickqt only supports the built-in features from click.
