@@ -530,6 +530,8 @@ class Control(QObject):
         This slot is automatically executed when the user clicks on the 'Run'-button.
         """
 
+        self.gui.terminal_output.clear()
+
         hierarchy_selected_command = self.current_command_hierarchy(
             self.gui.widgets_container, self.cmd
         )
@@ -636,6 +638,8 @@ class Control(QObject):
         """
         This function is responsible
         """
+        self.gui.terminal_output.clear()
+
         hierarchy_selected_command = self.current_command_hierarchy(
             self.gui.widgets_container, self.cmd
         )
