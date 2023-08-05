@@ -1,3 +1,5 @@
+.. _clickqt.core:
+
 Core
 =============
 
@@ -26,4 +28,3 @@ Core
 
 .. automodule:: clickqt.core.error
     :members:
-    

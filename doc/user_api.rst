@@ -5,4 +5,3 @@ User API
 
 .. automodule:: clickqt.core.core
     :members:
-

@@ -5,4 +5,3 @@ Developer API
 
     core
     widgets
-    

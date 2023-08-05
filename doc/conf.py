@@ -22,6 +22,7 @@ extensions = [
     "sphinx_rtd_theme",
     "enum_tools.autoenum",
     "sphinx_qt_documentation",
+    "sphinx.ext.graphviz",
 ]
 
 # Make the documentations order the same as the source order.
@@ -48,8 +49,7 @@ html_theme = "sphinx_rtd_theme"
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = []
-
+html_static_path = ["_static"]
 
 # Copy readme_resources images into documentation so they show up when
 # markdown files with relative paths are transcluded
@@ -67,3 +67,4 @@ def copy_readme_resources(app, docname=None):
 
 def setup(app):
     app.connect("builder-inited", copy_readme_resources)
+    app.add_css_file("wide_theme.css")
