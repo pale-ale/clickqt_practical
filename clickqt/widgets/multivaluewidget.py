@@ -39,15 +39,15 @@ class MultiValueWidget(MultiWidget):
         self.widget.setLayout(QVBoxLayout())
 
         # Add param.nargs widgets of type otype
-        for _ in range(param.nargs):
+        for i in range(param.nargs):
             nargs = param.nargs
             param.nargs = 1  # Stop recursion
             bw: BaseWidget = widgetsource(
                 otype, param, widgetsource=widgetsource, parent=self, **kwargs
             )
             param.nargs = nargs  # click needs the right value for a correct conversion
-            bw.layout.removeWidget(bw.label)
-            bw.label.deleteLater()
+            
+            self.consider_metavar(bw, i)
             self.widget.layout().addWidget(bw.container)
             self.children.append(bw)
 

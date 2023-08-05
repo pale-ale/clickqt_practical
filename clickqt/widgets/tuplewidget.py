@@ -39,15 +39,15 @@ class TupleWidget(MultiWidget):
 
         self.widget.setLayout(QHBoxLayout())
 
-        for child_type in otype.types if hasattr(otype, "types") else otype:
+        for i, child_type in enumerate(otype.types if hasattr(otype, "types") else otype):
             nargs = self.param.nargs
             self.param.nargs = 1
             bw: BaseWidget = widgetsource(
                 child_type, self.param, widgetsource=widgetsource, parent=self, **kwargs
             )
             self.param.nargs = nargs
-            bw.layout.removeWidget(bw.label)
-            bw.label.deleteLater()
+
+            self.consider_metavar(bw, i)
             self.widget.layout().addWidget(bw.container)
             self.children.append(bw)
 

@@ -5,7 +5,7 @@ import os
 import typing as t
 from gettext import ngettext
 
-from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QHBoxLayout
+from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QHBoxLayout, QSizePolicy
 from PySide6.QtCore import Qt
 import click
 
@@ -355,6 +355,22 @@ class MultiWidget(BaseWidget):
                 default := BaseWidget.get_param_default(self.param, None)
             ) is not None:  # Consider default value
                 self.set_value(default)
+
+    def consider_metavar(self, child: BaseWidget, pos: int):
+        if self.param.metavar is None:
+            child.layout.removeWidget(child.label)
+            child.label.deleteLater()
+        else:
+            assert (
+                isinstance(self.param.metavar, t.Iterable) and pos < len(self.param.metavar)
+            ), f"metavar in option '{self.param.name}' is not correct."
+            
+            child.layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+            child.widget.setSizePolicy(
+                QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
+            )
+            label_text = self.param.metavar[pos]
+            child.label.setText(label_text + (":" if label_text else ""))
 
     def set_value(self, value: t.Iterable[t.Any]):
         if len(value) != self.param.nargs:
