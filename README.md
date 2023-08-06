@@ -96,12 +96,12 @@ from clickqt import qt_gui_from_click
 
   ui_handle = qt_gui_from_click(foo, {BasedIntParamType: QSpinBox})
 ```
-This can be referenced externally:
+This can be referenced externally via an option before the arguments:
 ```
-clickqtfy ENTRYPOINT [GUI]
+clickqtfy --custom-gui [GUI] ENTRYPOINT
 ```
 ```
-clickqtfy ENTRYPOINT [GUI] FUNCNAME
+clickqtfy --custom-gui [GUI] ENTRYPOINT FUNCNAME
 ```
 GUI in this case can be an entrypoint, created as described in [Wrapper with Entrypoint](#wrapper_with_entrypoint) or it is the ui_handle you used to create this entrypoint.
 With this you can map your own click types to specific QtWidgets of your choice if this is your choice.
