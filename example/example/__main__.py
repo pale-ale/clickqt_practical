@@ -1,6 +1,7 @@
 import os
 import click
 import clickqt
+from click_option_group import optgroup
 from PySide6.QtWidgets import QSpinBox
 from clickqt.basedint import BasedIntParamType
 
@@ -156,6 +157,22 @@ def hello_ns2(ns):
     for i, s in ns:
         for _ in range(i):
             click.echo(f"{s}{i}")
+
+
+@utilgroup.command()
+@optgroup.group(
+    "Server configuration", help="The configuration of some server connection"
+)
+@optgroup.option("-h", "--host", default="localhost", help="Server host name")
+@optgroup.option("-p", "--port", type=int, default=8888, help="Server port")
+@click.option("--debug/--no-debug", default=False, help="Debug flag")
+@optgroup.group("Test configuration", help="The configuration of some test suite.")
+@optgroup.option("--n", default=5, help="Number of test rounds")
+def cli(host, port, debug, n):
+    test_params = n
+    params = host, port, debug
+    print(params)
+    print(n)
 
 
 utilgroup.add_command(hello)
