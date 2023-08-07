@@ -87,3 +87,6 @@ class DateTimeEdit(BaseWidget):
 
     def get_widget_value(self) -> datetime.datetime:
         return self.widget.dateTime().toPython()
+    
+    def get_widget_value_cmdline(self) -> str:
+        return f"{self.get_preferable_opt()} \"{self.get_widget_value()}\""

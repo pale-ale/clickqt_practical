@@ -225,3 +225,7 @@ class NValueWidget(MultiWidget):
             BaseWidget.handle_valid(self, valid)
         else:
             super().handle_valid(valid)
+
+    def get_widget_value_cmdline(self) -> str:
+        cmdstr = "".join([c.get_widget_value_cmdline() for c in self.children])
+        return cmdstr

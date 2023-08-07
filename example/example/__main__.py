@@ -1,7 +1,9 @@
 import os
+
 import click
-import clickqt
 from PySide6.QtWidgets import QSpinBox
+
+import clickqt
 from clickqt.basedint import BasedIntParamType
 
 
@@ -9,6 +11,17 @@ from clickqt.basedint import BasedIntParamType
 def utilgroup():
     pass
 
+# Used to test the boolean flag behaviour (--flag true vs --flag, --flag false)
+@utilgroup.command()
+@click.option("--someflag", "-sf", 
+    type=bool,
+    is_flag=True,
+)
+@click.option("--someint", 
+    type=int,
+)
+def foobar(*args, **kwargs):
+    click.echo(f"Args: {args}, Kwargs: {kwargs}")
 
 @utilgroup.command()
 @click.argument("username", default=lambda: os.environ.get("USERNAME", ""))

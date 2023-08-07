@@ -241,6 +241,16 @@ class BaseWidget(ABC):
     @abstractmethod
     def get_widget_value(self) -> t.Any:
         """Returns the value of the Qt-widget without any checks."""
+    
+    def get_preferable_opt(self) -> str:
+        return max(self.param.opts, key=len)
+
+    def get_widget_value_cmdline(self) -> str:
+        """Returns the value of the Qt-widget without any checks as a commandline string."""
+        is_flag = self.param.to_info_dict().get("is_flag", False)
+        if is_flag:
+            return f"{self.get_preferable_opt()} " if self.widget.isChecked() else ""
+        return f"{self.get_preferable_opt()} {self.get_widget_value()} "
 
     def handle_valid(self, valid: bool):
         """Changes the border of the widget dependent on **valid**. If **valid** == False, the border will be colored red, otherwise black.
@@ -404,3 +414,9 @@ class MultiWidget(BaseWidget):
 
     def get_widget_value(self) -> t.Iterable[t.Any]:
         return [c.get_widget_value() for c in self.children]
+    
+    def get_widget_value_cmdline(self) -> str:
+        optname = self.get_preferable_opt()
+        childcmds = [c.get_widget_value_cmdline().replace(optname, "").strip() for c in self.children]
+        cmdstr = " ".join(childcmds)
+        return f"{self.get_preferable_opt()} {cmdstr} "
