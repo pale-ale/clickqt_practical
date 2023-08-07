@@ -11,17 +11,22 @@ from clickqt.basedint import BasedIntParamType
 def utilgroup():
     pass
 
+
 # Used to test the boolean flag behaviour (--flag true vs --flag, --flag false)
 @utilgroup.command()
-@click.option("--someflag", "-sf", 
+@click.option(
+    "--someflag",
+    "-sf",
     type=bool,
     is_flag=True,
 )
-@click.option("--someint", 
+@click.option(
+    "--someint",
     type=int,
 )
 def foobar(*args, **kwargs):
     click.echo(f"Args: {args}, Kwargs: {kwargs}")
+
 
 @utilgroup.command()
 @click.argument("username", default=lambda: os.environ.get("USERNAME", ""))

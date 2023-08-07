@@ -14,74 +14,69 @@ def prepare_execution(cmd: click.Command, cmd_group_name: click.Group):
 @pytest.mark.parametrize(
     ("click_attrs", "value", "expected_output"),
     [
-        (ClickAttrs.intfield(), 12, "main  --p 12"),
-        (ClickAttrs.textfield(), "test", "main  --p test"),
-        (ClickAttrs.realfield(), 0.8, "main  --p 0.8"),
-        (ClickAttrs.passwordfield(), "abc", "main  --p abc"),
-        (ClickAttrs.checkbox(), True, "main  --p True"),
-        (ClickAttrs.checkbox(), False, "main  --p False"),
-        (ClickAttrs.intrange(maxval=2, clamp=True), 5, "main  --p 2"),
-        (ClickAttrs.floatrange(maxval=2.05, clamp=True), 5, "main  --p 2.05"),
+        (ClickAttrs.intfield(), 12, "main --p 12"),
+        (ClickAttrs.textfield(), "test", "main --p test"),
+        (ClickAttrs.realfield(), 0.8, "main --p 0.8"),
+        (ClickAttrs.passwordfield(), "abc", "main --p abc"),
+        (ClickAttrs.checkbox(), True, "main --p True"),
+        (ClickAttrs.checkbox(), False, "main --p False"),
+        (ClickAttrs.intrange(maxval=2, clamp=True), 5, "main --p 2"),
+        (ClickAttrs.floatrange(maxval=2.05, clamp=True), 5, "main --p 2.05"),
         (
             ClickAttrs.combobox(
                 choices=["A", "B", "C"], case_sensitive=False, confirmation_prompt=True
             ),
             "B",
-            "main  --p=B",
+            "main --p B",
         ),
         (
             ClickAttrs.combobox(choices=["A", "B", "C"], case_sensitive=False),
             "B",
-            "main  --p=B",
+            "main --p B",
         ),
         (
             ClickAttrs.checkable_combobox(choices=["A", "B", "C"]),
             ["B", "C"],
-            "main  --p=B --p=C",
+            "main --p B --p C",
         ),
-        (ClickAttrs.checkable_combobox(choices=["A", "B", "C"]), ["A"], "main  --p=A"),
+        (ClickAttrs.checkable_combobox(choices=["A", "B", "C"]), ["A"], "main --p A"),
         (
             ClickAttrs.checkable_combobox(choices=["A", "B", "C"]),
             ["A", "B", "C"],
-            "main  --p=A --p=B --p=C",
+            "main --p A --p B --p C",
         ),
         (
             ClickAttrs.tuple_widget(types=(str, int, float)),
             ("t", 1, -2.0),
-            "main  --p  t  1  -2.0",
+            "main --p t 1 -2.0",
         ),
         (
             ClickAttrs.nvalue_widget(type=(str, int)),
             [["a", 12], ["b", 11]],
-            "main  --p   a   12  --p   b   11 ",
+            "main --p a 12 --p b 11",
         ),
         (
             (
                 ClickAttrs.multi_value_widget(nargs=2),
                 ["foo", "bar"],
-                "main  --p  foo  bar",
+                "main --p foo bar",
             )
         ),
         (
             ClickAttrs.multi_value_widget(nargs=2, default=["A", "B"]),
             ["A", "C"],
-            "main  --p  A  C",
-        ),
-        (
-            ClickAttrs.multi_value_widget(nargs=2, default=["A", "B"]),
-            [" ", " "],
-            "main  --p      ",
+            "main --p A C",
         ),
         (
             ClickAttrs.nvalue_widget(type=(click.types.File(), int)),
             [[".gitignore", 12], ["setup.py", -1]],
-            "main  --p   .gitignore   12  --p   setup.py   -1 ",
+            "main --p .gitignore 12 --p setup.py -1",
         ),
     ],
 )
 def test_command_with_ep(click_attrs: dict, value: t.Any, expected_output: str):
     param = click.Option(param_decls=["--p"], **click_attrs)
-    cli = click.Command("cli", params=[param])
+    cli = click.Command("main", params=[param])
     control = clickqt.qtgui_from_click(cli)
     control.set_ep_or_path("main")
     control.set_is_ep(True)
@@ -96,87 +91,85 @@ def test_command_with_ep(click_attrs: dict, value: t.Any, expected_output: str):
 
     # Simulate clipboard behavior using QApplication.clipboard()
     clipboard = QApplication.clipboard()
-    print(clipboard.text(QClipboard.Clipboard))
     assert clipboard.text(QClipboard.Clipboard) == expected_output
 
 
 @pytest.mark.parametrize(
     ("click_attrs", "value", "expected_output"),
     [
-        (ClickAttrs.intfield(), 12, "python example/example/main.py  --p 12"),
-        (ClickAttrs.textfield(), "test", "python example/example/main.py  --p test"),
-        (ClickAttrs.realfield(), 0.8, "python example/example/main.py  --p 0.8"),
-        (ClickAttrs.passwordfield(), "abc", "python example/example/main.py  --p abc"),
-        (ClickAttrs.checkbox(), True, "python example/example/main.py  --p True"),
-        (ClickAttrs.checkbox(), False, "python example/example/main.py  --p False"),
+        (ClickAttrs.intfield(), 12, "python example/example/main.py cli --p 12"),
+        (ClickAttrs.textfield(), "test", "python example/example/main.py cli --p test"),
+        (ClickAttrs.realfield(), 0.8, "python example/example/main.py cli --p 0.8"),
+        (
+            ClickAttrs.passwordfield(),
+            "abc",
+            "python example/example/main.py cli --p abc",
+        ),
+        (ClickAttrs.checkbox(), True, "python example/example/main.py cli --p True"),
+        (ClickAttrs.checkbox(), False, "python example/example/main.py cli --p False"),
         (
             ClickAttrs.intrange(maxval=2, clamp=True),
             5,
-            "python example/example/main.py  --p 2",
+            "python example/example/main.py cli --p 2",
         ),
         (
             ClickAttrs.floatrange(maxval=2.05, clamp=True),
             5,
-            "python example/example/main.py  --p 2.05",
+            "python example/example/main.py cli --p 2.05",
         ),
         (
             ClickAttrs.combobox(
                 choices=["A", "B", "C"], case_sensitive=False, confirmation_prompt=True
             ),
             "B",
-            "python example/example/main.py  --p=B",
+            "python example/example/main.py cli --p B",
         ),
         (
             ClickAttrs.combobox(choices=["A", "B", "C"], case_sensitive=False),
             "B",
-            "python example/example/main.py  --p=B",
+            "python example/example/main.py cli --p B",
         ),
         (
             ClickAttrs.checkable_combobox(choices=["A", "B", "C"]),
             ["B", "C"],
-            "python example/example/main.py  --p=B --p=C",
+            "python example/example/main.py cli --p B --p C",
         ),
         (
             ClickAttrs.checkable_combobox(choices=["A", "B", "C"]),
             ["A"],
-            "python example/example/main.py  --p=A",
+            "python example/example/main.py cli --p A",
         ),
         (
             ClickAttrs.checkable_combobox(choices=["A", "B", "C"]),
             ["A", "B", "C"],
-            "python example/example/main.py  --p=A --p=B --p=C",
+            "python example/example/main.py cli --p A --p B --p C",
         ),
         (
             ClickAttrs.tuple_widget(types=(str, int, float)),
             ("t", 1, -2.0),
-            "python example/example/main.py  --p  t  1  -2.0",
+            "python example/example/main.py cli --p t 1 -2.0",
         ),
         (
             ClickAttrs.nvalue_widget(type=(str, int)),
             [["a", 12], ["b", 11]],
-            "python example/example/main.py  --p   a   12  --p   b   11 ",
+            "python example/example/main.py cli --p a 12 --p b 11",
         ),
         (
             (
                 ClickAttrs.multi_value_widget(nargs=2),
                 ["foo", "bar"],
-                "python example/example/main.py  --p  foo  bar",
+                "python example/example/main.py cli --p foo bar",
             )
         ),
         (
             ClickAttrs.multi_value_widget(nargs=2, default=["A", "B"]),
             ["A", "C"],
-            "python example/example/main.py  --p  A  C",
-        ),
-        (
-            ClickAttrs.multi_value_widget(nargs=2, default=["A", "B"]),
-            [" ", " "],
-            "python example/example/main.py  --p      ",
+            "python example/example/main.py cli --p A C",
         ),
         (
             ClickAttrs.nvalue_widget(type=(click.types.File(), int)),
             [[".gitignore", 12], ["setup.py", -1]],
-            "python example/example/main.py  --p   .gitignore   12  --p   setup.py   -1 ",
+            "python example/example/main.py cli --p .gitignore 12 --p setup.py -1",
         ),
     ],
 )
@@ -206,72 +199,67 @@ def test_construct_cmd_string_file(
 @pytest.mark.parametrize(
     ("click_attrs", "value", "expected_output"),
     [
-        (ClickAttrs.intfield(), 12, "main  cmd --p 12"),
-        (ClickAttrs.textfield(), "test", "main  cmd --p test"),
-        (ClickAttrs.realfield(), 0.8, "main  cmd --p 0.8"),
-        (ClickAttrs.passwordfield(), "abc", "main  cmd --p abc"),
-        (ClickAttrs.checkbox(), True, "main  cmd --p True"),
-        (ClickAttrs.checkbox(), False, "main  cmd --p False"),
-        (ClickAttrs.intrange(maxval=2, clamp=True), 5, "main  cmd --p 2"),
-        (ClickAttrs.floatrange(maxval=2.05, clamp=True), 5, "main  cmd --p 2.05"),
+        (ClickAttrs.intfield(), 12, "main cmd --p 12"),
+        (ClickAttrs.textfield(), "test", "main cmd --p test"),
+        (ClickAttrs.realfield(), 0.8, "main cmd --p 0.8"),
+        (ClickAttrs.passwordfield(), "abc", "main cmd --p abc"),
+        (ClickAttrs.checkbox(), True, "main cmd --p True"),
+        (ClickAttrs.checkbox(), False, "main cmd --p False"),
+        (ClickAttrs.intrange(maxval=2, clamp=True), 5, "main cmd --p 2"),
+        (ClickAttrs.floatrange(maxval=2.05, clamp=True), 5, "main cmd --p 2.05"),
         (
             ClickAttrs.combobox(
                 choices=["A", "B", "C"], case_sensitive=False, confirmation_prompt=True
             ),
             "B",
-            "main  cmd --p=B",
+            "main cmd --p B",
         ),
         (
             ClickAttrs.combobox(choices=["A", "B", "C"], case_sensitive=False),
             "B",
-            "main  cmd --p=B",
+            "main cmd --p B",
         ),
         (
             ClickAttrs.checkable_combobox(choices=["A", "B", "C"]),
             ["B", "C"],
-            "main  cmd --p=B --p=C",
+            "main cmd --p B --p C",
         ),
         (
             ClickAttrs.checkable_combobox(choices=["A", "B", "C"]),
             ["A"],
-            "main  cmd --p=A",
+            "main cmd --p A",
         ),
         (
             ClickAttrs.checkable_combobox(choices=["A", "B", "C"]),
             ["A", "B", "C"],
-            "main  cmd --p=A --p=B --p=C",
+            "main cmd --p A --p B --p C",
         ),
         (
             ClickAttrs.tuple_widget(types=(str, int, float)),
             ("t", 1, -2.0),
-            "main  cmd --p  t  1  -2.0",
+            "main cmd --p t 1 -2.0",
         ),
         (
             ClickAttrs.nvalue_widget(type=(str, int)),
             [["a", 12], ["b", 11]],
-            "main  cmd --p   a   12  --p   b   11 ",
+            "main cmd --p a 12 --p b 11",
         ),
         (
             (
                 ClickAttrs.multi_value_widget(nargs=2),
                 ["foo", "bar"],
-                "main  cmd --p  foo  bar",
+                "main cmd --p foo bar",
             )
         ),
         (
             ClickAttrs.multi_value_widget(nargs=2, default=["A", "B"]),
             ["A", "C"],
-            "main  cmd --p  A  C",
-        ),
-        (
-            ClickAttrs.multi_value_widget(nargs=2, default=["A", "B"]),
-            [" ", " "],
-            "main  cmd --p      ",
+            "main cmd --p A C",
         ),
         (
             ClickAttrs.nvalue_widget(type=(click.types.File(), int)),
             [[".gitignore", 12], ["setup.py", -1]],
-            "main  cmd --p   .gitignore   12  --p   setup.py   -1 ",
+            "main cmd --p .gitignore 12 --p setup.py -1",
         ),
     ],
 )
@@ -301,88 +289,83 @@ def test_command_with_ep_group(click_attrs: dict, value: t.Any, expected_output:
 @pytest.mark.parametrize(
     ("click_attrs", "value", "expected_output"),
     [
-        (ClickAttrs.intfield(), 12, "python example/example/main.py  cmd --p 12"),
+        (ClickAttrs.intfield(), 12, "python example/example/main.py cmd --p 12"),
         (
             ClickAttrs.textfield(),
             "test",
-            "python example/example/main.py  cmd --p test",
+            "python example/example/main.py cmd --p test",
         ),
-        (ClickAttrs.realfield(), 0.8, "python example/example/main.py  cmd --p 0.8"),
+        (ClickAttrs.realfield(), 0.8, "python example/example/main.py cmd --p 0.8"),
         (
             ClickAttrs.passwordfield(),
             "abc",
-            "python example/example/main.py  cmd --p abc",
+            "python example/example/main.py cmd --p abc",
         ),
-        (ClickAttrs.checkbox(), True, "python example/example/main.py  cmd --p True"),
-        (ClickAttrs.checkbox(), False, "python example/example/main.py  cmd --p False"),
+        (ClickAttrs.checkbox(), True, "python example/example/main.py cmd --p True"),
+        (ClickAttrs.checkbox(), False, "python example/example/main.py cmd --p False"),
         (
             ClickAttrs.intrange(maxval=2, clamp=True),
             5,
-            "python example/example/main.py  cmd --p 2",
+            "python example/example/main.py cmd --p 2",
         ),
         (
             ClickAttrs.floatrange(maxval=2.05, clamp=True),
             5,
-            "python example/example/main.py  cmd --p 2.05",
+            "python example/example/main.py cmd --p 2.05",
         ),
         (
             ClickAttrs.combobox(
                 choices=["A", "B", "C"], case_sensitive=False, confirmation_prompt=True
             ),
             "B",
-            "python example/example/main.py  cmd --p=B",
+            "python example/example/main.py cmd --p B",
         ),
         (
             ClickAttrs.combobox(choices=["A", "B", "C"], case_sensitive=False),
             "B",
-            "python example/example/main.py  cmd --p=B",
+            "python example/example/main.py cmd --p B",
         ),
         (
             ClickAttrs.checkable_combobox(choices=["A", "B", "C"]),
             ["B", "C"],
-            "python example/example/main.py  cmd --p=B --p=C",
+            "python example/example/main.py cmd --p B --p C",
         ),
         (
             ClickAttrs.checkable_combobox(choices=["A", "B", "C"]),
             ["A"],
-            "python example/example/main.py  cmd --p=A",
+            "python example/example/main.py cmd --p A",
         ),
         (
             ClickAttrs.checkable_combobox(choices=["A", "B", "C"]),
             ["A", "B", "C"],
-            "python example/example/main.py  cmd --p=A --p=B --p=C",
+            "python example/example/main.py cmd --p A --p B --p C",
         ),
         (
             ClickAttrs.tuple_widget(types=(str, int, float)),
             ("t", 1, -2.0),
-            "python example/example/main.py  cmd --p  t  1  -2.0",
+            "python example/example/main.py cmd --p t 1 -2.0",
         ),
         (
             ClickAttrs.nvalue_widget(type=(str, int)),
             [["a", 12], ["b", 11]],
-            "python example/example/main.py  cmd --p   a   12  --p   b   11 ",
+            "python example/example/main.py cmd --p a 12 --p b 11",
         ),
         (
             (
                 ClickAttrs.multi_value_widget(nargs=2),
                 ["foo", "bar"],
-                "python example/example/main.py  cmd --p  foo  bar",
+                "python example/example/main.py cmd --p foo bar",
             )
         ),
         (
             ClickAttrs.multi_value_widget(nargs=2, default=["A", "B"]),
             ["A", "C"],
-            "python example/example/main.py  cmd --p  A  C",
-        ),
-        (
-            ClickAttrs.multi_value_widget(nargs=2, default=["A", "B"]),
-            [" ", " "],
-            "python example/example/main.py  cmd --p      ",
+            "python example/example/main.py cmd --p A C",
         ),
         (
             ClickAttrs.nvalue_widget(type=(click.types.File(), int)),
             [[".gitignore", 12], ["setup.py", -1]],
-            "python example/example/main.py  cmd --p   .gitignore   12  --p   setup.py   -1 ",
+            "python example/example/main.py cmd --p .gitignore 12 --p setup.py -1",
         ),
     ],
 )

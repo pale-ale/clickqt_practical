@@ -109,7 +109,7 @@ class Control(QObject):
         assert param.name, "No parameter name specified"
         assert self.widget_registry[groups_command_name].get(param.name) is None
 
-        widget = self.gui.create_widget(  # pylint: disable=no-self-use
+        widget = self.gui.create_widget(
             param.type, param, widgetsource=self.gui.create_widget, com=command
         )
 
@@ -121,7 +121,7 @@ class Control(QObject):
 
         return widget.container
 
-    def concat(self, a: str, b: str) -> str:  # pylint: disable=no-self-use
+    def concat(self, a: str, b: str) -> str:
         """Concatenates the strings a and b with ':' and returns the result."""
 
         return a + ":" + b
@@ -394,7 +394,7 @@ class Control(QObject):
         )
         return self.ep_or_path + " " + hierarchy_selected_command_name
 
-    def command_to_string_to_copy(self, hierarchy_selected_name: str, selected_command):
+    def command_to_string_to_copy(self, hierarchy_selected_name: str, _):
         """Returns the click command line string corresponding to the current UI setup."""
         # parameter_list = self.get_option_names(selected_command)
         # parameter_list = [param for param in parameter_list if param[0] != "--yes"]
@@ -489,15 +489,30 @@ class Control(QObject):
         parameter_strings = ""
         for widget in list(self.widget_registry[hierarchy_selected_name].values()):
             parameter_strings += widget.get_widget_value_cmdline()
-        message = hierarchy_selected_name.replace(f"{self.cmd.name}:", "", 1).replace(":", " ")
-        message += " " + parameter_strings
-        # message = re.sub(rf"\b{re.escape(self.cmd.name)}:\b", "", message)
+        if hierarchy_selected_name.startswith(self.cmd.name + ":"):
+            hierarchy_selected_name = hierarchy_selected_name[len(self.cmd.name) + 1 :]
+        print(f"Entrypoint:'{self.ep_or_path}'")
+        print(f"Hierarchy:'{hierarchy_selected_name}'")
+        print(f"Params:'{parameter_strings}'")
+        msgpieces = []
+        if not self.is_ep:
+            msgpieces.append("python")
+        msgpieces.append(self.ep_or_path)
         if self.is_ep:
-            message = f"{self.ep_or_path} {message}"
+            if hierarchy_selected_name.startswith(self.ep_or_path):
+                reduced_name = hierarchy_selected_name[len(self.ep_or_path) :]
+                if reduced_name.startswith(":"):
+                    reduced_name.replace(":", "", 1)
+                if reduced_name:
+                    msgpieces.append(reduced_name)
+            else:
+                msgpieces.append(hierarchy_selected_name)
         else:
-            message = f"python {self.ep_or_path} {message}"
-        print(message)
-        return message
+            msgpieces.append(hierarchy_selected_name)
+        msgpieces.append(parameter_strings)
+        msg = " ".join(msgpieces).strip()
+        print("Copied to clipboard:", msg)
+        return msg
 
     def function_call_formatter(
         self, hierarchy_selected_command_name: str, selected_command_name: str, args

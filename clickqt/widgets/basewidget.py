@@ -128,7 +128,7 @@ class BaseWidget(ABC):
                                 self.param.param_type_name,
                             ),
                         )
-                    #self.handle_parameter_missing_default(default)
+                    # self.handle_parameter_missing_default(default)
                     if default is not None:
                         self.set_value(default)
                         widget_values = self.get_widget_value()
@@ -197,7 +197,7 @@ class BaseWidget(ABC):
                         param=self.param,
                         ctx=click.Context(self.click_command),
                     )
-        except Exception as e: # pylint: disable=broad-exception-caught
+        except Exception as e:  # pylint: disable=broad-exception-caught
             self.handle_valid(False)
             return (
                 None,
@@ -229,7 +229,7 @@ class BaseWidget(ABC):
             return (None, ClickQtError(ClickQtError.ErrorType.ABORTED_ERROR))
         except click.exceptions.Exit:
             return (None, ClickQtError(ClickQtError.ErrorType.EXIT_ERROR))
-        except Exception as e: # pylint: disable=broad-exception-caught
+        except Exception as e:  # pylint: disable=broad-exception-caught
             self.handle_valid(False)
             return (
                 None,
@@ -241,7 +241,7 @@ class BaseWidget(ABC):
     @abstractmethod
     def get_widget_value(self) -> t.Any:
         """Returns the value of the Qt-widget without any checks."""
-    
+
     def get_preferable_opt(self) -> str:
         return max(self.param.opts, key=len)
 
@@ -249,7 +249,11 @@ class BaseWidget(ABC):
         """Returns the value of the Qt-widget without any checks as a commandline string."""
         is_flag = self.param.to_info_dict().get("is_flag", False)
         if is_flag:
-            return f"{self.get_preferable_opt()} " if self.widget.isChecked() else ""
+            return (
+                f"{self.get_preferable_opt()} "
+                if hasattr(self.widget, "isChecked") and self.widget.isChecked()
+                else ""
+            )
         return f"{self.get_preferable_opt()} {self.get_widget_value()} "
 
     def handle_valid(self, valid: bool):
@@ -267,7 +271,7 @@ class BaseWidget(ABC):
             self.widget.setStyleSheet(f"QWidget#{self.widget.objectName()}{{ }}")
 
     @staticmethod
-    def get_param_default(param: click.Parameter, alternative:t.Any=None):
+    def get_param_default(param: click.Parameter, alternative: t.Any = None):
         """Returns the default value of **param**. If there is no default value, **alternative** will be returned."""
 
         # TODO: Replace with param.get_default(ctx=click.Context(command), call=True)
@@ -345,7 +349,7 @@ class MultiWidget(BaseWidget):
     def __init__(self, otype: click.ParamType, param: click.Parameter, **kwargs):
         super().__init__(otype, param, **kwargs)
 
-        self.children: t.Union[t.Iterable[BaseWidget],t.dict_values[BaseWidget]] = []
+        self.children: t.Union[t.Iterable[BaseWidget], t.dict_values[BaseWidget]] = []
 
     def init(self):
         """Sets the value of the (child-)widgets according to envvar or default values.
@@ -371,10 +375,10 @@ class MultiWidget(BaseWidget):
             child.layout.removeWidget(child.label)
             child.label.deleteLater()
         else:
-            assert (
-                isinstance(self.param.metavar, t.Iterable) and pos < len(self.param.metavar)
+            assert isinstance(self.param.metavar, t.Iterable) and pos < len(
+                self.param.metavar
             ), f"metavar in option '{self.param.name}' is not correct."
-            
+
             child.layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
             child.widget.setSizePolicy(
                 QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
@@ -414,9 +418,12 @@ class MultiWidget(BaseWidget):
 
     def get_widget_value(self) -> t.Iterable[t.Any]:
         return [c.get_widget_value() for c in self.children]
-    
+
     def get_widget_value_cmdline(self) -> str:
         optname = self.get_preferable_opt()
-        childcmds = [c.get_widget_value_cmdline().replace(optname, "").strip() for c in self.children]
+        childcmds = [
+            c.get_widget_value_cmdline().replace(optname, "").strip()
+            for c in self.children
+        ]
         cmdstr = " ".join(childcmds)
         return f"{self.get_preferable_opt()} {cmdstr} "
