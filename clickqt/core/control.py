@@ -335,41 +335,6 @@ class Control(QObject):
 
         return [cmd]
 
-    # def get_option_names(self, cmd):
-    #     """Returns an array of all the parameters used for the current command togeter with their properties."""
-    #     option_names = []
-    #     for param in cmd.params:
-    #         if isinstance(param, click.Option):
-    #             long_forms = [opt for opt in param.opts if opt.startswith("--")]
-    #             longest_long_form = max(long_forms, key=len, default=None)
-    #             short_forms = [opt for opt in param.opts if opt.startswith("-")]
-    #             short_form = max(short_forms, key=len, default=None)
-    #             if longest_long_form:
-    #                 option_names.append(
-    #                     (
-    #                         "",
-    #                         #longest_long_form,
-    #                         param.type,
-    #                         param.multiple,
-    #                         param.nargs,
-    #                         param.confirmation_prompt,
-    #                     )
-    #                 )
-    #             else:
-    #                 option_names.append(
-    #                     (
-    #                         "",
-    #                         #short_form,
-    #                         param.type,
-    #                         param.multiple,
-    #                         param.nargs,
-    #                         param.confirmation_prompt,
-    #                     )
-    #                 )
-    #         elif isinstance(param, click.Argument):
-    #             option_names.append(("Argument", param.type))
-    #     return option_names
-
     def get_params(self, selected_command_name: str, args):
         """Returns an array of strings that are used for the output field."""
         params = [k for k, v in self.widget_registry[selected_command_name].items()]
@@ -396,96 +361,6 @@ class Control(QObject):
 
     def command_to_string_to_copy(self, hierarchy_selected_name: str, _):
         """Returns the click command line string corresponding to the current UI setup."""
-        # parameter_list = self.get_option_names(selected_command)
-        # parameter_list = [param for param in parameter_list if param[0] != "--yes"]
-        # widgets = self.widget_registry[hierarchy_selected_name]
-        # widget_keys = list(widgets.keys())
-        # if "yes" in widgets:
-        #     widgets.pop("yes")
-        # widget_values = []
-        # for widget in widgets:
-        #     if widget != "yes":
-        #         # widget_values.append(widgets[widget].get_widget_value())
-        #         widget_values.append(widgets[widget].get_widget_value_cmdline())
-        # parameter_strings = []
-        # for i, param in enumerate(parameter_list):
-        #     if param[0] == "Argument":
-        #         parameter_strings.append(str(widget_values[i]))
-        #         continue
-        #     if (not isinstance(widget_values[i], list)) and param[2] is not True:
-        #         widget_value = str(widget_values[i])
-        #         if (isinstance(param[1], click.Choice) and param[4] is True) or (
-        #             isinstance(param[1], click.Choice)
-        #         ):
-        #             if is_file_path(widget_value):
-        #                 parameter_strings.append(param[0] + "=" + widget_value)
-        #             else:
-        #                 parameter_strings.append(
-        #                     param[0]
-        #                     + "="
-        #                     + re.sub(r"[^a-zA-Z0-9 .-]", " ", widget_value)
-        #                 )
-        #         else:
-        #             if is_file_path(widget_value):
-        #                 parameter_strings.append(param[0] + " " + widget_value)
-        #             else:
-        #                 parameter_strings.append(
-        #                     param[0]
-        #                     + " "
-        #                     + re.sub(r"[^a-zA-Z0-9 .-]", " ", widget_value)
-        #                 )
-        #     else:
-        #         if is_nested_list(widget_values[i]):
-        #             depth = len(widget_values[i])
-        #             for j in range(depth):
-        #                 widget_value = str(widget_values[i][j])
-        #                 if not is_file_path(widget_value):
-        #                     parameter_strings.append(
-        #                         param[0]
-        #                         + " "
-        #                         + re.sub(r"[^a-zA-Z0-9 .-]", " ", widget_value)
-        #                     )
-        #                 else:
-        #                     parameter_strings.append(param[0] + " " + widget_value)
-        #         else:
-        #             length = len(widget_values[i])
-        #             if param[2] is not True:
-        #                 parameter_strings.append(param[0])
-        #                 for j in range(length):
-        #                     widget_value = str(widget_values[i][j])
-        #                     if not is_file_path(widget_value):
-        #                         parameter_strings.append(
-        #                             " " + re.sub(r"[^a-zA-Z0-9 .-]", " ", widget_value)
-        #                         )
-        #                     else:
-        #                         parameter_strings.append(" " + widget_value)
-        #             else:
-        #                 if isinstance(widgets[widget_keys[i]], CheckableComboBox):
-        #                     for j in range(length):
-        #                         widget_value = str(widget_values[i][j])
-        #                         if not is_file_path(widget_value):
-        #                             parameter_strings.append(
-        #                                 param[0]
-        #                                 + "="
-        #                                 + re.sub(r"[^a-zA-Z0-9 .-]", " ", widget_value)
-        #                             )
-        #                         else:
-        #                             parameter_strings.append(
-        #                                 param[0] + "=" + widget_value
-        #                             )
-        #                 else:
-        #                     for j in range(length):
-        #                         widget_value = str(widget_values[i][j])
-        #                         if not is_file_path(widget_value):
-        #                             parameter_strings.append(
-        #                                 param[0]
-        #                                 + " "
-        #                                 + re.sub(r"[^a-zA-Z0-9 .-]", " ", widget_value)
-        #                             )
-        #                         else:
-        #                             parameter_strings.append(
-        #                                 param[0] + " " + widget_value
-        #                             )
         parameter_strings = ""
         for widget in list(self.widget_registry[hierarchy_selected_name].values()):
             parameter_strings += widget.get_widget_value_cmdline()
