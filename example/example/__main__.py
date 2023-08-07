@@ -166,4 +166,4 @@ gui = clickqt.qtgui_from_click(
 )
 
 if __name__ == "__main__":
-    gui()
+    utilgroup()
