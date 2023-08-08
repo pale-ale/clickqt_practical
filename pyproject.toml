@@ -28,6 +28,7 @@ classifiers = [
 ]
 dependencies = [
     "click",
+    "click_option_group",
     "PySide6",
 ]
 
