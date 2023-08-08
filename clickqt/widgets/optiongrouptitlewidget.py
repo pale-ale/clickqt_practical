@@ -1,7 +1,6 @@
 from __future__ import annotations
 import typing as t
 import click
-from click_option_group._core import _GroupTitleFakeOption
 from PySide6.QtWidgets import QLabel, QFrame
 from clickqt.widgets.basewidget import BaseWidget
 
