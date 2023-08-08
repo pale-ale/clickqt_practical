@@ -171,7 +171,7 @@ class GUI:
                 return TupleWidget(otype, param, **kwargs)
             return MultiValueWidget(otype, param, **kwargs)
         if isinstance(param, _GroupTitleFakeOption):
-            return OptionGroupTitleWidget(otype, param, **kwargs, title=param.help)
+            return OptionGroupTitleWidget(otype, param, **kwargs)
 
         for t, widgetclass in self.typedict.items():
             if isinstance(otype, t):

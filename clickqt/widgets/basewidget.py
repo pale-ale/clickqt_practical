@@ -243,10 +243,7 @@ class BaseWidget(ABC):
         """Returns the value of the Qt-widget without any checks."""
 
     def get_preferable_opt(self) -> str:
-        try:
-            long_name = max(self.param.opts, key=len)
-        except ValueError:
-            long_name = ""
+        long_name = max(self.param.opts, key=len, default="")
         return long_name if long_name.startswith("-") else ""
 
     def get_widget_value_cmdline(self) -> str:
