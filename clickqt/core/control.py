@@ -6,6 +6,7 @@ from functools import reduce
 import re
 import inspect
 import click
+from click_option_group._core import GroupedOption, _GroupTitleFakeOption
 from PySide6.QtWidgets import (
     QWidget,
     QFrame,
@@ -22,11 +23,9 @@ from PySide6.QtGui import QPalette, QClipboard
 from clickqt.core.gui import GUI
 from clickqt.core.commandexecutor import CommandExecutor
 from clickqt.core.error import ClickQtError
-from clickqt.widgets.combobox import CheckableComboBox
 from clickqt.widgets.basewidget import BaseWidget
 from clickqt.widgets.messagebox import MessageBox
 from clickqt.widgets.filefield import FileField
-from clickqt.core.utils import is_nested_list, is_file_path
 
 
 class Control(QObject):
@@ -201,7 +200,7 @@ class Control(QObject):
 
     def parse_cmd(self, cmd: click.Command, groups_command_name: str) -> QScrollArea:
         """Creates for every click parameter in **cmd** a clickqt widget and returns them stored in a QScrollArea.
-        The widgets are divided into a "Required arguments" and "Optional arguments" part.
+        The widgets are divided into a "Required arguments", "Optional arguments" and "Option Group" part.
 
         :param cmd: The command from which a QTabWidget with content should be created
         :param groups_command_name: The hierarchy of **cmd** as string whereby the names of the components are
@@ -216,11 +215,11 @@ class Control(QObject):
 
         required_optional_box: list[QWidget] = []
 
-        for i in range(2):
+        for i in range(3):
             box = QWidget()
             box.setLayout(QVBoxLayout())
             box_label = QLabel(
-                text=f"<b>{'Required arguments' if i == 0 else 'Optional arguments'}</b>"
+                text=f"<b>{'Required arguments' if i == 0 else ('Optional arguments' if i == 1 else 'Option Groups')}</b>"
             )
             box_label.setTextFormat(Qt.TextFormat.RichText)  # Bold text
             box.layout().addWidget(box_label)
@@ -262,7 +261,15 @@ class Control(QObject):
                         0
                         if (param.required or isinstance(param, click.Argument))
                         and param.default is None
-                        else 1
+                        else (
+                            2
+                            if (
+                                isinstance(
+                                    param, (GroupedOption, _GroupTitleFakeOption)
+                                )
+                            )
+                            else 1
+                        )
                     ].layout().addWidget(
                         self.parameter_to_widget(cmd, groups_command_name, param)
                     )
