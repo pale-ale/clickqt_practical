@@ -169,7 +169,6 @@ def hello_ns2(ns):
 @optgroup.group("Test configuration", help="The configuration of some test suite.")
 @optgroup.option("--n", default=5, help="Number of test rounds")
 def cli(host, port, debug, n):
-    test_params = n
     params = host, port, debug
     print(params)
     print(n)
