@@ -11,7 +11,7 @@ class OptionGroupTitleWidget(BaseWidget):
 
     def __init__(self, otype: click.ParamType, param: click.Parameter, **kwargs):
         super().__init__(otype, param, **kwargs)
-        self.widget_name = param._GroupTitleFakeOption__group.__dict__["_name"] 
+        self.widget_name = param._GroupTitleFakeOption__group.__dict__["_name"]
         self.label = QLabel(f"<b>{self.widget_name}</b>")
         self.line = QFrame()
         self.line.setFrameShape(QFrame.Shape.HLine)
