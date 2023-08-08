@@ -493,11 +493,11 @@ class Control(QObject):
                     print(
                         f"For command details, please call '{self.command_to_string(hierarchy_command)} --help'"
                     )
-                    # # print(self.command_to_string_to_copy(hierarchy_command, command))
-                    # print(
-                    #     f"Current Command: {self.function_call_formatter(hierarchy_command, command, kwargs)} \n"
-                    #     + "Output:"
-                    # )
+                    print(self.command_to_string_to_copy(hierarchy_command, command))
+                    print(
+                        f"Current Command: {self.function_call_formatter(hierarchy_command, command, kwargs)} \n"
+                        + "Output:"
+                    )
                     return lambda: command.callback(*args, **kwargs)
             else:
                 return lambda: command.callback(
