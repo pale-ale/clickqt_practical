@@ -243,7 +243,8 @@ class BaseWidget(ABC):
         """Returns the value of the Qt-widget without any checks."""
 
     def get_preferable_opt(self) -> str:
-        return max(self.param.opts, key=len)
+        long_name = max(self.param.opts, key=len)
+        return long_name if long_name.startswith("-") else ""
 
     def get_widget_value_cmdline(self) -> str:
         """Returns the value of the Qt-widget without any checks as a commandline string."""
@@ -254,7 +255,7 @@ class BaseWidget(ABC):
                 if hasattr(self.widget, "isChecked") and self.widget.isChecked()
                 else ""
             )
-        return f"{self.get_preferable_opt()} {self.get_widget_value()} "
+        return f"{self.get_preferable_opt()} {self.get_widget_value()} ".lstrip()
 
     def handle_valid(self, valid: bool):
         """Changes the border of the widget dependent on **valid**. If **valid** == False, the border will be colored red, otherwise black.

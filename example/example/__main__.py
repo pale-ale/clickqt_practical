@@ -20,12 +20,12 @@ def utilgroup():
     type=bool,
     is_flag=True,
 )
-@click.option(
-    "--someint",
+@click.argument(
+    "someint",
     type=int,
 )
-def foobar(*args, **kwargs):
-    click.echo(f"Args: {args}, Kwargs: {kwargs}")
+def foobar(someint, someflag):
+    click.echo(f"{someflag} {someint}")
 
 
 @utilgroup.command()

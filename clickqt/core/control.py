@@ -361,14 +361,16 @@ class Control(QObject):
 
     def command_to_string_to_copy(self, hierarchy_selected_name: str, _):
         """Returns the click command line string corresponding to the current UI setup."""
+
+        # some edge cases:
+        # negative numbers need to be passed like "-n -- -1"
+        # other escape characters
+
         parameter_strings = ""
         for widget in list(self.widget_registry[hierarchy_selected_name].values()):
             parameter_strings += widget.get_widget_value_cmdline()
         if hierarchy_selected_name.startswith(self.cmd.name + ":"):
             hierarchy_selected_name = hierarchy_selected_name[len(self.cmd.name) + 1 :]
-        print(f"Entrypoint:'{self.ep_or_path}'")
-        print(f"Hierarchy:'{hierarchy_selected_name}'")
-        print(f"Params:'{parameter_strings}'")
         msgpieces = []
         if not self.is_ep:
             msgpieces.append("python")
@@ -386,7 +388,6 @@ class Control(QObject):
             msgpieces.append(hierarchy_selected_name)
         msgpieces.append(parameter_strings)
         msg = " ".join(msgpieces).strip()
-        print("Copied to clipboard:", msg)
         return msg
 
     def function_call_formatter(
@@ -505,14 +506,8 @@ class Control(QObject):
 
         callables: list[t.Callable] = []
         for i, command in enumerate(hierarchy_selected_command, 1):
-            if (
-                c := run_command(
-                    command,
-                    reduce(
-                        self.concat, [g.name for g in hierarchy_selected_command[:i]]
-                    ),
-                )
-            ) is not None:
+            widget_tab = ":".join(g.name for g in hierarchy_selected_command[:i])
+            if (c := run_command(command, widget_tab)) is not None:
                 callables.append(c)
 
         if len(callables) == len(hierarchy_selected_command):
