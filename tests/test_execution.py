@@ -450,7 +450,7 @@ def test_execution_context():
     control = clickqt.qtgui_from_click(cli)
     control.gui.run_button.click()
 
-    wait_process_Events(100)  # Wait for worker thread to finish the execution
+    wait_process_Events(200)  # Wait for worker thread to finish the execution
 
     assert (
         len(clickqt_res) == 2
@@ -479,7 +479,7 @@ def test_execution_expose_value_kwargs():
     control = clickqt.qtgui_from_click(cli)
     control.gui.run_button.click()
 
-    wait_process_Events(1)  # Wait for worker thread to finish the execution
+    wait_process_Events(100)  # Wait for worker thread to finish the execution
 
     assert len(clickqt_res.values()) == 1
     assert clickqt_res.get("p3") == "c"

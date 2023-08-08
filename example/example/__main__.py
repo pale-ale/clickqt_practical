@@ -1,13 +1,31 @@
 import os
+
 import click
-import clickqt
 from PySide6.QtWidgets import QSpinBox
+
+import clickqt
 from clickqt.basedint import BasedIntParamType
 
 
 @click.group()
 def utilgroup():
     pass
+
+
+# Used to test the boolean flag behaviour (--flag true vs --flag, --flag false)
+@utilgroup.command()
+@click.option(
+    "--someflag",
+    "-sf",
+    type=bool,
+    is_flag=True,
+)
+@click.argument(
+    "someint",
+    type=int,
+)
+def foobar(someint, someflag):
+    click.echo(f"{someflag} {someint}")
 
 
 @utilgroup.command()

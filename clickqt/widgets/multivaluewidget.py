@@ -46,9 +46,16 @@ class MultiValueWidget(MultiWidget):
                 otype, param, widgetsource=widgetsource, parent=self, **kwargs
             )
             param.nargs = nargs  # click needs the right value for a correct conversion
-            
+
             self.consider_metavar(bw, i)
             self.widget.layout().addWidget(bw.container)
             self.children.append(bw)
 
         self.init()
+
+    def get_widget_value_cmdline(self) -> str:
+        return (
+            f"{self.get_preferable_opt()} "
+            + " ".join([str(c.get_widget_value()) for c in self.children])
+            + " "
+        )
