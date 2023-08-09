@@ -46,7 +46,9 @@ class NValueWidget(MultiWidget):
         self.widget.setWidgetResizable(True)
         addfieldbtn = QPushButton("+", self.widget)
         # Add an empty widget
-        addfieldbtn.clicked.connect(lambda: self.add_pair())  # pylint: disable=unnecessary-lambda
+        addfieldbtn.clicked.connect(
+            lambda: self.add_pair()
+        )  # pylint: disable=unnecessary-lambda
         self.vbox.layout().addWidget(addfieldbtn)
         self.widget.setWidget(self.vbox)
         self.buttondict: dict[QPushButton, BaseWidget] = {}
@@ -181,7 +183,7 @@ class NValueWidget(MultiWidget):
                         )
                     )
                     child.handle_valid(True)
-                except Exception as e: # pylint: disable=broad-exception-caught
+                except Exception as e:  # pylint: disable=broad-exception-caught
                     child.handle_valid(False)
                     err_messages.append(str(e))
 
@@ -225,3 +227,7 @@ class NValueWidget(MultiWidget):
             BaseWidget.handle_valid(self, valid)
         else:
             super().handle_valid(valid)
+
+    def get_widget_value_cmdline(self) -> str:
+        cmdstr = "".join([c.get_widget_value_cmdline() for c in self.children])
+        return cmdstr

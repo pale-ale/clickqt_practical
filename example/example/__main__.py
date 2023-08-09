@@ -1,13 +1,32 @@
 import os
+
 import click
-import clickqt
+from click_option_group import optgroup
 from PySide6.QtWidgets import QSpinBox
+
+import clickqt
 from clickqt.basedint import BasedIntParamType
 
 
 @click.group()
 def utilgroup():
     pass
+
+
+# Used to test the boolean flag behaviour (--flag true vs --flag, --flag false)
+@utilgroup.command()
+@click.option(
+    "--someflag",
+    "-sf",
+    type=bool,
+    is_flag=True,
+)
+@click.argument(
+    "someint",
+    type=int,
+)
+def foobar(someint, someflag):
+    click.echo(f"{someflag} {someint}")
 
 
 @utilgroup.command()
@@ -158,6 +177,21 @@ def hello_ns2(ns):
             click.echo(f"{s}{i}")
 
 
+@utilgroup.command()
+@optgroup.group(
+    "Server configuration", help="The configuration of some server connection"
+)
+@optgroup.option("-h", "--host", default="localhost", help="Server host name")
+@optgroup.option("-p", "--port", type=int, default=8888, help="Server port")
+@click.option("--debug/--no-debug", default=False, help="Debug flag")
+@optgroup.group("Test configuration", help="The configuration of some test suite.")
+@optgroup.option("--n", default=5, help="Number of test rounds")
+def cli(host, port, debug, n):
+    params = host, port, debug
+    print(params)
+    print(n)
+
+
 utilgroup.add_command(hello)
 hello.add_command(hello2)
 
@@ -166,4 +200,4 @@ gui = clickqt.qtgui_from_click(
 )
 
 if __name__ == "__main__":
-    gui()
+    utilgroup()

@@ -6,6 +6,7 @@ from functools import reduce
 import re
 import inspect
 import click
+from click_option_group._core import GroupedOption, _GroupTitleFakeOption
 from PySide6.QtWidgets import (
     QWidget,
     QFrame,
@@ -22,11 +23,9 @@ from PySide6.QtGui import QPalette, QClipboard
 from clickqt.core.gui import GUI
 from clickqt.core.commandexecutor import CommandExecutor
 from clickqt.core.error import ClickQtError
-from clickqt.widgets.combobox import CheckableComboBox
 from clickqt.widgets.basewidget import BaseWidget
 from clickqt.widgets.messagebox import MessageBox
 from clickqt.widgets.filefield import FileField
-from clickqt.core.utils import is_nested_list, is_file_path
 
 
 class Control(QObject):
@@ -109,7 +108,7 @@ class Control(QObject):
         assert param.name, "No parameter name specified"
         assert self.widget_registry[groups_command_name].get(param.name) is None
 
-        widget = self.gui.create_widget(  # pylint: disable=no-self-use
+        widget = self.gui.create_widget(
             param.type, param, widgetsource=self.gui.create_widget, com=command
         )
 
@@ -121,7 +120,7 @@ class Control(QObject):
 
         return widget.container
 
-    def concat(self, a: str, b: str) -> str:  # pylint: disable=no-self-use
+    def concat(self, a: str, b: str) -> str:
         """Concatenates the strings a and b with ':' and returns the result."""
 
         return a + ":" + b
@@ -201,7 +200,7 @@ class Control(QObject):
 
     def parse_cmd(self, cmd: click.Command, groups_command_name: str) -> QScrollArea:
         """Creates for every click parameter in **cmd** a clickqt widget and returns them stored in a QScrollArea.
-        The widgets are divided into a "Required arguments" and "Optional arguments" part.
+        The widgets are divided into a "Required arguments", "Optional arguments" and "Option Group" part.
 
         :param cmd: The command from which a QTabWidget with content should be created
         :param groups_command_name: The hierarchy of **cmd** as string whereby the names of the components are
@@ -216,11 +215,11 @@ class Control(QObject):
 
         required_optional_box: list[QWidget] = []
 
-        for i in range(2):
+        for i in range(3):
             box = QWidget()
             box.setLayout(QVBoxLayout())
             box_label = QLabel(
-                text=f"<b>{'Required arguments' if i == 0 else 'Optional arguments'}</b>"
+                text=f"<b>{'Required arguments' if i == 0 else ('Optional arguments' if i == 1 else 'Option Groups')}</b>"
             )
             box_label.setTextFormat(Qt.TextFormat.RichText)  # Bold text
             box.layout().addWidget(box_label)
@@ -262,7 +261,15 @@ class Control(QObject):
                         0
                         if (param.required or isinstance(param, click.Argument))
                         and param.default is None
-                        else 1
+                        else (
+                            2
+                            if (
+                                isinstance(
+                                    param, (GroupedOption, _GroupTitleFakeOption)
+                                )
+                            )
+                            else 1
+                        )
                     ].layout().addWidget(
                         self.parameter_to_widget(cmd, groups_command_name, param)
                     )
@@ -335,39 +342,6 @@ class Control(QObject):
 
         return [cmd]
 
-    def get_option_names(self, cmd):
-        """Returns an array of all the parameters used for the current command togeter with their properties."""
-        option_names = []
-        for param in cmd.params:
-            if isinstance(param, click.Option):
-                long_forms = [opt for opt in param.opts if opt.startswith("--")]
-                longest_long_form = max(long_forms, key=len) if long_forms else None
-                short_forms = [opt for opt in param.opts if opt.startswith("-")]
-                short_forms = max(short_forms, key=len) if short_forms else None
-                if longest_long_form:
-                    option_names.append(
-                        (
-                            longest_long_form,
-                            param.type,
-                            param.multiple,
-                            param.nargs,
-                            param.confirmation_prompt,
-                        )
-                    )
-                else:
-                    option_names.append(
-                        (
-                            short_forms,
-                            param.type,
-                            param.multiple,
-                            param.nargs,
-                            param.confirmation_prompt,
-                        )
-                    )
-            elif isinstance(param, click.Argument):
-                option_names.append(("Argument", param.type))
-        return option_names
-
     def get_params(self, selected_command_name: str, args):
         """Returns an array of strings that are used for the output field."""
         params = [k for k, v in self.widget_registry[selected_command_name].items()]
@@ -392,105 +366,36 @@ class Control(QObject):
         )
         return self.ep_or_path + " " + hierarchy_selected_command_name
 
-    def command_to_string_to_copy(self, hierarchy_selected_name: str, selected_command):
-        """Returns a string representing the click command if one actually would actually execute it in the shell."""
-        parameter_list = self.get_option_names(selected_command)
-        parameter_list = [param for param in parameter_list if param[0] != "--yes"]
-        widgets = self.widget_registry[hierarchy_selected_name]
-        widget_keys = list(widgets.keys())
-        if "yes" in widgets:
-            widgets.pop("yes")
-        widget_values = []
-        for widget in widgets:
-            if widget != "yes":
-                widget_values.append(widgets[widget].get_widget_value())
-        parameter_strings = []
-        for i, param in enumerate(parameter_list):
-            if param[0] == "Argument":
-                parameter_strings.append(str(widget_values[i]))
-                continue
-            if (not isinstance(widget_values[i], list)) and param[2] is not True:
-                widget_value = str(widget_values[i])
-                if (isinstance(param[1], click.Choice) and param[4] is True) or (
-                    isinstance(param[1], click.Choice)
-                ):
-                    if is_file_path(widget_value):
-                        parameter_strings.append(param[0] + "=" + widget_value)
-                    else:
-                        parameter_strings.append(
-                            param[0]
-                            + "="
-                            + re.sub(r"[^a-zA-Z0-9 .-]", " ", widget_value)
-                        )
-                else:
-                    if is_file_path(widget_value):
-                        parameter_strings.append(param[0] + " " + widget_value)
-                    else:
-                        parameter_strings.append(
-                            param[0]
-                            + " "
-                            + re.sub(r"[^a-zA-Z0-9 .-]", " ", widget_value)
-                        )
-            else:
-                if is_nested_list(widget_values[i]):
-                    depth = len(widget_values[i])
-                    for j in range(depth):
-                        widget_value = str(widget_values[i][j])
-                        if not is_file_path(widget_value):
-                            parameter_strings.append(
-                                param[0]
-                                + " "
-                                + re.sub(r"[^a-zA-Z0-9 .-]", " ", widget_value)
-                            )
-                        else:
-                            parameter_strings.append(param[0] + " " + widget_value)
-                else:
-                    length = len(widget_values[i])
-                    if param[2] is not True:
-                        parameter_strings.append(param[0])
-                        for j in range(length):
-                            widget_value = str(widget_values[i][j])
-                            if not is_file_path(widget_value):
-                                parameter_strings.append(
-                                    " " + re.sub(r"[^a-zA-Z0-9 .-]", " ", widget_value)
-                                )
-                            else:
-                                parameter_strings.append(" " + widget_value)
-                    else:
-                        if isinstance(widgets[widget_keys[i]], CheckableComboBox):
-                            for j in range(length):
-                                widget_value = str(widget_values[i][j])
-                                if not is_file_path(widget_value):
-                                    parameter_strings.append(
-                                        param[0]
-                                        + "="
-                                        + re.sub(r"[^a-zA-Z0-9 .-]", " ", widget_value)
-                                    )
-                                else:
-                                    parameter_strings.append(
-                                        param[0] + "=" + widget_value
-                                    )
-                        else:
-                            for j in range(length):
-                                widget_value = str(widget_values[i][j])
-                                if not is_file_path(widget_value):
-                                    parameter_strings.append(
-                                        param[0]
-                                        + " "
-                                        + re.sub(r"[^a-zA-Z0-9 .-]", " ", widget_value)
-                                    )
-                                else:
-                                    parameter_strings.append(
-                                        param[0] + " " + widget_value
-                                    )
-        message = hierarchy_selected_name + " " + " ".join(parameter_strings)
-        message = re.sub(rf"\b{re.escape(self.cmd.name)}\b", "", message)
-        message = message.replace(":", " ")
+    def command_to_string_to_copy(self, hierarchy_selected_name: str, _):
+        """Returns the click command line string corresponding to the current UI setup."""
+
+        # some edge cases:
+        # negative numbers need to be passed like "-n -- -1"
+        # other escape characters
+
+        parameter_strings = ""
+        for widget in list(self.widget_registry[hierarchy_selected_name].values()):
+            parameter_strings += widget.get_widget_value_cmdline()
+        if hierarchy_selected_name.startswith(self.cmd.name + ":"):
+            hierarchy_selected_name = hierarchy_selected_name[len(self.cmd.name) + 1 :]
+        msgpieces = []
         if not self.is_ep:
-            message = "python " + self.ep_or_path + " " + message
+            msgpieces.append("python")
+        msgpieces.append(self.ep_or_path)
+        if self.is_ep:
+            if hierarchy_selected_name.startswith(self.ep_or_path):
+                reduced_name = hierarchy_selected_name[len(self.ep_or_path) :]
+                if reduced_name.startswith(":"):
+                    reduced_name.replace(":", "", 1)
+                if reduced_name:
+                    msgpieces.append(reduced_name)
+            else:
+                msgpieces.append(hierarchy_selected_name)
         else:
-            message = self.ep_or_path + " " + message
-        return message
+            msgpieces.append(hierarchy_selected_name)
+        msgpieces.append(parameter_strings)
+        msg = " ".join(msgpieces).strip()
+        return msg
 
     def function_call_formatter(
         self, hierarchy_selected_command_name: str, selected_command_name: str, args
@@ -608,14 +513,8 @@ class Control(QObject):
 
         callables: list[t.Callable] = []
         for i, command in enumerate(hierarchy_selected_command, 1):
-            if (
-                c := run_command(
-                    command,
-                    reduce(
-                        self.concat, [g.name for g in hierarchy_selected_command[:i]]
-                    ),
-                )
-            ) is not None:
+            widget_tab = ":".join(g.name for g in hierarchy_selected_command[:i])
+            if (c := run_command(command, widget_tab)) is not None:
                 callables.append(c)
 
         if len(callables) == len(hierarchy_selected_command):

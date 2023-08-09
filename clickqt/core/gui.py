@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import sys
 import click
+from click_option_group._core import _GroupTitleFakeOption
 from PySide6.QtWidgets import (
     QApplication,
     QSplitter,
@@ -18,6 +19,7 @@ from PySide6.QtGui import (
     QPalette,
     QScreen,
 )
+from clickqt.widgets.optiongrouptitlewidget import OptionGroupTitleWidget
 from clickqt.widgets.checkbox import CheckBox
 from clickqt.widgets.numericfields import IntField, RealField
 from clickqt.widgets.datetimeedit import DateTimeEdit
@@ -168,6 +170,8 @@ class GUI:
             if isinstance(otype, click.types.Tuple):
                 return TupleWidget(otype, param, **kwargs)
             return MultiValueWidget(otype, param, **kwargs)
+        if isinstance(param, _GroupTitleFakeOption):
+            return OptionGroupTitleWidget(otype, param, **kwargs)
 
         for t, widgetclass in self.typedict.items():
             if isinstance(otype, t):
