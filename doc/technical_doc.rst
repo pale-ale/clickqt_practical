@@ -1,6 +1,9 @@
 Technical Documentation
 =======================
 
+This is a short overview of all the important design decisions concerning the used frameworks, paired with the most crucial components of
+clickQt if changes are going to happen.
+
 ==========
 Frameworks
 ==========
@@ -18,7 +21,21 @@ PySide6 is Python package that provides access to the Qt6.0+ framework of C++ an
 Each standard click type is mapped to a certain Qt-widget, which is realised as a seperate UI class. The widgets are used to set
 the values of the parameters of a specific command. These values are parsed to the click command for its execution.
 
-Here's a list of the most relevant classes and what they do:
+=====================
+Most important method
+=====================
+
+The most important method of clickQt is the qtgui_from_click() method, whose concrete documentation can be found here: :mod:`clickqt.core.core`.
+
+| To summarize the importance of this function:
+
+The user calls this central function to create the gui from a Command Line Interface that has been built in click by parsing the click command to this function, but
+qtgui_from_click allows one to set additional parameters like application name or application icon. In addition to that the function sets the actual layout of the GUI like how big it should be and what kind of colors are supposed to be used for the layout.
+
+=================
+Important classes
+=================
+This section displays all the important classes used in clickQt together with all the important methods.
 
 1. :class:`clickqt.core.gui.GUI`
 This class is responsible creating the widgets that are needed for the constructed depending on the parameter types of the commands presented in the Command Line Interface
