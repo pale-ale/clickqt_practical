@@ -162,7 +162,7 @@ def test_gui_construction_no_options(root_group_command: click.Command):
         findChildren(
             gui.splitter, QPushButton, Qt.FindChildOption.FindChildrenRecursively
         ),
-        3,
+        4,
     )
     assert (
         gui.run_button in buttons

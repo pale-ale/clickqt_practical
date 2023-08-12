@@ -23,6 +23,7 @@ from PySide6.QtGui import QPalette, QClipboard
 from clickqt.core.gui import GUI
 from clickqt.core.commandexecutor import CommandExecutor
 from clickqt.core.error import ClickQtError
+from clickqt.core.utils import is_param_arg
 from clickqt.widgets.basewidget import BaseWidget
 from clickqt.widgets.messagebox import MessageBox
 from clickqt.widgets.filefield import FileField
@@ -68,6 +69,7 @@ class Control(QObject):
         self.gui.run_button.clicked.connect(self.start_execution)
         self.gui.stop_button.clicked.connect(self.stop_execution)
         self.gui.copy_button.clicked.connect(self.construct_command_string)
+        self.gui.import_button.clicked.connect(self.import_cmdline)
 
         # Groups-Command-name concatinated with ":" to command-option-names to BaseWidget
         self.widget_registry: dict[str, dict[str, BaseWidget]] = {}
@@ -342,6 +344,23 @@ class Control(QObject):
 
         return [cmd]
 
+    def select_current_command_hierarchy(
+        self, commands: list[str]
+    ) -> tuple[list[str], QWidget]:
+        """Set up the tab widgets such that the command gets selected, up to `commands`."""
+        widget = self.gui.widgets_container
+        fulfilled_cmds = []
+        for command in commands:
+            if not isinstance(widget, QTabWidget):
+                return fulfilled_cmds, widget
+            subcommands = [widget.tabText(i) for i in range(widget.count())]
+            if command not in subcommands:
+                return fulfilled_cmds, widget
+            tabidx = subcommands.index(command)
+            fulfilled_cmds.append(command)
+            widget.setCurrentIndex(tabidx)
+        return fulfilled_cmds, widget
+
     def get_params(self, selected_command_name: str, args):
         """Returns an array of strings that are used for the output field."""
         params = [k for k, v in self.widget_registry[selected_command_name].items()]
@@ -369,13 +388,14 @@ class Control(QObject):
     def command_to_string_to_copy(self, hierarchy_selected_name: str, _):
         """Returns the click command line string corresponding to the current UI setup."""
 
-        # some edge cases:
-        # negative numbers need to be passed like "-n -- -1"
-        # other escape characters
-
-        parameter_strings = ""
+        argument_strings = ""
+        opt_strings = ""
         for widget in list(self.widget_registry[hierarchy_selected_name].values()):
-            parameter_strings += widget.get_widget_value_cmdline()
+            if is_param_arg(widget.param):
+                argument_strings += widget.get_widget_value_cmdline()
+            else:
+                opt_strings += widget.get_widget_value_cmdline()
+        parameter_strings = argument_strings + opt_strings
         if hierarchy_selected_name.startswith(self.cmd.name + ":"):
             hierarchy_selected_name = hierarchy_selected_name[len(self.cmd.name) + 1 :]
         msgpieces = []
@@ -594,3 +614,89 @@ class Control(QObject):
         )
         clip_board = QApplication.clipboard()
         clip_board.setText(message, QClipboard.Clipboard)
+        click.echo(f"Copied to clipboard: '{message}'")
+
+    def get_clipboard(self) -> str:
+        """Obtain the clipboard as a string."""
+        return QApplication.clipboard().text()
+
+    def import_cmdline(self, cmdstr: str) -> None:
+        """Set the values of the widgets according to `cmdstr`."""
+        cmdstr = self.get_clipboard()
+        click.echo(f"Importing '{cmdstr}' ...")
+        splitstrs = click.parser.split_arg_string(cmdstr)
+        click.echo(f"Read as: '{splitstrs}' ...")
+        error = ClickQtError()
+
+        # sanity checks
+        if self.is_ep:
+            if len(splitstrs) == 0 or splitstrs[0] != self.ep_or_path:
+                error = ClickQtError(
+                    ClickQtError.ErrorType.PROCESSING_VALUE_ERROR,
+                    "Cannot import due to missing or wrong entry point name",
+                )
+        else:
+            if len(splitstrs) <= 3:
+                error = ClickQtError(
+                    ClickQtError.ErrorType.PROCESSING_VALUE_ERROR,
+                    "Cannot import due to missing or wrong file/function combination",
+                )
+        if self.check_error(error):
+            return
+        if self.is_ep:
+            splitstrs.pop(0)
+        else:
+            splitstrs = splitstrs[2:]
+        click.echo(f"Arguments w/ command: {splitstrs}")
+        # what if we use a command like "foobar xyz abc" - is abc a subcommand or an argument?
+        # i suppose the desired behaviour would be a greedy consumption for subcmds
+        hierarchystrs, parentwidget = self.select_current_command_hierarchy(splitstrs)
+        click.echo(f"Set tabs to: '{hierarchystrs}' from '{splitstrs}'")
+        for hierarchystr in hierarchystrs:
+            splitstrs.remove(hierarchystr)
+        click.echo(f"Arguments w/o command: {splitstrs}")
+        if isinstance(self.cmd, click.Group):
+            hierarchystrs.insert(0, self.cmd.name)
+        commandstr = ":".join(hierarchystrs)
+        parameter_strings = ""
+        relevant_widgets = self.widget_registry[commandstr].values()
+        for widget in relevant_widgets:
+            parameter_strings += widget.get_widget_value_cmdline()
+        click.echo(f"Current GUI args: {parameter_strings}")
+
+        # we need to differnetiate between args and opts
+        arg_opt_split = len(splitstrs)
+        for i, arg_or_opt in enumerate(splitstrs):
+            if arg_or_opt.startswith("-"):
+                arg_opt_split = i
+                break
+        click.echo(
+            f"Arg / Opt split: {splitstrs[:arg_opt_split]} / {splitstrs[arg_opt_split:]}"
+        )
+        args = splitstrs[:arg_opt_split]
+        opts = splitstrs[arg_opt_split:]
+        args_iter = iter(args)
+        for widget in relevant_widgets:
+            use_arg = all(not o.startswith("-") for o in widget.param.opts)
+            if use_arg:
+                widget.set_value(
+                    widget.type.convert(next(args_iter), widget.param, None)
+                )
+            else:
+                optidx = -1
+                for o in widget.param.opts:
+                    if o in opts:
+                        optidx = opts.index(o)
+                        break
+                if optidx != -1:  # the option is used
+                    widget.set_value(
+                        widget.type.convert(opts[optidx], widget.param, None)
+                    )
+                else:  # the option is unused, i.e. a default gets inserted
+                    widget.set_value(widget.get_param_default(widget.param))
+                    ctx = click.Context(self.cmd)
+                    print(self.cmd.commands["foobar"].params)
+                    self.cmd.parse_args(ctx, splitstrs)
+                    print(self.cmd.commands["foobar"].params)
+
+        # self.widget_registry
