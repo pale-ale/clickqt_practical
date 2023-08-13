@@ -77,6 +77,18 @@ class GUI:
         self.run_button = QPushButton("&Run")  # Shortcut Alt+R
         self.stop_button = QPushButton("&Stop")  # Shortcut Alt+S
         self.stop_button.setEnabled(False)
+        self.stop_button.setStyleSheet(
+            """
+            QPushButton {
+                background-color: #FF0000; /* Default background color (red) when disabled */
+                color: #FFFFFF; /* Default text color when disabled */
+            }
+            QPushButton:enabled {
+                background-color: #00FF00; /* Background color (green) when enabled */
+                color: #FFFFFF; /* Text color when enabled */
+            }
+        """
+        )
         self.copy_button = QPushButton("&Copy-To-Clipboard")
         self.buttons_container.layout().addWidget(self.run_button)
         self.buttons_container.layout().addWidget(self.stop_button)
