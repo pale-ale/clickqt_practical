@@ -1,6 +1,7 @@
 import click
 from click_option_group import optgroup
 
+
 @click.command()
 @optgroup.group(
     "Server configuration", help="The configuration of some server connection"
