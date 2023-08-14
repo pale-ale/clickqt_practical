@@ -387,41 +387,25 @@ class Control(QObject):
         return self.ep_or_path + " " + hierarchy_selected_command_name
     
     def hierarchy_to_str(self, command_hierarchy: list[str]) -> str:
+        assert isinstance(command_hierarchy, list)
         return ":".join(command_hierarchy)
 
-    def command_to_string_to_copy(self, command_hierarchy: list[str], _):
+    def command_to_cli_string(self, command_hierarchy: list[str]):
         """Returns the click command line string corresponding to the current UI setup."""
-
-        argument_strings = ""
-        opt_strings = ""
+        param_strings = ""
         hierarchy_str = self.hierarchy_to_str(command_hierarchy)
         for widget in list(self.widget_registry[hierarchy_str].values()):
-            if is_param_arg(widget.param):
-                argument_strings += widget.get_widget_value_cmdline()
-            else:
-                opt_strings += widget.get_widget_value_cmdline()
-        parameter_strings = argument_strings + opt_strings
-        if hierarchy_str.startswith(self.cmd.name + ":"):
-            hierarchy_str = hierarchy_str[len(self.cmd.name) + 1 :]
+            param_strings += widget.get_widget_value_cmdline()
         msgpieces = []
-        if command_hierarchy[0] == self.cmd.name:
+        if self.is_ep:
             command_hierarchy = command_hierarchy[1:]
         if not self.is_ep:
+            if isinstance(self.cmd, click.Group) and command_hierarchy[0] == self.cmd.name:
+                command_hierarchy = command_hierarchy[1:]
             msgpieces.append("python")
         msgpieces.append(self.ep_or_path)
-        # if self.is_ep:
-        #     if hierarchy_str.startswith(self.ep_or_path):
-        #         reduced_name = hierarchy_str[len(self.ep_or_path) :]
-        #         if reduced_name.startswith(":"):
-        #             reduced_name.replace(":", "", 1)
-        #         if reduced_name:
-        #             msgpieces.append(reduced_name)
-        #     else:
-        #         msgpieces.append(hierarchy_str)
-        # else:
-        #     msgpieces.append(hierarchy_str)
         msgpieces.extend(command_hierarchy)
-        msgpieces.append(parameter_strings)
+        msgpieces.append(param_strings)
         msg = " ".join(msgpieces).strip()
         return msg
 
@@ -470,18 +454,19 @@ class Control(QObject):
         )
 
         def run_command(
-            command: click.Command, hierarchy_command: str
+            command: click.Command, hierarchy: list[str]
         ) -> t.Optional[t.Callable]:
             kwargs: dict[str, t.Any] = {}
             has_error = False
             dialog_widgets: list[BaseWidget] = []  # widgets that will show a dialog
+            hierarchy_str = self.hierarchy_to_str(hierarchy)
 
             if (
-                self.widget_registry.get(hierarchy_command) is not None
+                self.widget_registry.get(hierarchy_str) is not None
             ):  # Groups with no options are not in the dict
                 # Check the values of all non dialog widgets for errors
                 for option_name, widget in self.widget_registry[
-                    hierarchy_command
+                    hierarchy_str
                 ].items():
                     if isinstance(widget, MessageBox):
                         dialog_widgets.append(
@@ -526,11 +511,11 @@ class Control(QObject):
                     )  # Remove explicitly mentioned args from kwargs
 
                     print(
-                        f"For command details, please call '{self.command_to_string(hierarchy_command)} --help'"
+                        f"For command details, please call '{self.command_to_string(hierarchy_str)} --help'"
                     )
-                    print(self.command_to_string_to_copy(hierarchy_command, command))
+                    print(self.command_to_cli_string(hierarchy))
                     print(
-                        f"Current Command: {self.function_call_formatter(hierarchy_command, command, kwargs)} \n"
+                        f"Current Command: {self.function_call_formatter(hierarchy_str, command, kwargs)} \n"
                         + "Output:"
                     )
                     return lambda: command.callback(*args, **kwargs)
@@ -541,8 +526,8 @@ class Control(QObject):
 
         callables: list[t.Callable] = []
         for i, command in enumerate(hierarchy_selected_command, 1):
-            widget_tab = ":".join(g.name for g in hierarchy_selected_command[:i])
-            if (c := run_command(command, widget_tab)) is not None:
+            hierarchy = [g.name for g in hierarchy_selected_command[:i]]
+            if (c := run_command(command, hierarchy)) is not None:
                 callables.append(c)
 
         if len(callables) == len(hierarchy_selected_command):
@@ -561,64 +546,15 @@ class Control(QObject):
                 callables, click.Context(hierarchy_selected_command[-1])
             )
 
+    def get_hierarchy(self):
+        return [g.name for g in self.current_command_hierarchy(self.gui.widgets_container, self.cmd)]
+
     def construct_command_string(self):
         """
-        This function is responsible
+        Build a shell-executable command from the current state of the GUI.
         """
         self.gui.terminal_output.clear()
-
-        hierarchy_selected_command = self.current_command_hierarchy(
-            self.gui.widgets_container, self.cmd
-        )
-        selected_command = hierarchy_selected_command[-1]
-        command_hierarchy = [g.name for g in hierarchy_selected_command]
-        hierarchy_selected_command_name = reduce(self.concat, command_hierarchy)
-
-        kwargs: dict[str, t.Any] = {}
-        has_error = False
-        unused_options: list[BaseWidget] = []  # parameters with expose_value==False
-
-        # Check all values for errors
-        for option_name, widget in self.widget_registry[
-            hierarchy_selected_command_name
-        ].items():
-            param: click.Parameter = next(
-                (x for x in selected_command.params if x.name == option_name)
-            )
-            if param.expose_value:
-                widget_value, err = widget.get_value()
-                has_error |= self.check_error(err)
-
-                kwargs[option_name] = widget_value
-            else:  # Verify it when all options are valid
-                unused_options.append(widget)
-
-        if has_error:
-            return
-
-        # Replace the callables with their values and check for errors
-        for option_name, value in kwargs.items():
-            if callable(value):
-                kwargs[option_name], err = value()
-                has_error |= self.check_error(err)
-
-        if has_error:
-            return
-
-        # Parameters with expose_value==False
-        for widget in unused_options:
-            widget_value, err = widget.get_value()
-            has_error |= self.check_error(err)
-            if callable(widget_value):
-                _, err = widget_value()
-                has_error |= self.check_error(err)
-
-        if has_error:
-            return
-
-        message = self.command_to_string_to_copy(
-            command_hierarchy, selected_command
-        )
+        message = self.command_to_cli_string(self.get_hierarchy())
         clip_board = QApplication.clipboard()
         clip_board.setText(message, QClipboard.Clipboard)
         click.echo(f"Copied to clipboard: '{message}'")
@@ -660,9 +596,7 @@ class Control(QObject):
         for hierarchystr in hierarchystrs:
             splitstrs.remove(hierarchystr)
         click.echo(f"Arguments w/o command: {splitstrs}")
-        # if isinstance(self.cmd, click.Group):
-        #     hierarchystrs.insert(0, self.cmd.name)
-        commandstr = ":".join(hierarchystrs)
+        commandstr = self.hierarchy_to_str(hierarchystrs)
 
         cmd:click.Group = self.cmd
         for cmdname in hierarchystrs:
