@@ -359,6 +359,7 @@ class Control(QObject):
             tabidx = subcommands.index(command)
             fulfilled_cmds.append(command)
             widget.setCurrentIndex(tabidx)
+            widget = widget.currentWidget()
         return fulfilled_cmds, widget
 
     def get_params(self, selected_command_name: str, args):
@@ -384,35 +385,42 @@ class Control(QObject):
             self.cmd.name, hierarchy_selected_command_name
         )
         return self.ep_or_path + " " + hierarchy_selected_command_name
+    
+    def hierarchy_to_str(self, command_hierarchy: list[str]) -> str:
+        return ":".join(command_hierarchy)
 
-    def command_to_string_to_copy(self, hierarchy_selected_name: str, _):
+    def command_to_string_to_copy(self, command_hierarchy: list[str], _):
         """Returns the click command line string corresponding to the current UI setup."""
 
         argument_strings = ""
         opt_strings = ""
-        for widget in list(self.widget_registry[hierarchy_selected_name].values()):
+        hierarchy_str = self.hierarchy_to_str(command_hierarchy)
+        for widget in list(self.widget_registry[hierarchy_str].values()):
             if is_param_arg(widget.param):
                 argument_strings += widget.get_widget_value_cmdline()
             else:
                 opt_strings += widget.get_widget_value_cmdline()
         parameter_strings = argument_strings + opt_strings
-        if hierarchy_selected_name.startswith(self.cmd.name + ":"):
-            hierarchy_selected_name = hierarchy_selected_name[len(self.cmd.name) + 1 :]
+        if hierarchy_str.startswith(self.cmd.name + ":"):
+            hierarchy_str = hierarchy_str[len(self.cmd.name) + 1 :]
         msgpieces = []
+        if command_hierarchy[0] == self.cmd.name:
+            command_hierarchy = command_hierarchy[1:]
         if not self.is_ep:
             msgpieces.append("python")
         msgpieces.append(self.ep_or_path)
-        if self.is_ep:
-            if hierarchy_selected_name.startswith(self.ep_or_path):
-                reduced_name = hierarchy_selected_name[len(self.ep_or_path) :]
-                if reduced_name.startswith(":"):
-                    reduced_name.replace(":", "", 1)
-                if reduced_name:
-                    msgpieces.append(reduced_name)
-            else:
-                msgpieces.append(hierarchy_selected_name)
-        else:
-            msgpieces.append(hierarchy_selected_name)
+        # if self.is_ep:
+        #     if hierarchy_str.startswith(self.ep_or_path):
+        #         reduced_name = hierarchy_str[len(self.ep_or_path) :]
+        #         if reduced_name.startswith(":"):
+        #             reduced_name.replace(":", "", 1)
+        #         if reduced_name:
+        #             msgpieces.append(reduced_name)
+        #     else:
+        #         msgpieces.append(hierarchy_str)
+        # else:
+        #     msgpieces.append(hierarchy_str)
+        msgpieces.extend(command_hierarchy)
         msgpieces.append(parameter_strings)
         msg = " ".join(msgpieces).strip()
         return msg
@@ -563,9 +571,8 @@ class Control(QObject):
             self.gui.widgets_container, self.cmd
         )
         selected_command = hierarchy_selected_command[-1]
-        hierarchy_selected_command_name = reduce(
-            self.concat, [g.name for g in hierarchy_selected_command]
-        )
+        command_hierarchy = [g.name for g in hierarchy_selected_command]
+        hierarchy_selected_command_name = reduce(self.concat, command_hierarchy)
 
         kwargs: dict[str, t.Any] = {}
         has_error = False
@@ -610,7 +617,7 @@ class Control(QObject):
             return
 
         message = self.command_to_string_to_copy(
-            hierarchy_selected_command_name, selected_command
+            command_hierarchy, selected_command
         )
         clip_board = QApplication.clipboard()
         clip_board.setText(message, QClipboard.Clipboard)
@@ -648,55 +655,21 @@ class Control(QObject):
         else:
             splitstrs = splitstrs[2:]
         click.echo(f"Arguments w/ command: {splitstrs}")
-        # what if we use a command like "foobar xyz abc" - is abc a subcommand or an argument?
-        # i suppose the desired behaviour would be a greedy consumption for subcmds
         hierarchystrs, parentwidget = self.select_current_command_hierarchy(splitstrs)
         click.echo(f"Set tabs to: '{hierarchystrs}' from '{splitstrs}'")
         for hierarchystr in hierarchystrs:
             splitstrs.remove(hierarchystr)
         click.echo(f"Arguments w/o command: {splitstrs}")
-        if isinstance(self.cmd, click.Group):
-            hierarchystrs.insert(0, self.cmd.name)
+        # if isinstance(self.cmd, click.Group):
+        #     hierarchystrs.insert(0, self.cmd.name)
         commandstr = ":".join(hierarchystrs)
-        parameter_strings = ""
-        relevant_widgets = self.widget_registry[commandstr].values()
-        for widget in relevant_widgets:
-            parameter_strings += widget.get_widget_value_cmdline()
-        click.echo(f"Current GUI args: {parameter_strings}")
 
-        # we need to differnetiate between args and opts
-        arg_opt_split = len(splitstrs)
-        for i, arg_or_opt in enumerate(splitstrs):
-            if arg_or_opt.startswith("-"):
-                arg_opt_split = i
-                break
-        click.echo(
-            f"Arg / Opt split: {splitstrs[:arg_opt_split]} / {splitstrs[arg_opt_split:]}"
-        )
-        args = splitstrs[:arg_opt_split]
-        opts = splitstrs[arg_opt_split:]
-        args_iter = iter(args)
-        for widget in relevant_widgets:
-            use_arg = all(not o.startswith("-") for o in widget.param.opts)
-            if use_arg:
-                widget.set_value(
-                    widget.type.convert(next(args_iter), widget.param, None)
-                )
-            else:
-                optidx = -1
-                for o in widget.param.opts:
-                    if o in opts:
-                        optidx = opts.index(o)
-                        break
-                if optidx != -1:  # the option is used
-                    widget.set_value(
-                        widget.type.convert(opts[optidx], widget.param, None)
-                    )
-                else:  # the option is unused, i.e. a default gets inserted
-                    widget.set_value(widget.get_param_default(widget.param))
-                    ctx = click.Context(self.cmd)
-                    print(self.cmd.commands["foobar"].params)
-                    self.cmd.parse_args(ctx, splitstrs)
-                    print(self.cmd.commands["foobar"].params)
+        cmd:click.Group = self.cmd
+        for cmdname in hierarchystrs:
+            cmd = cmd.commands[cmdname]
+        ctx = click.Context(cmd)    
+        cmd.parse_args(ctx, splitstrs[:])
+        relevant_widgets = self.widget_registry[self.cmd.name + ":" + commandstr]
 
-        # self.widget_registry
+        for paramname, paramvalue in ctx.params.items():
+            relevant_widgets[paramname].set_value(paramvalue)
