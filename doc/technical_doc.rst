@@ -33,7 +33,7 @@ translated into the UI of clickQt, that is realised with Qt-widgets from PySide6
 
 PySide6
 -------
-PySide6 is a Python package that provides access to the Qt6.0+ framework of C++ and offers a variety of Qt-widgets for different kind of inputs.
+PySide6 is a Python package that provides access to the Qt6.0+ framework of C++ and offers a variety of Qt-widgets for different kinds of inputs.
 Each standard click type is mapped to a certain Qt-widget, which is realised as a separate UI class. The widgets are used to set
 the values of the parameters of a specific command. These values are passed to the click command for its execution.
 
@@ -46,7 +46,7 @@ The most important method of clickQt is the qtgui_from_click() method, whose con
 | To summarize the importance of this function:
 
 The user calls this central function to create the gui from a Command Line Interface that has been built in click by parsing the click command to this function, but
-qtgui_from_click allows one to set additional parameters like application name or application icon. In addition to that the function sets the actual layout of the GUI e.g. the size, theme, etc. to be used for the layout.
+qtgui_from_click allows one to set additional parameters like application name or application icon. In addition to that, the function sets the actual layout of the GUI, e.g. the size, theme, etc. to be used for the layout.
 
 =================
 Important classes
