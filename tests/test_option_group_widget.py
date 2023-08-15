@@ -19,7 +19,7 @@ def determine_relevant_widgets(control_instance: Control):
     return widgets_with_name
 
 
-def determin_widgets_for_comp(widgets: list, cmd, p_name2: str = None):
+def determine_widgets_for_comp(widgets: list, cmd, p_name2: str = None):
     widgets_to_compare = []
     param_names = []
     if p_name2 is not None:
@@ -71,7 +71,7 @@ def test_option_group_ordering(click_attrs: dict):
     control = qtgui_from_click(cmd)
 
     widgets = determine_relevant_widgets(control)
-    comp_widgets = determin_widgets_for_comp(widgets, cmd, parameter.name)
+    comp_widgets = determine_widgets_for_comp(widgets, cmd, parameter.name)
     assert comp_widgets[0][0] < comp_widgets[1][0]
 
 
@@ -90,5 +90,5 @@ def test_option_group():
     cmd = cli
     control = qtgui_from_click(cmd)
     widgets = determine_relevant_widgets(control)
-    comp_widgets = determin_widgets_for_comp(widgets, cmd)
+    comp_widgets = determine_widgets_for_comp(widgets, cmd)
     assert comp_widgets[0][0] < comp_widgets[1][0]
