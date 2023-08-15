@@ -75,7 +75,23 @@ def test_option_group_ordering(click_attrs: dict):
     assert comp_widgets[0][0] < comp_widgets[1][0]
 
 
-def test_option_group():
+def test_option_group_fail():
+    """This test will fail if you comment one of the options out"""
+    group = OptionGroup("Group 1")
+
+    @click.command("main")
+    @group.option("--opt1")
+    @group.option("--opt2")
+    def cli(**params):
+        print(params)
+
+    cmd = cli
+    control = qtgui_from_click(cmd)
+    widgets = determine_relevant_widgets(control)
+    assert len(widgets) == 3
+
+
+def test_option_group_simple_ordering():
     group = OptionGroup("Group 1")
     group2 = OptionGroup("Group 2")
 
