@@ -98,9 +98,11 @@ class GUI:
         """
         )
         self.copy_button = QPushButton("&Copy-To-Clipboard")
+        self.import_button = QPushButton("&Import-From-Clipboard")
         self.buttons_container.layout().addWidget(self.run_button)
         self.buttons_container.layout().addWidget(self.stop_button)
         self.buttons_container.layout().addWidget(self.copy_button)
+        self.buttons_container.layout().addWidget(self.import_button)
 
         self.terminal_output = TerminalOutput()
         self.terminal_output.setReadOnly(True)

@@ -17,7 +17,6 @@ def utilgroup():
     pass
 
 
-# Used to test the boolean flag behaviour (--flag true vs --flag, --flag false)
 @utilgroup.command()
 @click.option(
     "--someflag",

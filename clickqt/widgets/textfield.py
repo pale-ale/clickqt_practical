@@ -14,7 +14,7 @@ from clickqt.core.utils import remove_prefix
 try:
     from enum_tools.documentation import document_enum
 except ImportError:  # pragma: no cover
-    document_enum = lambda x: x # pylint: disable=unnecessary-lambda-assignment
+    document_enum = lambda x: x  # pylint: disable=unnecessary-lambda-assignment
 
 
 class TextField(BaseWidget):
@@ -33,7 +33,9 @@ class TextField(BaseWidget):
 
         if self.parent_widget is None:
             if (
-                envvar_value := param.resolve_envvar_value(click.Context(self.click_command))
+                envvar_value := param.resolve_envvar_value(
+                    click.Context(self.click_command)
+                )
             ) is not None:  # Consider envvar
                 self.set_value(envvar_value)
             else:  # Consider default value
@@ -44,7 +46,7 @@ class TextField(BaseWidget):
             self.widget.setText(value)
         else:
             self.widget.setText(
-                self.type.convert(
+                click.STRING.convert(
                     value=value,
                     param=self.click_command,
                     ctx=click.Context(self.click_command),
