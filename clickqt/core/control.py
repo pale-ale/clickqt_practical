@@ -259,20 +259,14 @@ class Control(QObject):
                         feature_switches[param.name] = []
                     feature_switches[param.name].append(param)
                 else:
-                    required_optional_box[
-                        0
-                        if (param.required or isinstance(param, click.Argument))
-                        and param.default is None
-                        else (
-                            2
-                            if (
-                                isinstance(
-                                    param, (GroupedOption, _GroupTitleFakeOption)
-                                )
-                            )
-                            else 1
-                        )
-                    ].layout().addWidget(
+                    widget_counter = 1
+                    if (
+                        param.required or isinstance(param, click.Argument)
+                    ) and param.default is None:
+                        widget_counter = 0
+                    elif isinstance(param, (GroupedOption, _GroupTitleFakeOption)):
+                        widget_counter = 2
+                    required_optional_box[widget_counter].layout().addWidget(
                         self.parameter_to_widget(cmd, groups_command_name, param)
                     )
 
@@ -385,7 +379,7 @@ class Control(QObject):
             self.cmd.name, hierarchy_selected_command_name
         )
         return self.ep_or_path + " " + hierarchy_selected_command_name
-    
+
     def hierarchy_to_str(self, command_hierarchy: list[str]) -> str:
         assert isinstance(command_hierarchy, list)
         return ":".join(command_hierarchy)
@@ -400,7 +394,10 @@ class Control(QObject):
         if self.is_ep:
             command_hierarchy = command_hierarchy[1:]
         if not self.is_ep:
-            if isinstance(self.cmd, click.Group) and command_hierarchy[0] == self.cmd.name:
+            if (
+                isinstance(self.cmd, click.Group)
+                and command_hierarchy[0] == self.cmd.name
+            ):
                 command_hierarchy = command_hierarchy[1:]
             msgpieces.append("python")
         msgpieces.append(self.ep_or_path)
@@ -465,9 +462,7 @@ class Control(QObject):
                 self.widget_registry.get(hierarchy_str) is not None
             ):  # Groups with no options are not in the dict
                 # Check the values of all non dialog widgets for errors
-                for option_name, widget in self.widget_registry[
-                    hierarchy_str
-                ].items():
+                for option_name, widget in self.widget_registry[hierarchy_str].items():
                     if isinstance(widget, MessageBox):
                         dialog_widgets.append(
                             widget
@@ -547,7 +542,12 @@ class Control(QObject):
             )
 
     def get_hierarchy(self):
-        return [g.name for g in self.current_command_hierarchy(self.gui.widgets_container, self.cmd)]
+        return [
+            g.name
+            for g in self.current_command_hierarchy(
+                self.gui.widgets_container, self.cmd
+            )
+        ]
 
     def construct_command_string(self):
         """
@@ -598,10 +598,10 @@ class Control(QObject):
         click.echo(f"Arguments w/o command: {splitstrs}")
         commandstr = self.hierarchy_to_str(hierarchystrs)
 
-        cmd:click.Group = self.cmd
+        cmd: click.Group = self.cmd
         for cmdname in hierarchystrs:
             cmd = cmd.commands[cmdname]
-        ctx = click.Context(cmd)    
+        ctx = click.Context(cmd)
         cmd.parse_args(ctx, splitstrs[:])
         relevant_widgets = self.widget_registry[self.cmd.name + ":" + commandstr]
 
