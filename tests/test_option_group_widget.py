@@ -36,27 +36,27 @@ def determin_widgets_for_comp(widgets: list, cmd, p_name2: str = None):
 
 
 @pytest.mark.parametrize(
-    ("click_attrs", "required"),
+    ("click_attrs"),
     [
-        (ClickAttrs.intfield(), False),
-        (ClickAttrs.passwordfield(), False),
-        (ClickAttrs.checkbox(), False),
-        (ClickAttrs.datetime(), False),
-        (ClickAttrs.checkable_combobox(choices=["A", "B"]), False),
-        (ClickAttrs.combobox(choices=["A", "B"]), False),
-        (ClickAttrs.filefield(), False),
-        (ClickAttrs.floatrange(), False),
-        (ClickAttrs.intrange(), False),
-        (ClickAttrs.multi_value_widget(nargs=2), False),
-        (ClickAttrs.nvalue_widget(), False),
-        (ClickAttrs.passwordfield(), False),
-        (ClickAttrs.tuple_widget(types=[str, str]), False),
-        (ClickAttrs.realfield(), False),
-        (ClickAttrs.uuid(), False),
-        (ClickAttrs.textfield(), False),
+        (ClickAttrs.intfield(),),
+        (ClickAttrs.passwordfield()),
+        (ClickAttrs.checkbox()),
+        (ClickAttrs.datetime()),
+        (ClickAttrs.checkable_combobox(choices=["A", "B"])),
+        (ClickAttrs.combobox(choices=["A", "B"])),
+        (ClickAttrs.filefield()),
+        (ClickAttrs.floatrange()),
+        (ClickAttrs.intrange()),
+        (ClickAttrs.multi_value_widget(nargs=2)),
+        (ClickAttrs.nvalue_widget()),
+        (ClickAttrs.passwordfield()),
+        (ClickAttrs.tuple_widget(types=[str, str])),
+        (ClickAttrs.realfield()),
+        (ClickAttrs.uuid()),
+        (ClickAttrs.textfield()),
     ],
 )
-def test_option_group_ordering(click_attrs: dict, required: bool):
+def test_option_group_ordering(click_attrs: dict):
     group = OptionGroup("Server configuration")
 
     @click.command("main")
@@ -66,7 +66,7 @@ def test_option_group_ordering(click_attrs: dict, required: bool):
         print(params)
 
     cmd = cli
-    parameter = click.Option(param_decls=["--p"], **click_attrs, required=required)
+    parameter = click.Option(param_decls=["--p"], **click_attrs)
     cmd.params.append(parameter)
     control = qtgui_from_click(cmd)
 
