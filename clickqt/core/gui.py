@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import sys
+from typing import Callable, Tuple, Any
 import click
 from click_option_group._core import _GroupTitleFakeOption
 from PySide6.QtWidgets import (
@@ -37,6 +38,13 @@ from clickqt.widgets.confirmationwidget import ConfirmationWidget
 from clickqt.widgets.messagebox import MessageBox
 from clickqt.core.output import OutputStream, TerminalOutput
 
+GetterFnType = Callable[[Any], Any]
+SetterFnType = Callable[[Any], None]
+CustomBindingType = Tuple[Any, GetterFnType, SetterFnType]
+"""
+Represents a Qt widget, a method to obtain the value, and a method to set the value.
+"""
+
 
 class GUI:
     """
@@ -68,7 +76,7 @@ class GUI:
         self.window.layout().addWidget(self.splitter)
 
         self.widgets_container: QWidget = None  # Control constructs this Qt-widget
-        self.custom_mapping = {}
+        self.custom_mapping: dict[click.ParamType, CustomBindingType] = {}
         self.buttons_container = QWidget()
         self.buttons_container.setLayout(QHBoxLayout())
         self.buttons_container.setSizePolicy(
@@ -139,7 +147,7 @@ class GUI:
         geo.moveCenter(center)
         self.window.move(geo.topLeft())
 
-    def update_typedict(self, custom_mapping):
+    def update_typedict(self, custom_mapping: dict[click.ParamType, CustomBindingType]):
         assert len(custom_mapping) >= 1
         self.custom_mapping.update(custom_mapping)
 
@@ -191,8 +199,8 @@ class GUI:
             if isinstance(otype, t):
                 return widgetclass(otype, param, **kwargs)
 
-        for t, widgetclass in self.custom_mapping.items():
+        for t, widgetbindings in self.custom_mapping.items():
             if isinstance(otype, t):
-                return CustomWidget(widgetclass, otype, param, **kwargs)
+                return CustomWidget(widgetbindings, otype, param, **kwargs)
 
         return TextField(otype, param, **kwargs)  # Custom types are mapped to TextField
