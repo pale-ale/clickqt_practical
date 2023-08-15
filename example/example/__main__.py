@@ -1,4 +1,5 @@
 import os
+from typing import TYPE_CHECKING
 
 import click
 from click_option_group import optgroup
@@ -7,13 +8,15 @@ from PySide6.QtWidgets import QSpinBox
 import clickqt
 from clickqt.basedint import BasedIntParamType
 
+if TYPE_CHECKING:
+    from clickqt.widgets.customwidget import CustomWidget
+
 
 @click.group()
 def utilgroup():
     pass
 
 
-# Used to test the boolean flag behaviour (--flag true vs --flag, --flag false)
 @utilgroup.command()
 @click.option(
     "--someflag",
@@ -21,10 +24,7 @@ def utilgroup():
     type=bool,
     is_flag=True,
 )
-@click.argument(
-    "someint",
-    type=int,
-)
+@click.argument("someint", type=BasedIntParamType())
 def foobar(someint, someflag):
     click.echo(f"{someflag} {someint}")
 
@@ -195,8 +195,20 @@ def cli(host, port, debug, n):
 utilgroup.add_command(hello)
 hello.add_command(hello2)
 
+
+def custom_getter(widget: "CustomWidget"):
+    assert isinstance(widget.widget, QSpinBox)
+    return widget.widget.value()
+
+
+def custom_setter(widget: "CustomWidget", val):
+    widget.widget.setValue(val)
+
+
 gui = clickqt.qtgui_from_click(
-    utilgroup, {BasedIntParamType: QSpinBox}, "custom entrypoint name"
+    utilgroup,
+    {BasedIntParamType: (QSpinBox, custom_getter, custom_setter)},
+    "custom entrypoint name",
 )
 
 if __name__ == "__main__":

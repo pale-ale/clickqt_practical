@@ -7,11 +7,12 @@ from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QIcon
 
 from clickqt.core.control import Control
+from clickqt.core.gui import CustomBindingType
 
 
 def qtgui_from_click(
     cmd: click.Command,
-    custom_mapping: t.Optional[dict] = None,
+    custom_mapping: t.Optional[dict[click.ParamType, CustomBindingType]] = None,
     application_name: t.Optional[str] = None,
     window_icon: t.Optional[str] = None,
 ):
