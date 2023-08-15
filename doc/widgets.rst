@@ -23,6 +23,10 @@ Widgets
     :show-inheritance:
     :members:
 
+.. automodule:: clickqt.widgets.customwidget
+    :show-inheritance:
+    :members:
+
 .. automodule:: clickqt.widgets.datetimeedit
     :show-inheritance:
     :members:
@@ -48,6 +52,10 @@ Widgets
     :members:
 
 .. automodule:: clickqt.widgets.nvaluewidget
+    :show-inheritance:
+    :members:
+
+.. automodule:: clickqt.widgets.optiongrouptitlewidget
     :show-inheritance:
     :members:
 
