@@ -38,7 +38,7 @@ def determin_widgets_for_comp(widgets: list, cmd, p_name2: str = None):
 @pytest.mark.parametrize(
     ("click_attrs"),
     [
-        (ClickAttrs.intfield(),),
+        (ClickAttrs.intfield()),
         (ClickAttrs.passwordfield()),
         (ClickAttrs.checkbox()),
         (ClickAttrs.datetime()),
