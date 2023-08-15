@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 import os
 import typing as t
 from gettext import ngettext
+import shlex
 
 from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QHBoxLayout, QSizePolicy
 from PySide6.QtCore import Qt
@@ -255,7 +256,7 @@ class BaseWidget(ABC):
                 if hasattr(self.widget, "isChecked") and self.widget.isChecked()
                 else ""
             )
-        return f"{self.get_preferable_opt()} {self.get_widget_value()} ".lstrip()
+        return f"{self.get_preferable_opt()} {shlex.quote(str(self.get_widget_value()))} ".lstrip()
 
     def handle_valid(self, valid: bool):
         """Changes the border of the widget dependent on **valid**. If **valid** == False, the border will be colored red, otherwise black.
@@ -415,7 +416,7 @@ class MultiWidget(BaseWidget):
         if len(self.children) == 0:
             return True
 
-        return any([c.is_empty() for c in self.children])
+        return any(c.is_empty() for c in self.children)
 
     def get_widget_value(self) -> t.Iterable[t.Any]:
         return [c.get_widget_value() for c in self.children]
