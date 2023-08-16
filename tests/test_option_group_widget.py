@@ -71,6 +71,10 @@ def test_option_group_ordering(click_attrs: dict):
     control = qtgui_from_click(cmd)
 
     widgets = determine_relevant_widgets(control)
+    # check if all the widgets are correctly ordered in the hierarchy
+    for i, widget in enumerate(widgets):
+        if i < len(widgets) - 1:
+            assert widget[0] < widgets[i + 1][0]
     comp_widgets = determine_widgets_for_comp(widgets, cmd, parameter.name)
     assert comp_widgets[0][0] < comp_widgets[1][0]
 
