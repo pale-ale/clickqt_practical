@@ -23,7 +23,6 @@ from PySide6.QtGui import QPalette, QClipboard
 from clickqt.core.gui import GUI
 from clickqt.core.commandexecutor import CommandExecutor
 from clickqt.core.error import ClickQtError
-from clickqt.core.utils import is_param_arg
 from clickqt.widgets.basewidget import BaseWidget
 from clickqt.widgets.messagebox import MessageBox
 from clickqt.widgets.filefield import FileField
@@ -515,9 +514,9 @@ class Control(QObject):
                     )
                     return lambda: command.callback(*args, **kwargs)
             else:
-                return lambda: command.callback(
+                return lambda: command.callback(  # pylint: disable=unnecessary-lambda
                     **kwargs
-                )  # pylint: disable=unnecessary-lambda
+                )
 
         callables: list[t.Callable] = []
         for i, command in enumerate(hierarchy_selected_command, 1):
@@ -551,7 +550,7 @@ class Control(QObject):
 
     def construct_command_string(self):
         """
-        Build a shell-executable command from the current state of the GUI.
+        Build a shell-executable command from the current state of the GUI and put it into the clipboard.
         """
         self.gui.terminal_output.clear()
         message = self.command_to_cli_string(self.get_hierarchy())
@@ -563,8 +562,8 @@ class Control(QObject):
         """Obtain the clipboard as a string."""
         return QApplication.clipboard().text()
 
-    def import_cmdline(self, cmdstr: str) -> None:
-        """Set the values of the widgets according to `cmdstr`."""
+    def import_cmdline(self) -> None:
+        """Set the values of the widgets according to the text in the clipboard."""
         cmdstr = self.get_clipboard()
         click.echo(f"Importing '{cmdstr}' ...")
         splitstrs = click.parser.split_arg_string(cmdstr)
@@ -578,12 +577,11 @@ class Control(QObject):
                     ClickQtError.ErrorType.PROCESSING_VALUE_ERROR,
                     "Cannot import due to missing or wrong entry point name",
                 )
-        else:
-            if len(splitstrs) <= 3:
-                error = ClickQtError(
-                    ClickQtError.ErrorType.PROCESSING_VALUE_ERROR,
-                    "Cannot import due to missing or wrong file/function combination",
-                )
+        elif len(splitstrs) <= 3:
+            error = ClickQtError(
+                ClickQtError.ErrorType.PROCESSING_VALUE_ERROR,
+                "Cannot import due to missing or wrong file/function combination",
+            )
         if self.check_error(error):
             return
         if self.is_ep:
@@ -591,7 +589,7 @@ class Control(QObject):
         else:
             splitstrs = splitstrs[2:]
         click.echo(f"Arguments w/ command: {splitstrs}")
-        hierarchystrs, parentwidget = self.select_current_command_hierarchy(splitstrs)
+        hierarchystrs, _ = self.select_current_command_hierarchy(splitstrs)
         click.echo(f"Set tabs to: '{hierarchystrs}' from '{splitstrs}'")
         for hierarchystr in hierarchystrs:
             splitstrs.remove(hierarchystr)
@@ -603,7 +601,10 @@ class Control(QObject):
             cmd = cmd.commands[cmdname]
         ctx = click.Context(cmd)
         cmd.parse_args(ctx, splitstrs[:])
-        relevant_widgets = self.widget_registry[self.cmd.name + ":" + commandstr]
+        if commandstr:
+            relevant_widgets = self.widget_registry[self.cmd.name + ":" + commandstr]
+        else:
+            relevant_widgets = self.widget_registry[self.cmd.name]
 
         for paramname, paramvalue in ctx.params.items():
             relevant_widgets[paramname].set_value(paramvalue)
