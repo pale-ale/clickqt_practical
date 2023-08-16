@@ -24,7 +24,7 @@ def utilgroup():
     type=bool,
     is_flag=True,
 )
-@click.argument("someint", type=BasedIntParamType())
+@click.option("--someint", multiple=True, type=click.File())
 def foobar(someint, someflag):
     click.echo(f"{someflag} {someint}")
 
