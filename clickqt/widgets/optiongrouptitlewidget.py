@@ -24,3 +24,6 @@ class OptionGroupTitleWidget(BaseWidget):
 
     def set_value(self, value: t.Any):
         pass
+
+    def get_widget_value_cmdline(self) -> str:
+        return ""
