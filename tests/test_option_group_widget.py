@@ -2,7 +2,8 @@ import pytest
 import click
 from click_option_group import OptionGroup
 from click_option_group._core import _GroupTitleFakeOption
-from PySide6.QtWidgets import QWidget
+from PySide6.QtWidgets import QWidget, QApplication
+from PySide6.QtGui import QClipboard
 from clickqt.core.control import Control
 from clickqt.core.core import qtgui_from_click
 from tests.testutils import ClickAttrs
@@ -112,3 +113,36 @@ def test_option_group_simple_ordering():
     widgets = determine_relevant_widgets(control)
     comp_widgets = determine_widgets_for_comp(widgets, cmd)
     assert comp_widgets[0][0] < comp_widgets[1][0]
+
+
+@pytest.mark.parametrize(
+    ("value", "expected_output"),
+    [
+        ("abc", "main --opt1 abc --opt2 abc"),
+        ("abc dev", "main --opt1 'abc dev' --opt2 'abc dev'"),
+        ("\n", "main --opt1 '\n' --opt2 '\n'"),
+    ],
+)
+def test_option_group_cmd_str_export(value: str, expected_output: str):
+    group = OptionGroup("Group 1")
+
+    @click.command("main")
+    @group.option("--opt1")
+    @group.option("--opt2")
+    def cli(**params):
+        print(params)
+
+    cmd = cli
+    control = qtgui_from_click(cmd)
+    control.set_ep_or_path("main")
+    control.set_is_ep(True)
+
+    for param in cmd.params:
+        widget = control.widget_registry[cmd.name][param.name]
+        widget.set_value(value)
+
+    control.construct_command_string()
+
+    clipboard = QApplication.clipboard()
+    print(clipboard.text(QClipboard.Clipboard))
+    assert clipboard.text(QClipboard.Clipboard) == expected_output
