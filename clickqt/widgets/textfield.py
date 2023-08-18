@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from enum import IntFlag
 import typing as t
+from io import TextIOWrapper
 
 import click
 from PySide6.QtWidgets import QLineEdit, QPushButton, QFileDialog, QHBoxLayout, QWidget
@@ -97,7 +98,10 @@ class PathField(TextField):
         self.layout.addWidget(input_btn_container)
 
     def set_value(self, value: t.Any):
-        self.widget.setText(str(value))
+        if isinstance(value, TextIOWrapper):
+            self.widget.setText(value.name)
+            return
+        self.widget.setText(value)
 
     def browse(self):
         """Opens a :class:`~clickqt.widgets.core.QPathDialog.QPathDialog` if :attr:`~clickqt.widgets.textfield.PathField.file_type` is of type

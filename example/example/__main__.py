@@ -24,9 +24,10 @@ def utilgroup():
     type=bool,
     is_flag=True,
 )
+@click.option("--foo", multiple=True, type=(click.Path(), int))
 @click.option("--someint", multiple=True, type=click.File())
-def foobar(someint, someflag):
-    click.echo(f"{someflag} {someint}")
+def foobar(someint, someflag, foo):
+    click.echo(f"{someflag} {someint} {foo}")
 
 
 @utilgroup.command()
