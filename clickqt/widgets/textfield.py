@@ -101,7 +101,7 @@ class PathField(TextField):
         if isinstance(value, TextIOWrapper):
             self.widget.setText(value.name)
             return
-        self.widget.setText(value)
+        self.widget.setText(str(value))
 
     def browse(self):
         """Opens a :class:`~clickqt.widgets.core.QPathDialog.QPathDialog` if :attr:`~clickqt.widgets.textfield.PathField.file_type` is of type
