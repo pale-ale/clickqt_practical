@@ -84,4 +84,4 @@ class CheckableComboBox(ComboBoxBase):
 
     def get_widget_value_cmdline(self) -> str:
         optname = self.get_preferable_opt() + " "
-        return optname + f" {optname}".join(self.get_widget_value())
+        return optname + f" {optname}".join(self.get_widget_value()) + " "

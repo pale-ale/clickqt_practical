@@ -55,7 +55,9 @@ class MultiValueWidget(MultiWidget):
 
     def get_widget_value_cmdline(self) -> str:
         return (
-            f"{self.get_preferable_opt()} "
-            + " ".join([str(c.get_widget_value()) for c in self.children])
+            " ".join(
+                [self.get_preferable_opt()]
+                + [str(c.get_widget_value()) for c in self.children]
+            )
             + " "
         )
