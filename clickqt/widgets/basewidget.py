@@ -250,12 +250,12 @@ class BaseWidget(ABC):
     def get_widget_value_cmdline(self) -> str:
         """Returns the value of the Qt-widget without any checks as a commandline string."""
         is_flag = self.param.to_info_dict().get("is_flag", False)
+        is_count = self.param.to_info_dict().get("count", False)
         if is_flag:
-            return (
-                f"{self.get_preferable_opt()} "
-                if hasattr(self.widget, "isChecked") and self.widget.isChecked()
-                else ""
-            )
+            return f"{self.get_preferable_opt()} "
+        if is_count:
+            count = self.get_widget_value()
+            return f"{self.get_preferable_opt()} " * count
         return f"{self.get_preferable_opt()} {shlex.quote(str(self.get_widget_value()))} ".lstrip()
 
     def handle_valid(self, valid: bool):

@@ -1,3 +1,4 @@
+import io
 import typing as t
 import pytest
 import click
@@ -7,6 +8,14 @@ from tests.testutils import ClickAttrs
 
 def prepare_execution(cmd: click.Command, cmd_group_name: click.Group):
     return cmd_group_name.name + ":" + cmd.name
+
+
+def textio_to_str_to_list(vals):
+    if isinstance(vals, io.TextIOWrapper):
+        return vals.name
+    if isinstance(vals, (list, tuple)):
+        return [textio_to_str_to_list(v) for v in vals]
+    return vals
 
 
 @pytest.mark.parametrize(
@@ -50,8 +59,8 @@ def prepare_execution(cmd: click.Command, cmd_group_name: click.Group):
         ),
         (
             ClickAttrs.nvalue_widget(type=(str, int)),
-            [("a", 12), ("b", 11)],
-            [("ddd", 22)],
+            [["a", 12], ["b", 11]],
+            [["ddd", 22]],
         ),
         (
             (
@@ -64,6 +73,11 @@ def prepare_execution(cmd: click.Command, cmd_group_name: click.Group):
             ClickAttrs.multi_value_widget(nargs=2, default=["A", "B"]),
             ["A", "C"],
             ["X", "X"],
+        ),
+        (
+            ClickAttrs.nvalue_widget(type=(click.types.File(), int)),
+            [[".gitignore", 12], ["setup.py", -1]],
+            [["setup.py", 10], ["README.md", 1]],
         ),
     ],
 )
@@ -85,13 +99,11 @@ def test_import_ep(click_attrs: dict, value: t.Any, fake_value: t.Any):
 
     widget.set_value(fake_value)
     val, _ = widget.get_value()
-    if isinstance(val, tuple):
-        val = list(val)
+    val = textio_to_str_to_list(val)
     assert val == fake_value
 
     # read the cmd from clipboard
     control.import_cmdline()
     val, _ = widget.get_value()
-    if isinstance(val, tuple):
-        val = list(val)
+    val = textio_to_str_to_list(val)
     assert val == value
