@@ -72,6 +72,7 @@ def prepare_execution(cmd: click.Command, cmd_group_name: click.Group):
             [[".gitignore", 12], ["setup.py", -1]],
             "main --p .gitignore 12 --p setup.py -1",
         ),
+        (ClickAttrs.countwidget(), 3, "main --p --p --p"),
     ],
 )
 def test_command_with_ep(click_attrs: dict, value: t.Any, expected_output: str):
@@ -171,6 +172,7 @@ def test_command_with_ep(click_attrs: dict, value: t.Any, expected_output: str):
             [[".gitignore", 12], ["setup.py", -1]],
             "python example/example/main.py cli --p .gitignore 12 --p setup.py -1",
         ),
+        (ClickAttrs.countwidget(), 3, "python example/example/main.py cli --p --p --p"),
     ],
 )
 def test_construct_cmd_string_file(
@@ -261,6 +263,7 @@ def test_construct_cmd_string_file(
             [[".gitignore", 12], ["setup.py", -1]],
             "main cmd --p .gitignore 12 --p setup.py -1",
         ),
+        (ClickAttrs.countwidget(), 3, "main cmd --p --p --p"),
     ],
 )
 def test_command_with_ep_group(click_attrs: dict, value: t.Any, expected_output: str):
@@ -367,6 +370,7 @@ def test_command_with_ep_group(click_attrs: dict, value: t.Any, expected_output:
             [[".gitignore", 12], ["setup.py", -1]],
             "python example/example/main.py cmd --p .gitignore 12 --p setup.py -1",
         ),
+        (ClickAttrs.countwidget(), 3, "python example/example/main.py cmd --p --p --p"),
     ],
 )
 def test_construct_cmd_string_file_grouped(

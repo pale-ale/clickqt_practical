@@ -68,7 +68,7 @@ class ClickAttrs:
         min_open: bool = False,
         max_open: bool = False,
         clamp: bool = False,
-        **attrs_dict
+        **attrs_dict,
     ) -> dict:
         return {
             "type": click.IntRange(
@@ -88,7 +88,7 @@ class ClickAttrs:
         min_open: bool = False,
         max_open: bool = False,
         clamp: bool = False,
-        **attrs_dict
+        **attrs_dict,
     ) -> dict:
         return {
             "type": click.FloatRange(
@@ -129,11 +129,13 @@ class ClickAttrs:
         }
 
     @staticmethod
-    def filefield(type_dict: dict = {}, **attrs_dict) -> dict:
+    def filefield(type_dict: dict = None, **attrs_dict) -> dict:
+        type_dict = {} if type_dict is None else type_dict
         return {"type": click.types.File(**type_dict), **attrs_dict}
 
     @staticmethod
-    def filepathfield(type_dict: dict = {}, **attrs_dict) -> dict:
+    def filepathfield(type_dict: dict = None, **attrs_dict) -> dict:
+        type_dict = {} if type_dict is None else type_dict
         return {"type": click.types.Path(**type_dict), **attrs_dict}
 
     @staticmethod
@@ -166,3 +168,7 @@ class ClickAttrs:
     @staticmethod
     def textfield(**attrs_dict) -> dict:
         return {"type": click.types.STRING, **attrs_dict}
+
+    @staticmethod
+    def countwidget(**attrs_dict) -> dict:
+        return {"count": True, **attrs_dict}
