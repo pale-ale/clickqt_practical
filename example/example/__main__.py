@@ -179,6 +179,7 @@ def hello_ns2(ns):
 
 
 @utilgroup.command()
+@click.option("--test", type=int)
 @optgroup.group(
     "Server configuration", help="The configuration of some server connection"
 )
@@ -187,8 +188,8 @@ def hello_ns2(ns):
 @click.option("--debug/--no-debug", default=False, help="Debug flag")
 @optgroup.group("Test configuration", help="The configuration of some test suite.")
 @optgroup.option("--n", default=5, help="Number of test rounds")
-def cli(host, port, debug, n):
-    params = host, port, debug
+def cli(test, host, port, debug, n):
+    params = test, host, port, debug
     print(params)
     print(n)
 
