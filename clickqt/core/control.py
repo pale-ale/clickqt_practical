@@ -6,7 +6,7 @@ from functools import reduce
 import re
 import inspect
 import click
-from click_option_group._core import GroupedOption, _GroupTitleFakeOption
+from click_option_group._core import _GroupTitleFakeOption
 from PySide6.QtWidgets import (
     QWidget,
     QFrame,
@@ -133,6 +133,10 @@ class Control(QObject):
         group_name: str,
         group_names_concatenated: str = "",
     ):
+        def determine_option_group_presence(cmd: click.Command):
+            """Function to determine if there is an option group here."""
+            return any(isinstance(param, _GroupTitleFakeOption) for param in cmd.params)
+
         if isinstance(cmd, click.Group):
             child_tabs: QWidget = None
             concat_group_names = (
@@ -143,7 +147,8 @@ class Control(QObject):
             if len(cmd.params) > 0:
                 child_tabs = QWidget()
                 child_tabs.setLayout(QVBoxLayout())
-                group_params = self.parse_cmd(cmd, concat_group_names)
+                is_option_group = determine_option_group_presence(cmd)
+                group_params = self.parse_cmd(cmd, concat_group_names, is_option_group)
                 group_params.widget().layout().setContentsMargins(0, 0, 0, 0)
                 group_params.setSizePolicy(
                     QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed
@@ -167,12 +172,14 @@ class Control(QObject):
         elif tab_widget == self.gui.widgets_container:
             self.gui.widgets_container = self.parse_cmd(cmd, cmd.name)
         else:
+            is_option_group = determine_option_group_presence(cmd)
             tab_widget.addTab(
                 self.parse_cmd(
                     cmd,
                     self.concat(group_names_concatenated, cmd.name)
                     if group_names_concatenated
                     else cmd.name,
+                    is_option_group,
                 ),
                 group_name,
             )
@@ -199,13 +206,19 @@ class Control(QObject):
 
         return group_tab_widget
 
-    def parse_cmd(self, cmd: click.Command, groups_command_name: str) -> QScrollArea:
+    def parse_cmd(
+        self,
+        cmd: click.Command,
+        groups_command_name: str,
+        is_option_group: bool = False,
+    ) -> QScrollArea:
         """Creates for every click parameter in **cmd** a clickqt widget and returns them stored in a QScrollArea.
         The widgets are divided into a "Required arguments", "Optional arguments" and "Option Group" part.
 
         :param cmd: The command from which a QTabWidget with content should be created
         :param groups_command_name: The hierarchy of **cmd** as string whereby the names of the components are
                                     concatenated according to :func:`~clickqt.core.control.Control.concat`
+        :param is_option_group: A boolean to determine if a command contains Option groups
 
         :returns: The created clickqt widgets stored in a QScrollArea
         """
@@ -215,21 +228,32 @@ class Control(QObject):
         cmdbox.layout().setAlignment(Qt.AlignmentFlag.AlignTop)
 
         required_optional_box: list[QWidget] = []
-
-        for i in range(3):
+        if is_option_group:
             box = QWidget()
             box.setLayout(QVBoxLayout())
-            box_label = QLabel(
-                text=f"<b>{'Required arguments' if i == 0 else ('Optional arguments' if i == 1 else 'Option Groups')}</b>"
-            )
+            box_label = QLabel(text="<b>Option Groups</b>")
             box_label.setTextFormat(Qt.TextFormat.RichText)  # Bold text
             box.layout().addWidget(box_label)
             line = QFrame()
             line.setFrameShape(QFrame.Shape.HLine)
             box.layout().addWidget(line)
             box.layout().setAlignment(Qt.AlignmentFlag.AlignTop)
-
             required_optional_box.append(box)
+        else:
+            for i in range(3):
+                box = QWidget()
+                box.setLayout(QVBoxLayout())
+                box_label = QLabel(
+                    text=f"<b>{'Required arguments' if i == 0 else ('Optional arguments' if i == 1 else 'Option Groups')}</b>"
+                )
+                box_label.setTextFormat(Qt.TextFormat.RichText)  # Bold text
+                box.layout().addWidget(box_label)
+                line = QFrame()
+                line.setFrameShape(QFrame.Shape.HLine)
+                box.layout().addWidget(line)
+                box.layout().setAlignment(Qt.AlignmentFlag.AlignTop)
+
+                required_optional_box.append(box)
 
         INITIAL_CHILD_WIDGETS = len(
             required_optional_box[0].children()
@@ -258,13 +282,14 @@ class Control(QObject):
                         feature_switches[param.name] = []
                     feature_switches[param.name].append(param)
                 else:
-                    widget_counter = 1
-                    if (
-                        param.required or isinstance(param, click.Argument)
-                    ) and param.default is None:
+                    if not is_option_group:
+                        widget_counter = 1
+                        if (
+                            param.required or isinstance(param, click.Argument)
+                        ) and param.default is None:
+                            widget_counter = 0
+                    else:
                         widget_counter = 0
-                    elif isinstance(param, (GroupedOption, _GroupTitleFakeOption)):
-                        widget_counter = 2
                     required_optional_box[widget_counter].layout().addWidget(
                         self.parameter_to_widget(cmd, groups_command_name, param)
                     )
