@@ -135,9 +135,7 @@ class Control(QObject):
     ):
         def determine_option_group_presence(cmd: click.Command):
             """Function to determine if there is an option group here."""
-            if any(isinstance(param, _GroupTitleFakeOption) for param in cmd.params):
-                return True
-            return False
+            return any(isinstance(param, _GroupTitleFakeOption) for param in cmd.params)
 
         if isinstance(cmd, click.Group):
             child_tabs: QWidget = None
