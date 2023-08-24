@@ -207,7 +207,10 @@ class Control(QObject):
         return group_tab_widget
 
     def parse_cmd(
-        self, cmd: click.Command, groups_command_name: str, is_option_group: bool = False
+        self,
+        cmd: click.Command,
+        groups_command_name: str,
+        is_option_group: bool = False,
     ) -> QScrollArea:
         """Creates for every click parameter in **cmd** a clickqt widget and returns them stored in a QScrollArea.
         The widgets are divided into a "Required arguments", "Optional arguments" and "Option Group" part.
