@@ -228,18 +228,16 @@ class Control(QObject):
         cmdbox.layout().setAlignment(Qt.AlignmentFlag.AlignTop)
 
         required_optional_box: list[QWidget] = []
-        # This is the box in the case there is an Option group
-        box = QWidget()
-        box.setLayout(QVBoxLayout())
-        line = QFrame()
-        line.setFrameShape(QFrame.Shape.HLine)
-        box.layout().addWidget(line)
-        box.layout().setAlignment(Qt.AlignmentFlag.AlignTop)
-
         if is_option_group:
+            box = QWidget()
+            box.setLayout(QVBoxLayout())
             box_label = QLabel(text="<b>Option Groups</b>")
             box_label.setTextFormat(Qt.TextFormat.RichText)  # Bold text
             box.layout().addWidget(box_label)
+            line = QFrame()
+            line.setFrameShape(QFrame.Shape.HLine)
+            box.layout().addWidget(line)
+            box.layout().setAlignment(Qt.AlignmentFlag.AlignTop)
             required_optional_box.append(box)
         else:
             for i in range(3):
