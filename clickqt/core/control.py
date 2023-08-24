@@ -147,8 +147,8 @@ class Control(QObject):
             if len(cmd.params) > 0:
                 child_tabs = QWidget()
                 child_tabs.setLayout(QVBoxLayout())
-                option_group = determine_option_group_presence(cmd)
-                group_params = self.parse_cmd(cmd, concat_group_names, option_group)
+                is_option_group = determine_option_group_presence(cmd)
+                group_params = self.parse_cmd(cmd, concat_group_names, is_option_group)
                 group_params.widget().layout().setContentsMargins(0, 0, 0, 0)
                 group_params.setSizePolicy(
                     QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed
@@ -172,14 +172,14 @@ class Control(QObject):
         elif tab_widget == self.gui.widgets_container:
             self.gui.widgets_container = self.parse_cmd(cmd, cmd.name)
         else:
-            option_group = determine_option_group_presence(cmd)
+            is_option_group = determine_option_group_presence(cmd)
             tab_widget.addTab(
                 self.parse_cmd(
                     cmd,
                     self.concat(group_names_concatenated, cmd.name)
                     if group_names_concatenated
                     else cmd.name,
-                    option_group,
+                    is_option_group,
                 ),
                 group_name,
             )
@@ -207,7 +207,7 @@ class Control(QObject):
         return group_tab_widget
 
     def parse_cmd(
-        self, cmd: click.Command, groups_command_name: str, option_group: bool = False
+        self, cmd: click.Command, groups_command_name: str, is_option_group: bool = False
     ) -> QScrollArea:
         """Creates for every click parameter in **cmd** a clickqt widget and returns them stored in a QScrollArea.
         The widgets are divided into a "Required arguments", "Optional arguments" and "Option Group" part.
@@ -215,7 +215,7 @@ class Control(QObject):
         :param cmd: The command from which a QTabWidget with content should be created
         :param groups_command_name: The hierarchy of **cmd** as string whereby the names of the components are
                                     concatenated according to :func:`~clickqt.core.control.Control.concat`
-        :param option_group: A boolean to determine if a command contains Option groups
+        :param is_option_group: A boolean to determine if a command contains Option groups
 
         :returns: The created clickqt widgets stored in a QScrollArea
         """
@@ -225,16 +225,18 @@ class Control(QObject):
         cmdbox.layout().setAlignment(Qt.AlignmentFlag.AlignTop)
 
         required_optional_box: list[QWidget] = []
-        if option_group:
-            box = QWidget()
-            box.setLayout(QVBoxLayout())
+        # This is the box in the case there is an Option group
+        box = QWidget()
+        box.setLayout(QVBoxLayout())
+        line = QFrame()
+        line.setFrameShape(QFrame.Shape.HLine)
+        box.layout().addWidget(line)
+        box.layout().setAlignment(Qt.AlignmentFlag.AlignTop)
+
+        if is_option_group:
             box_label = QLabel(text="<b>Option Groups</b>")
             box_label.setTextFormat(Qt.TextFormat.RichText)  # Bold text
             box.layout().addWidget(box_label)
-            line = QFrame()
-            line.setFrameShape(QFrame.Shape.HLine)
-            box.layout().addWidget(line)
-            box.layout().setAlignment(Qt.AlignmentFlag.AlignTop)
             required_optional_box.append(box)
         else:
             for i in range(3):
@@ -279,7 +281,7 @@ class Control(QObject):
                         feature_switches[param.name] = []
                     feature_switches[param.name].append(param)
                 else:
-                    if not option_group:
+                    if not is_option_group:
                         widget_counter = 1
                         if (
                             param.required or isinstance(param, click.Argument)
