@@ -106,6 +106,7 @@ class Control(QObject):
         :param groups_command_name: The hierarchy of the **command** as string whereby the names of the components are
                                     concatenated according to :func:`~clickqt.core.control.Control.concat`
         :param param: The click parameter whose type a clickqt widget should be created from
+        :param **kwargs: Additional parameters that can be passed via a keyword.
 
         :return: The container of the created widget (label-element + Qt-widget)
         """
@@ -113,8 +114,17 @@ class Control(QObject):
         assert param.name, "No parameter name specified"
         assert self.widget_registry[groups_command_name].get(param.name) is None
 
+        option_groups = kwargs.get("opt_groups")
+        assert isinstance(option_groups, dict)
+
         widget = self.gui.create_widget(
-            param.type, param, widgetsource=self.gui.create_widget, com=command
+            param.type,
+            param,
+            widgetsource=self.gui.create_widget,
+            com=command,
+            opt_groups=option_groups,
+            control=self,
+            key=kwargs.get("key"),
         )
 
         self.widget_registry[groups_command_name][param.name] = widget
@@ -184,6 +194,7 @@ class Control(QObject):
                     if group_names_concatenated
                     else cmd.name,
                     is_option_group,
+                    key=self.concat(group_names_concatenated, group_name),
                 ),
                 group_name,
             )
@@ -215,6 +226,7 @@ class Control(QObject):
         cmd: click.Command,
         groups_command_name: str,
         is_option_group: bool = False,
+        **kwargs,
     ) -> QScrollArea:
         """Creates for every click parameter in **cmd** a clickqt widget and returns them stored in a QScrollArea.
         The widgets are divided into a "Required arguments", "Optional arguments" and "Option Group" part.
@@ -223,11 +235,17 @@ class Control(QObject):
         :param groups_command_name: The hierarchy of **cmd** as string whereby the names of the components are
                                     concatenated according to :func:`~clickqt.core.control.Control.concat`
         :param is_option_group: A boolean to determine if a command contains Option groups
+        :param **kwargs: Additional parameters that can be passed via a keyword.
 
         :returns: The created clickqt widgets stored in a QScrollArea
         """
 
         def determine_option_groups(cmd: click.Command):
+            """Function to determine the widgets that belong to the option group.
+            :param cmd: The click command that for which we need to determine the option groups for.
+
+            :returns: A dictionary containing the group names as the keys and the corresponding options in a list.
+            """
             option_groups = {}
             current_name = ""  # Initialize current_name
             for param in cmd.params:
@@ -238,7 +256,6 @@ class Control(QObject):
                     option_groups[current_name].append(param.name)
             return option_groups
 
-        opt_groups = determine_option_groups(cmd)
         cmdbox = QWidget()
         cmdbox.setLayout(QVBoxLayout())
         cmdbox.layout().setAlignment(Qt.AlignmentFlag.AlignTop)
@@ -307,7 +324,13 @@ class Control(QObject):
                     else:
                         widget_counter = 0
                     required_optional_box[widget_counter].layout().addWidget(
-                        self.parameter_to_widget(cmd, groups_command_name, param)
+                        self.parameter_to_widget(
+                            cmd,
+                            groups_command_name,
+                            param,
+                            opt_groups=determine_option_groups(cmd),
+                            key=kwargs.get("key"),
+                        )
                     )
 
         # Create for every feature switch a ComboBox
@@ -322,7 +345,13 @@ class Control(QObject):
                 switch_names[0].flag_value,
             )  # First param with default==True is the default
             required_optional_box[0 if choice.required else 1].layout().addWidget(
-                self.parameter_to_widget(cmd, groups_command_name, choice)
+                self.parameter_to_widget(
+                    cmd,
+                    groups_command_name,
+                    choice,
+                    opt_groups=determine_option_groups(cmd),
+                    key=kwargs.get("key"),
+                )
             )
             self.widget_registry[groups_command_name][param_name].set_value(default)
 

@@ -1,9 +1,7 @@
 from __future__ import annotations
 import typing as t
 import click
-from PySide6.QtCore import (
-    Qt,
-)
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QLabel, QFrame, QToolButton
 from clickqt.widgets.basewidget import BaseWidget
 
@@ -20,6 +18,9 @@ class OptionGroupTitleWidget(BaseWidget):
     ):
         super().__init__(otype, param, **kwargs)
         self.widget_name = param._GroupTitleFakeOption__group.__dict__["_name"]
+        self.groups = kwargs.get("opt_groups").get(self.widget_name)
+        self.control_instance = kwargs.get("control")
+        self.key = kwargs.get("key")
         self.label = QLabel(f"<b>{self.widget_name}</b>")
         self.line = QFrame()
         self.line.setFrameShape(QFrame.Shape.HLine)
@@ -55,7 +56,18 @@ class OptionGroupTitleWidget(BaseWidget):
     def get_widget_value_cmdline(self) -> str:
         return ""
 
+    def option_group_visibility(self):
+        """Function to determine if all the necessary widgets are already collapsed or not."""
+        return all(
+            self.control_instance.widget_registry[self.key]
+            .get(grouped_option)
+            .is_collapsed
+            is False
+            for grouped_option in self.groups
+        )
+
     def toggle_option_group(self):
+        """Initiates the toggle action."""
         # Get the current state of the button before toggling
         current_checked_state = self.toggle_button_is_checked
 
@@ -70,4 +82,26 @@ class OptionGroupTitleWidget(BaseWidget):
         self.toggle_button_is_checked = not current_checked_state
 
     def update_arrow_icon(self, arrow_type):
+        """
+        Function to update the arrow status and is also responsible for hiding the widgets based on the current status.
+
+        :param arrow_type: The arrow_direction one wants to display.
+        """
         self.toggle_button.setArrowType(arrow_type)
+        visibility = self.option_group_visibility()
+        if visibility:
+            for grouped_option in self.groups:
+                self.control_instance.widget_registry[self.key].get(
+                    grouped_option
+                ).container.setVisible(False)
+                self.control_instance.widget_registry[self.key].get(
+                    grouped_option
+                ).is_collapsed = True
+        else:
+            for grouped_option in self.groups:
+                self.control_instance.widget_registry[self.key].get(
+                    grouped_option
+                ).container.setVisible(True)
+                self.control_instance.widget_registry[self.key].get(
+                    grouped_option
+                ).is_collapsed = False

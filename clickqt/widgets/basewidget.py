@@ -26,6 +26,7 @@ class BaseWidget(ABC):
     """
 
     widget_type: t.ClassVar[t.Type]  #: The Qt-type of this widget.
+    is_collapsed = False
 
     def __init__(
         self,
