@@ -34,6 +34,7 @@ def prepare_execution(cmd: click.Command, cmd_group_name: click.Group):
             "B",
             "main --p B",
         ),
+        (ClickAttrs.checkable_combobox(choices=["A", "B", "C"]), [], "main"),
         (
             ClickAttrs.checkable_combobox(choices=["A", "B", "C"]),
             ["B", "C"],
@@ -132,6 +133,11 @@ def test_command_with_ep(click_attrs: dict, value: t.Any, expected_output: str):
         ),
         (
             ClickAttrs.checkable_combobox(choices=["A", "B", "C"]),
+            [],
+            "python example/example/main.py cli",
+        ),
+        (
+            ClickAttrs.checkable_combobox(choices=["A", "B", "C"]),
             ["B", "C"],
             "python example/example/main.py cli --p B --p C",
         ),
@@ -221,6 +227,7 @@ def test_construct_cmd_string_file(
             "B",
             "main cmd --p B",
         ),
+        (ClickAttrs.checkable_combobox(choices=["A", "B", "C"]), [], "main cmd"),
         (
             ClickAttrs.checkable_combobox(choices=["A", "B", "C"]),
             ["B", "C"],
@@ -327,6 +334,11 @@ def test_command_with_ep_group(click_attrs: dict, value: t.Any, expected_output:
             ClickAttrs.combobox(choices=["A", "B", "C"], case_sensitive=False),
             "B",
             "python example/example/main.py cmd --p B",
+        ),
+        (
+            ClickAttrs.checkable_combobox(choices=["A", "B", "C"]),
+            [],
+            "python example/example/main.py cmd",
         ),
         (
             ClickAttrs.checkable_combobox(choices=["A", "B", "C"]),
