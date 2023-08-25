@@ -29,7 +29,7 @@ class OptionGroupTitleWidget(BaseWidget):
         self.toggle_button_is_checked = self.toggle_button.isChecked()
         self.toggle_button.setStyleSheet("QToolButton { border: 2px solid; }")
         self.toggle_button.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
-        self.toggle_button.setArrowType(Qt.RightArrow)
+        self.toggle_button.setArrowType(Qt.DownArrow)
 
         self.toggle_button.pressed.connect(self.toggle_option_group)
 
@@ -73,9 +73,9 @@ class OptionGroupTitleWidget(BaseWidget):
 
         # Update the arrow type based on the new state
         if not current_checked_state:
-            target_arrow_type = Qt.DownArrow
-        else:
             target_arrow_type = Qt.RightArrow
+        else:
+            target_arrow_type = Qt.DownArrow
 
         self.update_arrow_icon(target_arrow_type)
         # Toggle the button state
