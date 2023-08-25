@@ -6,7 +6,7 @@ from functools import reduce
 import re
 import inspect
 import click
-from click_option_group._core import _GroupTitleFakeOption
+from click_option_group._core import _GroupTitleFakeOption, GroupedOption
 from PySide6.QtWidgets import (
     QWidget,
     QFrame,
@@ -94,7 +94,11 @@ class Control(QObject):
         self.custom_mapping = custom_mapping
 
     def parameter_to_widget(
-        self, command: click.Command, groups_command_name: str, param: click.Parameter
+        self,
+        command: click.Command,
+        groups_command_name: str,
+        param: click.Parameter,
+        **kwargs,
     ) -> QWidget:
         """Creates a clickqt widget according to :func:`~clickqt.core.gui.GUI.create_widget` and returns the container of the widget (label-element + Qt-widget).
 
@@ -223,6 +227,18 @@ class Control(QObject):
         :returns: The created clickqt widgets stored in a QScrollArea
         """
 
+        def determine_option_groups(cmd: click.Command):
+            option_groups = {}
+            current_name = ""  # Initialize current_name
+            for param in cmd.params:
+                if isinstance(param, _GroupTitleFakeOption):
+                    current_name = param._GroupTitleFakeOption__group.__dict__["_name"]
+                    option_groups[current_name] = []
+                elif isinstance(param, GroupedOption):
+                    option_groups[current_name].append(param.name)
+            return option_groups
+
+        opt_groups = determine_option_groups(cmd)
         cmdbox = QWidget()
         cmdbox.setLayout(QVBoxLayout())
         cmdbox.layout().setAlignment(Qt.AlignmentFlag.AlignTop)
