@@ -246,7 +246,7 @@ class Control(QObject):
 
             :returns: A dictionary containing the group names as the keys and the corresponding options in a list.
             """
-            option_groups: dict = {}
+            option_groups: dict[str, list[str]] = {}
             current_name = ""  # Initialize current_name
             for param in cmd.params:
                 if isinstance(param, _GroupTitleFakeOption):
