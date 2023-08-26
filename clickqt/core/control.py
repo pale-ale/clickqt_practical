@@ -253,6 +253,9 @@ class Control(QObject):
                     current_name = param._GroupTitleFakeOption__group.__dict__["_name"]
                     option_groups[current_name] = []
                 elif isinstance(param, GroupedOption):
+                    assert (
+                        current_name in option_groups.keys()
+                    ), "current_name must be set because the title of the option group needs to be set before the grouped option."
                     option_groups[current_name].append(param.name)
             return option_groups
 
