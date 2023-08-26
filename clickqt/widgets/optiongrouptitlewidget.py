@@ -56,7 +56,7 @@ class OptionGroupTitleWidget(BaseWidget):
     def get_widget_value_cmdline(self) -> str:
         return ""
 
-    def get_option_group_visibility(self):
+    def is_option_group_visible(self):
         """Function to determine if all the necessary widgets are already collapsed or not."""
         return not any(
             self.control_instance.widget_registry[self.key]
@@ -87,7 +87,7 @@ class OptionGroupTitleWidget(BaseWidget):
         :param arrow_type: The arrow_direction one wants to display.
         """
         self.toggle_button.setArrowType(arrow_type)
-        visibility = self.get_option_group_visibility()
+        visibility = self.is_option_group_visible()
         for grouped_option in self.groups:
             self.control_instance.widget_registry[self.key].get(
                 grouped_option
