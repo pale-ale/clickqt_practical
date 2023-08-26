@@ -240,13 +240,13 @@ class Control(QObject):
         :returns: The created clickqt widgets stored in a QScrollArea
         """
 
-        def determine_option_groups(cmd: click.Command):
+        def get_option_groups(cmd: click.Command):
             """Function to determine the widgets that belong to the option group.
             :param cmd: The click command that for which we need to determine the option groups for.
 
             :returns: A dictionary containing the group names as the keys and the corresponding options in a list.
             """
-            option_groups = {}
+            option_groups: dict = {}
             current_name = ""  # Initialize current_name
             for param in cmd.params:
                 if isinstance(param, _GroupTitleFakeOption):
@@ -328,7 +328,7 @@ class Control(QObject):
                             cmd,
                             groups_command_name,
                             param,
-                            opt_groups=determine_option_groups(cmd),
+                            opt_groups=get_option_groups(cmd),
                             key=kwargs.get("key"),
                         )
                     )
@@ -349,7 +349,7 @@ class Control(QObject):
                     cmd,
                     groups_command_name,
                     choice,
-                    opt_groups=determine_option_groups(cmd),
+                    opt_groups=get_option_groups(cmd),
                     key=kwargs.get("key"),
                 )
             )
