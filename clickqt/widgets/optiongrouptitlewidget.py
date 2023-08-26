@@ -58,11 +58,10 @@ class OptionGroupTitleWidget(BaseWidget):
 
     def get_option_group_visibility(self):
         """Function to determine if all the necessary widgets are already collapsed or not."""
-        return all(
+        return not any(
             self.control_instance.widget_registry[self.key]
             .get(grouped_option)
             .is_collapsed
-            is False
             for grouped_option in self.groups
         )
 
