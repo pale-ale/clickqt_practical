@@ -31,7 +31,7 @@ class OptionGroupTitleWidget(BaseWidget):
         self.toggle_button.setArrowType(Qt.DownArrow)
 
         self.toggle_button.pressed.connect(
-            lambda: self.toggle_option_group(self.toggle_button.isChecked())
+            lambda: self.set_expanded(self.toggle_button.isChecked())
         )
 
         for i in range(self.layout.count()):
@@ -66,8 +66,10 @@ class OptionGroupTitleWidget(BaseWidget):
             for grouped_option in self.groups
         )
 
-    def toggle_option_group(self, is_checked: bool):
-        """Initiates the toggle action."""
+    def set_expanded(self, is_checked: bool):
+        """Initiates the toggle action.
+        :param is_checked: The bool indicating if the button has been checked or not.
+        """
         # Update the arrow type based on the new state
         target_arrow_type = Qt.RightArrow if not is_checked else Qt.DownArrow
 
