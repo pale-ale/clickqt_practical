@@ -69,10 +69,7 @@ class OptionGroupTitleWidget(BaseWidget):
     def toggle_option_group(self, is_checked: bool):
         """Initiates the toggle action."""
         # Update the arrow type based on the new state
-        if not is_checked:
-            target_arrow_type = Qt.RightArrow
-        else:
-            target_arrow_type = Qt.DownArrow
+        target_arrow_type = Qt.RightArrow if not is_checked else Qt.DownArrow
 
         self.update_arrow_icon(target_arrow_type, not is_checked)
         # Toggle the button state
