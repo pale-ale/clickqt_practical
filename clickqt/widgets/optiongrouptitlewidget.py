@@ -26,12 +26,13 @@ class OptionGroupTitleWidget(BaseWidget):
         self.line.setFrameShape(QFrame.Shape.HLine)
 
         self.toggle_button = QToolButton(text="Toggle", checkable=True)
-        self.toggle_button_is_checked = self.toggle_button.isChecked()
         self.toggle_button.setStyleSheet("QToolButton { border: 2px solid; }")
         self.toggle_button.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         self.toggle_button.setArrowType(Qt.DownArrow)
 
-        self.toggle_button.pressed.connect(self.toggle_option_group)
+        self.toggle_button.pressed.connect(
+            lambda: self.toggle_option_group(self.toggle_button.isChecked())
+        )
 
         for i in range(self.layout.count()):
             self.layout.itemAt(i).widget().close()
@@ -65,33 +66,28 @@ class OptionGroupTitleWidget(BaseWidget):
             for grouped_option in self.groups
         )
 
-    def toggle_option_group(self):
+    def toggle_option_group(self, is_checked: bool):
         """Initiates the toggle action."""
-        # Get the current state of the button before toggling
-        current_checked_state = self.toggle_button_is_checked
-
         # Update the arrow type based on the new state
-        if not current_checked_state:
+        if not is_checked:
             target_arrow_type = Qt.RightArrow
         else:
             target_arrow_type = Qt.DownArrow
 
-        self.update_arrow_icon(target_arrow_type)
+        self.update_arrow_icon(target_arrow_type, not is_checked)
         # Toggle the button state
-        self.toggle_button_is_checked = not current_checked_state
+        self.toggle_button.setCheckable(not is_checked)
 
-    def update_arrow_icon(self, arrow_type):
+    def update_arrow_icon(self, arrow_type: Qt.ArrowType, is_checked: bool):
         """
         Function to update the arrow status and is also responsible for hiding the widgets based on the current status.
 
         :param arrow_type: The arrow_direction one wants to display.
+
+        :param is_checked: The bool indicating if the button has been checked or not.
         """
         self.toggle_button.setArrowType(arrow_type)
-        visibility = self.is_option_group_visible()
         for grouped_option in self.groups:
             self.control_instance.widget_registry[self.key].get(
                 grouped_option
-            ).container.setVisible(not visibility)
-            self.control_instance.widget_registry[self.key].get(
-                grouped_option
-            ).is_collapsed = visibility
+            ).container.setVisible(not is_checked)
