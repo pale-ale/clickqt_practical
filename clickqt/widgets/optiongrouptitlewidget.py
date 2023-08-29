@@ -2,7 +2,7 @@ from __future__ import annotations
 import typing as t
 import click
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QLabel, QFrame, QToolButton
+from PySide6.QtWidgets import QLabel, QFrame, QToolButton, QHBoxLayout
 from clickqt.widgets.basewidget import BaseWidget
 
 
@@ -25,8 +25,19 @@ class OptionGroupTitleWidget(BaseWidget):
         self.line = QFrame()
         self.line.setFrameShape(QFrame.Shape.HLine)
 
-        self.toggle_button = QToolButton(text="Toggle", checkable=True)
-        self.toggle_button.setStyleSheet("QToolButton { border: 2px solid; }")
+        self.toggle_button = QToolButton(checkable=True)
+        self.toggle_button.setStyleSheet(
+            """
+            QToolButton {
+                border: 1px solid #3498db;
+                border-radius: 10px;
+                padding: 2px 5px;
+            }
+            QToolButton:hover {
+                background-color: #2980b9;
+            }
+        """
+        )
         self.toggle_button.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         self.toggle_button.setArrowType(Qt.DownArrow)
 
@@ -36,8 +47,11 @@ class OptionGroupTitleWidget(BaseWidget):
 
         for i in range(self.layout.count()):
             self.layout.itemAt(i).widget().close()
-        self.layout.addWidget(self.toggle_button)
-        self.layout.addWidget(self.label)
+        # Add a vertical layout to the existing horizontal layout for UI fix
+        self.toggle_layout = QHBoxLayout()
+        self.toggle_layout.addWidget(self.toggle_button)
+        self.toggle_layout.addWidget(self.label)
+        self.layout.addLayout(self.toggle_layout)
         if (
             isinstance(param, click.Option)
             and param.help
