@@ -271,6 +271,8 @@ def test_construct_cmd_string_file(
             "main cmd --p .gitignore 12 --p setup.py -1",
         ),
         (ClickAttrs.countwidget(), 3, "main cmd --p --p --p"),
+        (ClickAttrs.filepathfield(), "/ho me", "main cmd --p '/ho me'"),
+        (ClickAttrs.filepathfield(), "", "main cmd"),
     ],
 )
 def test_command_with_ep_group(click_attrs: dict, value: t.Any, expected_output: str):

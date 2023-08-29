@@ -1,4 +1,5 @@
 from __future__ import annotations
+import shlex
 
 from enum import IntFlag
 import typing as t
@@ -105,6 +106,9 @@ class PathField(TextField):
         else:
             self.widget.setText(str(value))
 
+    def is_empty(self) -> bool:
+        return self.widget.text() == ""
+
     def browse(self):
         """Opens a :class:`~clickqt.widgets.core.QPathDialog.QPathDialog` if :attr:`~clickqt.widgets.textfield.PathField.file_type` is of type
         :attr:`~clickqt.widgets.textfield.PathField.FileType.File` and :attr:`~clickqt.widgets.textfield.PathField.FileType.Directory`, a
@@ -160,3 +164,9 @@ class PathField(TextField):
                             QDir.separator(),
                         )
                     )
+
+    def get_widget_value_cmdline(self) -> str:
+        """Returns the value of the Qt-widget without any checks as a commandline string."""
+        if self.is_empty():
+            return ""
+        return f"{self.get_preferable_opt()} {shlex.quote(str(self.get_widget_value()))} ".lstrip()
