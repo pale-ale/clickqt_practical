@@ -28,8 +28,6 @@ class IntField(NumericField):
             otype, (click.IntRange, type(click.INT))
         ), f"'otype' must be of type '{click.IntRange}' or '{type(click.INT)}', but is '{type(otype)}'."
 
-        self.widget.wheelEvent = lambda *event: None # Disable scrolling
-
         if not isinstance(otype, click.IntRange):
             # QSpinBox is limited to [-2**31; 2**31 - 1], but sys.maxsize returns 2**63 - 1
             self.set_minimum(-(2**31))  # Default is 0
@@ -63,8 +61,6 @@ class RealField(NumericField):
         assert isinstance(
             otype, (click.FloatRange, type(click.FLOAT))
         ), f"'otype' must be of type '{click.FloatRange}' or '{type(click.FLOAT)}', but is '{type(otype)}'."
-
-        self.widget.wheelEvent = lambda *event: None # Disable scrolling
 
         if not isinstance(otype, click.FloatRange):
             self.set_minimum(-sys.float_info.max)  # Default is 0.0

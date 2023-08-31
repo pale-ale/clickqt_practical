@@ -77,6 +77,16 @@ class BaseWidget(ABC):
         self.focus_out_validator = clickqt.core.FocusOutValidator(self)
         self.widget.installEventFilter(self.focus_out_validator)
 
+        self.widget.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+
+        def handlewheel(event):
+            if self.widget.hasFocus():
+                self.widget_type.wheelEvent(self.widget, event)
+            else:
+                event.ignore()
+
+        self.widget.wheelEvent = handlewheel  # Disable scrolling
+
     def create_widget(self) -> QWidget:
         """Creates the widget specified in :attr:`~clickqt.widgets.basewidget.BaseWidget.widget_type` and returns it."""
 
