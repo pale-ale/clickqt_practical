@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import sys
 import typing as t
+from os.path import realpath
 
 import click
 import pytest
@@ -404,7 +405,7 @@ def test_pathfield(qtbot: QtBot, click_attrs: dict, value: str, expected: str):
     QTimer.singleShot(5, selectFile)
     widget.browse()
 
-    assert widget.get_widget_value() == expected
+    assert realpath(widget.get_widget_value()) == realpath(expected)
 
 
 @pytest.mark.parametrize(
