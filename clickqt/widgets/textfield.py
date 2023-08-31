@@ -11,7 +11,6 @@ from PySide6.QtCore import QDir
 
 from clickqt.widgets.core.QPathDialog import QPathDialog
 from clickqt.widgets.basewidget import BaseWidget
-from clickqt.core.utils import remove_prefix
 
 try:
     from enum_tools.documentation import document_enum
@@ -126,15 +125,8 @@ class PathField(TextField):
                 None, directory=QDir.currentPath(), exist=self.type.exists
             )
             if dialog.exec():
+                self.set_value(dialog.selectedPath())
                 self.handle_valid(True)
-                self.set_value(
-                    remove_prefix(
-                        dialog.selectedPath()
-                        .replace(QDir.currentPath(), "")
-                        .replace("/", QDir.separator()),
-                        QDir.separator(),
-                    )
-                )
         else:
             dialog = QFileDialog(directory=QDir.currentPath())
             dialog.setViewMode(QFileDialog.ViewMode.Detail)
@@ -155,15 +147,8 @@ class PathField(TextField):
             if dialog.exec():
                 filenames = dialog.selectedFiles()
                 if filenames and len(filenames) > 0:
+                    self.set_value(filenames[0])
                     self.handle_valid(True)
-                    self.set_value(
-                        remove_prefix(
-                            filenames[0]
-                            .replace(QDir.currentPath(), "")
-                            .replace("/", QDir.separator()),
-                            QDir.separator(),
-                        )
-                    )
 
     def get_widget_value_cmdline(self) -> str:
         """Returns the value of the Qt-widget without any checks as a commandline string."""
