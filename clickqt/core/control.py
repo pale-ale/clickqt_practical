@@ -106,7 +106,7 @@ class Control(QObject):
         :param groups_command_name: The hierarchy of the **command** as string whereby the names of the components are
                                     concatenated according to :func:`~clickqt.core.control.Control.concat`
         :param param: The click parameter whose type a clickqt widget should be created from
-        :param **kwargs: Additional parameters that can be passed via a keyword.
+        :param kwargs: Additional parameters that can be passed via a keyword.
 
         :return: The container of the created widget (label-element + Qt-widget)
         """
@@ -235,7 +235,7 @@ class Control(QObject):
         :param groups_command_name: The hierarchy of **cmd** as string whereby the names of the components are
                                     concatenated according to :func:`~clickqt.core.control.Control.concat`
         :param is_option_group: A boolean to determine if a command contains Option groups
-        :param **kwargs: Additional parameters that can be passed via a keyword.
+        :param kwargs: Additional parameters that can be passed via a keyword.
 
         :returns: The created clickqt widgets stored in a QScrollArea
         """
@@ -254,7 +254,7 @@ class Control(QObject):
                     option_groups[current_name] = []
                 elif isinstance(param, GroupedOption):
                     assert (
-                        current_name in option_groups.keys()
+                        current_name in option_groups
                     ), "current_name must be set because the title of the option group needs to be set before the grouped option."
                     option_groups[current_name].append(param.name)
             return option_groups
@@ -535,6 +535,8 @@ class Control(QObject):
             ):  # Groups with no options are not in the dict
                 # Check the values of all non dialog widgets for errors
                 for option_name, widget in self.widget_registry[hierarchy_str].items():
+                    if not widget.enabled:
+                        continue
                     if isinstance(widget, MessageBox):
                         dialog_widgets.append(
                             widget
@@ -680,4 +682,7 @@ class Control(QObject):
             relevant_widgets = self.widget_registry[self.cmd.name]
 
         for paramname, paramvalue in ctx.params.items():
-            relevant_widgets[paramname].set_value(paramvalue)
+            widget = relevant_widgets[paramname]
+            if paramvalue is not None:
+                widget.set_value(paramvalue)
+                widget.set_enabled(True)

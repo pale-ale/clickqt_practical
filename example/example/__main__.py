@@ -18,6 +18,13 @@ def utilgroup():
 
 
 @utilgroup.command()
+@click.option("--optional", type=str, required=False)
+@click.option("--required", type=str, required=True)
+def optreq(**kwargs):
+    print(kwargs)
+
+
+@utilgroup.command()
 @click.option(
     "--someflag",
     "-sf",
