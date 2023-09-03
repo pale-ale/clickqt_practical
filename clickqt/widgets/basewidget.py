@@ -44,7 +44,7 @@ class BaseWidget(ABC):
     ):
         assert isinstance(otype, click.ParamType)
         assert isinstance(param, click.Parameter)
-        self.enabled = True
+        self.is_enabled = True
         self.type = otype
         self.param = param
         self.parent_widget = parent
@@ -68,7 +68,7 @@ class BaseWidget(ABC):
         self.enabled_button.clicked.connect(
             lambda: self.set_enabled(self.enabled_button.isChecked())
         )
-        self.set_enabled(self.enabled)  # update the button
+        self.set_enabled(self.is_enabled)  # update the button
 
         if self.parent_widget is None:
             headinglayout.addWidget(self.enabled_button)
@@ -129,8 +129,8 @@ class BaseWidget(ABC):
         """
 
         btnsizehalf = 5
-        self.enabled = enabled
-        if self.enabled:
+        self.is_enabled = enabled
+        if self.is_enabled:
             self.enabled_button.setStyleSheet(BLOB_BUTTON_STYLE_ENABLED(btnsizehalf))
             self.enabled_button.setToolTip("Enabled: Option will be used.")
         else:
@@ -138,7 +138,7 @@ class BaseWidget(ABC):
             self.enabled_button.setToolTip("Disabled: Option will be ignored.")
         self.enabled_button.setFixedSize(btnsizehalf * 2, btnsizehalf * 2)
         # This might be useless, since we cannot disable sub-widgets like tuples
-        if enabled and self.parent_widget and not self.parent_widget.enabled:
+        if enabled and self.parent_widget and not self.parent_widget.is_enabled:
             self.parent_widget.set_enabled(True)
 
     def is_empty(self) -> bool:
@@ -300,7 +300,7 @@ class BaseWidget(ABC):
 
     def get_widget_value_cmdline(self) -> str:
         """Returns the value of the Qt-widget without any checks as a commandline string."""
-        if not self.enabled:
+        if not self.is_enabled:
             return ""
         is_flag = self.param.to_info_dict().get("is_flag", False)
         is_count = self.param.to_info_dict().get("count", False)

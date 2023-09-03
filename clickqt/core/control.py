@@ -460,7 +460,8 @@ class Control(QObject):
         """Returns the click command line string corresponding to the current UI setup."""
         param_strings = ""
         hierarchy_str = self.hierarchy_to_str(command_hierarchy)
-        for widget in list(self.widget_registry[hierarchy_str].values()):
+        widgets = list(self.widget_registry[hierarchy_str].values())
+        for widget in filter(lambda widget: widget.is_enabled, widgets):
             param_strings += widget.get_widget_value_cmdline()
         msgpieces = []
         if self.is_ep:
@@ -535,7 +536,7 @@ class Control(QObject):
             ):  # Groups with no options are not in the dict
                 # Check the values of all non dialog widgets for errors
                 for option_name, widget in self.widget_registry[hierarchy_str].items():
-                    if not widget.enabled:
+                    if not widget.is_enabled:
                         continue
                     if isinstance(widget, MessageBox):
                         dialog_widgets.append(

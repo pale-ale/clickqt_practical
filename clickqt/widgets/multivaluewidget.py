@@ -54,8 +54,6 @@ class MultiValueWidget(MultiWidget):
         self.init()
 
     def get_widget_value_cmdline(self) -> str:
-        if not self.enabled:
-            return ""
         return (
             " ".join(
                 [self.get_preferable_opt()]

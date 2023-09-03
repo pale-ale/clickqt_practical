@@ -68,11 +68,9 @@ def prepare_execution(cmd: click.Command, cmd_group_name: click.Group):
             "--p a 12 --p b 11",
         ),
         (
-            (
-                ClickAttrs.multi_value_widget(nargs=2),
-                ["foo", "bar"],
-                "--p foo bar",
-            )
+            ClickAttrs.multi_value_widget(nargs=2),
+            ["foo", "bar"],
+            "--p foo bar",
         ),
         (
             ClickAttrs.multi_value_widget(nargs=2, default=["A", "B"]),
