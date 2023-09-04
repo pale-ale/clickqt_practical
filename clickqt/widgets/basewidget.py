@@ -6,9 +6,17 @@ import typing as t
 from gettext import ngettext
 import shlex
 
-from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QHBoxLayout, QSizePolicy
+from PySide6.QtWidgets import (
+    QWidget,
+    QLabel,
+    QVBoxLayout,
+    QHBoxLayout,
+    QSizePolicy,
+    QToolButton,
+)
 from PySide6.QtCore import Qt
 import click
+from clickqt.widgets.styles import BLOB_BUTTON_STYLE_ENABLED, BLOB_BUTTON_STYLE_DISABLED
 
 from clickqt.core.error import ClickQtError
 import clickqt.core  # FocusOutValidator
@@ -36,6 +44,7 @@ class BaseWidget(ABC):
     ):
         assert isinstance(otype, click.ParamType)
         assert isinstance(param, click.Parameter)
+        self.is_enabled = True
         self.type = otype
         self.param = param
         self.parent_widget = parent
@@ -48,12 +57,24 @@ class BaseWidget(ABC):
             else QHBoxLayout()
         )
 
+        self.heading = QWidget()
+        headinglayout = QHBoxLayout()
+        self.heading.setLayout(headinglayout)
         self.label = QLabel(text=f"<b>{kwargs.get('label', '')}{self.widget_name}</b>")
         self.label.setTextFormat(Qt.TextFormat.RichText)  # Bold text
 
         self.widget = self.create_widget()
+        self.enabled_button = QToolButton(checkable=True, checked=True)
+        self.enabled_button.clicked.connect(
+            lambda: self.set_enabled(self.enabled_button.isChecked())
+        )
+        self.set_enabled(self.is_enabled)  # update the button
 
-        self.layout.addWidget(self.label)
+        if self.parent_widget is None:
+            headinglayout.addWidget(self.enabled_button)
+        headinglayout.addWidget(self.label)
+
+        self.layout.addWidget(self.heading)
         if (
             isinstance(param, click.Option)
             and param.help
@@ -75,8 +96,8 @@ class BaseWidget(ABC):
         assert self.type is not None, "Type not provided"
 
         self.focus_out_validator = clickqt.core.FocusOutValidator(self)
-        self.widget.installEventFilter(self.focus_out_validator)
 
+        self.widget.installEventFilter(self.focus_out_validator)
         self.widget.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
 
         def handlewheel(event):
@@ -99,6 +120,26 @@ class BaseWidget(ABC):
         :param value: The new value that should be stored in the widget
         :raises click.BadParameter: **value** could not be converted into the corresponding click.ParamType
         """
+
+    def set_enabled(self, enabled: bool):
+        """Enable or disable the widget.
+        A disabled widget's values are not used when the command is run or copied to cmdline.
+
+        :param enabled: True if the widget should be enabled, False otherwise
+        """
+
+        btnsizehalf = 5
+        self.is_enabled = enabled
+        if self.is_enabled:
+            self.enabled_button.setStyleSheet(BLOB_BUTTON_STYLE_ENABLED(btnsizehalf))
+            self.enabled_button.setToolTip("Enabled: Option will be used.")
+        else:
+            self.enabled_button.setStyleSheet(BLOB_BUTTON_STYLE_DISABLED(btnsizehalf))
+            self.enabled_button.setToolTip("Disabled: Option will be ignored.")
+        self.enabled_button.setFixedSize(btnsizehalf * 2, btnsizehalf * 2)
+        # This might be useless, since we cannot disable sub-widgets like tuples
+        if enabled and self.parent_widget and not self.parent_widget.is_enabled:
+            self.parent_widget.set_enabled(True)
 
     def is_empty(self) -> bool:
         """Checks whether the widget is empty. This can be the case for string-based widgets or the
@@ -259,6 +300,8 @@ class BaseWidget(ABC):
 
     def get_widget_value_cmdline(self) -> str:
         """Returns the value of the Qt-widget without any checks as a commandline string."""
+        if not self.is_enabled:
+            return ""
         is_flag = self.param.to_info_dict().get("is_flag", False)
         is_count = self.param.to_info_dict().get("count", False)
         if is_flag:
