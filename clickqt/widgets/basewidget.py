@@ -300,8 +300,6 @@ class BaseWidget(ABC):
 
     def get_widget_value_cmdline(self) -> str:
         """Returns the value of the Qt-widget without any checks as a commandline string."""
-        if not self.is_enabled:
-            return ""
         is_flag = self.param.to_info_dict().get("is_flag", False)
         is_count = self.param.to_info_dict().get("count", False)
         if is_flag:
