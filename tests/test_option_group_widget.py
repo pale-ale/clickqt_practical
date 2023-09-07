@@ -93,7 +93,7 @@ def test_option_group_fail():
     cmd = cli
     control = qtgui_from_click(cmd)
     widgets = determine_relevant_widgets(control)
-    assert len(widgets) == 3
+    assert len(widgets) == 6
 
 
 def test_option_group_simple_ordering():
