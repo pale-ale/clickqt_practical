@@ -2,7 +2,7 @@ from __future__ import annotations
 import typing as t
 from qt_collapsible_section import Section
 import click
-from PySide6.QtWidgets import QLabel, QFrame, QWidget
+from PySide6.QtWidgets import QLabel, QWidget
 from clickqt.widgets.basewidget import BaseWidget
 
 
@@ -17,19 +17,14 @@ class OptionGroupTitleWidget(BaseWidget):
         **kwargs,
     ):
         super().__init__(otype, param, **kwargs)
+        for i in range(self.layout.count() - 1):
+            self.layout.itemAt(i).widget().close()
         self.widget_name = param._GroupTitleFakeOption__group.__dict__["_name"]
         self.widget.setTitle(self.widget_name)
         self.groups = kwargs.get("opt_groups").get(self.widget_name)
         self.control_instance = kwargs.get("control")
         self.key = kwargs.get("key")
         self.label = QLabel(f"<b>{self.widget_name}</b>")
-        self.line = QFrame()
-        self.line.setFrameShape(QFrame.Shape.HLine)
-
-        for i in range(self.layout.count() - 1):
-            self.layout.itemAt(i).widget().close()
-
-        self.layout.addWidget(self.line)
 
     def create_widget(self) -> QWidget:
         return self.widget_type()

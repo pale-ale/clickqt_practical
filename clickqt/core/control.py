@@ -16,6 +16,7 @@ from PySide6.QtWidgets import (
     QApplication,
     QSizePolicy,
     QLabel,
+    QLayout,
 )
 from PySide6.QtCore import QThread, QObject, Signal, Slot, Qt
 from PySide6.QtGui import QPalette, QClipboard
@@ -241,7 +242,7 @@ class Control(QObject):
         """
 
         def get_option_groups(cmd: click.Command):
-            """Function to determine the widgets that belong to the option group.
+            """Function to determine the options that belong to the option group.
             :param cmd: The click command that for which we need to determine the option groups for.
 
             :returns: A dictionary containing the group names as the keys and the corresponding options in a list.
@@ -250,13 +251,13 @@ class Control(QObject):
             current_name = ""  # Initialize current_name
             for param in cmd.params:
                 if isinstance(param, _GroupTitleFakeOption):
-                    current_name = param._GroupTitleFakeOption__group.__dict__["_name"]
+                    current_name = param.name
                     option_groups[current_name] = []
                 elif isinstance(param, GroupedOption):
                     assert (
                         current_name in option_groups
                     ), "current_name must be set because the title of the option group needs to be set before the grouped option."
-                    option_groups[current_name].append(param.name)
+                    option_groups[current_name].append(param)
             return option_groups
 
         cmdbox = QWidget()
@@ -303,7 +304,10 @@ class Control(QObject):
         self.command_registry[groups_command_name] = {}
 
         # parameter name to flag values
-        feature_switches: dict[str, list[click.Parameter]] = {}
+        feature_switches: dict[str, QLayout] = {}
+        option_groups = get_option_groups(cmd)
+        current_option_group: str = ""
+        option_group_layouts: dict[str, list[QWidget]] = {}
 
         for param in cmd.params:
             if isinstance(param, click.core.Parameter):
@@ -326,15 +330,48 @@ class Control(QObject):
                             widget_counter = 0
                     else:
                         widget_counter = 0
-                    required_optional_box[widget_counter].layout().addWidget(
-                        self.parameter_to_widget(
+                    if isinstance(param, _GroupTitleFakeOption):
+                        created_widget = self.parameter_to_widget(
                             cmd,
                             groups_command_name,
                             param,
-                            opt_groups=get_option_groups(cmd),
+                            opt_groups=option_groups,
                             key=kwargs.get("key"),
                         )
-                    )
+                        required_optional_box[widget_counter].layout().addWidget(
+                            created_widget
+                        )
+                        current_option_group = param.name
+                        section_layout = QVBoxLayout()
+                        option_group_layouts[current_option_group] = section_layout
+                    elif isinstance(param, GroupedOption):
+                        if current_option_group is not None:
+                            created_widget = self.parameter_to_widget(
+                                cmd,
+                                groups_command_name,
+                                param,
+                                opt_groups=option_groups,
+                                key=kwargs.get("key"),
+                            )
+                            section_layout = option_group_layouts.get(
+                                current_option_group
+                            )
+                            section_layout.addWidget(created_widget)
+                    else:
+                        created_widget = self.parameter_to_widget(
+                            cmd,
+                            groups_command_name,
+                            param,
+                            opt_groups=option_groups,
+                            key=kwargs.get("key"),
+                        )
+                        required_optional_box[widget_counter].layout().addWidget(
+                            created_widget
+                        )
+        for keys, values in option_group_layouts.items():
+            self.widget_registry[groups_command_name][keys].widget.setContentLayout(
+                values
+            )
 
         # Create for every feature switch a ComboBox
         for param_name, switch_names in feature_switches.items():
