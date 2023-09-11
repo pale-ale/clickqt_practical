@@ -30,6 +30,7 @@ dependencies = [
     "click",
     "click_option_group",
     "PySide6",
+    "qt-collapsible-section-pyside6",
 ]
 
 [project.optional-dependencies]
