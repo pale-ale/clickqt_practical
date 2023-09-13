@@ -21,6 +21,7 @@ class OptionGroupTitleWidget(BaseWidget):
             self.layout.itemAt(i).widget().close()
         self.widget_name = param._GroupTitleFakeOption__group.__dict__["_name"]
         self.widget.setTitle(self.widget_name)
+        self.widget.setToolTip(self.param.help)
         self.label = QLabel(f"<b>{self.widget_name}</b>")
 
     def create_widget(self) -> QWidget:
