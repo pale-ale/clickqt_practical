@@ -16,7 +16,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 import click
-from clickqt.widgets.styles import BLOB_BUTTON_STYLE_ENABLED, BLOB_BUTTON_STYLE_DISABLED
+from clickqt.widgets.styles import BLOB_BUTTON_STYLE_ENABLED, BLOB_BUTTON_STYLE_DISABLED, BLOB_BUTTON_STYLE_ENABLED_FORCED, BLOB_BUTTON_STYLE_DISABLED_FORCED
 
 from clickqt.core.error import ClickQtError
 import clickqt.core  # FocusOutValidator
@@ -45,6 +45,7 @@ class BaseWidget(ABC):
         assert isinstance(otype, click.ParamType)
         assert isinstance(param, click.Parameter)
         self.is_enabled = True
+        self.can_change_enabled = True
         self.type = otype
         self.param = param
         self.parent_widget = parent
@@ -58,21 +59,21 @@ class BaseWidget(ABC):
         )
 
         self.heading = QWidget()
-        headinglayout = QHBoxLayout()
-        self.heading.setLayout(headinglayout)
+        self.headinglayout = QHBoxLayout()
+        self.heading.setLayout(self.headinglayout)
         self.label = QLabel(text=f"<b>{kwargs.get('label', '')}{self.widget_name}</b>")
         self.label.setTextFormat(Qt.TextFormat.RichText)  # Bold text
 
         self.widget = self.create_widget()
         self.enabled_button = QToolButton(checkable=True, checked=True)
         self.enabled_button.clicked.connect(
-            lambda: self.set_enabled(self.enabled_button.isChecked())
+            lambda: self.set_enabled_changeable(enabled=self.enabled_button.isChecked()) if self.can_change_enabled else None
         )
-        self.set_enabled(self.is_enabled)  # update the button
+        self.set_enabled_changeable(enabled=self.is_enabled, changeable=self.can_change_enabled)  # update the button
 
         if self.parent_widget is None:
-            headinglayout.addWidget(self.enabled_button)
-        headinglayout.addWidget(self.label)
+            self.headinglayout.addWidget(self.enabled_button)
+        self.headinglayout.addWidget(self.label)
 
         self.layout.addWidget(self.heading)
         if (
@@ -105,8 +106,15 @@ class BaseWidget(ABC):
                 self.widget_type.wheelEvent(self.widget, event)
             else:
                 event.ignore()
+        
+        def handlefocusin(event):
+            self.widget_type.focusInEvent(self.widget, event)
+            if self.can_change_enabled:
+                self.set_enabled_changeable(enabled=True)
 
         self.widget.wheelEvent = handlewheel  # Disable scrolling
+        if not isinstance(self, (MultiWidget)):
+            self.widget.focusInEvent = handlefocusin
 
     def create_widget(self) -> QWidget:
         """Creates the widget specified in :attr:`~clickqt.widgets.basewidget.BaseWidget.widget_type` and returns it."""
@@ -121,25 +129,32 @@ class BaseWidget(ABC):
         :raises click.BadParameter: **value** could not be converted into the corresponding click.ParamType
         """
 
-    def set_enabled(self, enabled: bool):
-        """Enable or disable the widget.
+    def set_enabled_changeable(self, enabled: bool|None=None, changeable: bool|None=None):
+        """Enable/disable the widget, allow user to enable/disable the widget.
         A disabled widget's values are not used when the command is run or copied to cmdline.
 
         :param enabled: True if the widget should be enabled, False otherwise
+        :param changeable: True if the widget can be enabled/disabled by the user, False otherwise
         """
-
         btnsizehalf = 5
-        self.is_enabled = enabled
-        if self.is_enabled:
+        self.is_enabled = self.is_enabled if enabled is None else enabled
+        self.can_change_enabled = self.can_change_enabled if changeable is None else changeable
+        if self.can_change_enabled and self.is_enabled:
             self.enabled_button.setStyleSheet(BLOB_BUTTON_STYLE_ENABLED(btnsizehalf))
             self.enabled_button.setToolTip("Enabled: Option will be used.")
-        else:
+        elif self.can_change_enabled and (not self.is_enabled):
             self.enabled_button.setStyleSheet(BLOB_BUTTON_STYLE_DISABLED(btnsizehalf))
             self.enabled_button.setToolTip("Disabled: Option will be ignored.")
+        elif not self.can_change_enabled and self.is_enabled:
+            self.enabled_button.setStyleSheet(BLOB_BUTTON_STYLE_ENABLED_FORCED(btnsizehalf))
+            self.enabled_button.setToolTip("Enabled: This option is required.")
+        elif not self.can_change_enabled and not self.is_enabled:
+            self.enabled_button.setStyleSheet(BLOB_BUTTON_STYLE_DISABLED_FORCED(btnsizehalf))
+            self.enabled_button.setToolTip("Disabled: This option cannot be used.")
         self.enabled_button.setFixedSize(btnsizehalf * 2, btnsizehalf * 2)
         # This might be useless, since we cannot disable sub-widgets like tuples
         if enabled and self.parent_widget and not self.parent_widget.is_enabled:
-            self.parent_widget.set_enabled(True)
+            self.parent_widget.set_enabled_changeable(enabled=True)
 
     def is_empty(self) -> bool:
         """Checks whether the widget is empty. This can be the case for string-based widgets or the

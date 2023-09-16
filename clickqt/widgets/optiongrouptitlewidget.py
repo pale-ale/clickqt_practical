@@ -16,22 +16,26 @@ class OptionGroupTitleWidget(BaseWidget):
         parent: t.Optional["BaseWidget"] = None,
         **kwargs,
     ):
+        self.child_basewidgets:list[BaseWidget] = []
         super().__init__(otype, param, **kwargs)
-        for i in range(self.layout.count() - 1):
-            self.layout.itemAt(i).widget().close()
         self.widget_name = param._GroupTitleFakeOption__group.__dict__["_name"]
         self.widget.setTitle(self.widget_name)
         self.widget.setToolTip(self.param.help)
-        self.label = QLabel(f"<b>{self.widget_name}</b>")
-
-    def create_widget(self) -> QWidget:
-        return self.widget_type()
+        self.enabled_button.clicked.connect(
+            lambda: self.set_enabled_changeable(enabled=self.enabled_button.isChecked()) if self.can_change_enabled else None
+        )        
+        self.label.setText(f"<b>{self.widget_name}</b>")
 
     def get_widget_value(self) -> t.Any:
         return ""
 
     def set_value(self, value: t.Any):
         pass
+
+    def set_enabled_changeable(self, enabled: bool | None = None, changeable: bool | None = None):
+        super().set_enabled_changeable(enabled, changeable)
+        for childbw in self.child_basewidgets:
+            childbw.set_enabled_changeable(enabled)
 
     def get_widget_value_cmdline(self) -> str:
         return ""

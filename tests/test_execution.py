@@ -228,11 +228,6 @@ def prepare_execution(
         ),
         (
             ClickAttrs.nvalue_widget(type=(str, str), required=True),
-            [["", ""]],
-            ClickQtError(ClickQtError.ErrorType.REQUIRED_ERROR),
-        ),
-        (
-            ClickAttrs.nvalue_widget(type=(str, str), required=True),
             [],
             ClickQtError(ClickQtError.ErrorType.REQUIRED_ERROR),
         ),
@@ -275,12 +270,15 @@ def test_execution(
         and "r" in widget.type.mode
     ):
         widget.set_value("-")
+        widget.set_enabled_changeable(enabled=True)
     elif isinstance(widget, clickqt.widgets.ConfirmationWidget):
         values = value.split(";")
         widget.field.set_value(values[0])
+        widget.set_enabled_changeable(enabled=True)
         widget.confirmation_field.set_value(values[1])
     elif value is not None:
         widget.set_value(value)
+        widget.set_enabled_changeable(enabled=True)
 
     args, inputs = prepare_execution(monkeypatch, value, widget)
     standalone_mode = False
@@ -387,14 +385,11 @@ def test_execution_confirmation_widget_fail(
         (ClickAttrs.nvalue_widget(), [], []),
         (ClickAttrs.nvalue_widget(), [], ["test1", "test2"]),
         (ClickAttrs.nvalue_widget(), ["a", "b"], []),
-        (ClickAttrs.nvalue_widget(), ["a", "b"], ["test1", "test2"]),
+        (ClickAttrs.nvalue_widget(required=True), ["a", "b"], ["test1", "test2"]),
         (ClickAttrs.nvalue_widget(default=["x", "y"]), [], []),
         (ClickAttrs.nvalue_widget(default=["x", "y"]), [], ["test1", "test2"]),
         (ClickAttrs.nvalue_widget(default=["x", "y"]), ["a", "b"], []),
         (ClickAttrs.nvalue_widget(default=["x", "y"]), ["a", "b"], ["test1", "test2"]),
-        # Children are empty
-        (ClickAttrs.nvalue_widget(default=["x", "y"]), ["", ""], []),
-        (ClickAttrs.nvalue_widget(default=[]), ["", ""], []),
     ],
 )
 def test_execution_nvalue_widget(

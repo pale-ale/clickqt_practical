@@ -88,7 +88,7 @@ def prepare_execution(cmd: click.Command, cmd_group_name: click.Group):
 def test_command(eptype: EPTYPE, click_attrs: dict, value: t.Any, expected_params: str):
     is_ep = eptype in [EPTYPE.EP, EPTYPE.EPGROUP]
     is_group = eptype in [EPTYPE.EPGROUP, EPTYPE.FILEGROUP]
-    param = click.Option(param_decls=["--p"], **click_attrs)
+    param = click.Option(param_decls=["--p"], required=True, **click_attrs)
     if eptype == EPTYPE.EP:
         cli = click.Command("main", params=[param])
         ep_or_path = "main"

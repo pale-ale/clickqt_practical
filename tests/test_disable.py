@@ -53,7 +53,7 @@ def test_disable(attrs, value, template):
     expected_disabled = "--standard 'te st'"
 
     ensure_cmdstr(control, expected_enabled)
-    widget.set_enabled(False)
+    widget.set_enabled_changeable(enabled=False)
     ensure_cmdstr(control, expected_disabled)
-    widget.set_enabled(True)
+    widget.set_enabled_changeable(enabled=True)
     ensure_cmdstr(control, expected_enabled)

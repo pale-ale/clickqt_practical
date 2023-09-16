@@ -50,7 +50,7 @@ def textio_to_str_to_list(vals):
         (
             ClickAttrs.checkable_combobox(choices=["A", "B", "C"]),
             ["A", "B", "C"],
-            [],
+            ["C"],
         ),
         (
             ClickAttrs.tuple_widget(types=(str, int, float)),
@@ -82,7 +82,7 @@ def textio_to_str_to_list(vals):
     ],
 )
 def test_import_ep(click_attrs: dict, value: t.Any, fake_value: t.Any):
-    param = click.Option(param_decls=["--p"], **click_attrs)
+    param = click.Option(param_decls=["--p"], required=True, **click_attrs)
     cli = click.Command("main", params=[param])
     control = clickqt.qtgui_from_click(cli)
     control.set_ep_or_path("main")

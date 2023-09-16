@@ -24,6 +24,7 @@ from PySide6.QtGui import QPalette, QClipboard
 from clickqt.core.gui import GUI
 from clickqt.core.commandexecutor import CommandExecutor
 from clickqt.core.error import ClickQtError
+from clickqt.widgets.optiongrouptitlewidget import OptionGroupTitleWidget
 from clickqt.widgets.basewidget import BaseWidget
 from clickqt.widgets.messagebox import MessageBox
 from clickqt.widgets.filefield import FileField
@@ -276,6 +277,7 @@ class Control(QObject):
         feature_switches: dict[str, QLayout] = {}
         current_option_group: str = ""
         option_group_layouts: dict[str, list[QWidget]] = {}
+        widget_required = True
 
         for param in cmd.params:
             if isinstance(param, click.core.Parameter):
@@ -291,20 +293,20 @@ class Control(QObject):
                     feature_switches[param.name].append(param)
                 else:
                     if not is_option_group:
-                        widget_counter = 1
+                        widget_required = False
                         if (
                             param.required or isinstance(param, click.Argument)
                         ) and param.default is None:
-                            widget_counter = 0
+                            widget_required = True
                     else:
-                        widget_counter = 0
+                        widget_required = True
                     if isinstance(param, _GroupTitleFakeOption):
                         created_widget = self.parameter_to_widget(
                             cmd,
                             groups_command_name,
                             param,
                         )
-                        required_optional_box[widget_counter].layout().addWidget(
+                        required_optional_box[0 if widget_required else 1].layout().addWidget(
                             created_widget
                         )
                         current_option_group = param.name
@@ -317,6 +319,11 @@ class Control(QObject):
                                 groups_command_name,
                                 param,
                             )
+                            basewidget = self.widget_registry[groups_command_name][param.name]
+                            basewidget.headinglayout.removeWidget(basewidget.enabled_button)
+                            basewidget.enabled_button.close()
+                            optiongroup:OptionGroupTitleWidget = self.widget_registry[groups_command_name][current_option_group]
+                            optiongroup.child_basewidgets.append(basewidget)
                             section_layout = option_group_layouts.get(
                                 current_option_group
                             )
@@ -327,9 +334,16 @@ class Control(QObject):
                             groups_command_name,
                             param,
                         )
-                        required_optional_box[widget_counter].layout().addWidget(
+                        required_optional_box[0 if widget_required else 1].layout().addWidget(
                             created_widget
                         )
+                        widget = self.widget_registry[groups_command_name][param.name]
+                        widget.set_enabled_changeable(
+                            enabled = widget_required or param.default is not None,
+                            changeable=not widget_required
+                        )
+                        self.widget_registry[groups_command_name][param.name].set_enabled_changeable(changeable=not widget_required)
+
         for keys, values in option_group_layouts.items():
             self.widget_registry[groups_command_name][keys].widget.setContentLayout(
                 values
@@ -534,7 +548,8 @@ class Control(QObject):
                 # Check the values of all non dialog widgets for errors
                 for option_name, widget in self.widget_registry[hierarchy_str].items():
                     if not widget.is_enabled:
-                        continue
+                        if not widget.param.multiple: # multiple must return (), even when the option is unused
+                            continue
                     if isinstance(widget, MessageBox):
                         dialog_widgets.append(
                             widget
@@ -574,7 +589,7 @@ class Control(QObject):
                 args: list[t.Any] = []
                 for ca in callback_args:  # Bring the args in the correct order
                     args.append(
-                        kwargs.pop(ca)
+                            kwargs.pop(ca)
                     )  # Remove explicitly mentioned args from kwargs
 
                     print(
@@ -683,4 +698,4 @@ class Control(QObject):
             widget = relevant_widgets[paramname]
             if paramvalue is not None:
                 widget.set_value(paramvalue)
-                widget.set_enabled(True)
+                widget.set_enabled_changeable(enabled=True)

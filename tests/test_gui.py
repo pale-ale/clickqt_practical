@@ -414,7 +414,7 @@ def test_gui_construction_with_options(root_group_command: click.Command):
 
 
 def test_gui_start_stop_execution():
-    param = click.Option(param_decls=["--p"], **ClickAttrs.checkbox())
+    param = click.Option(param_decls=["--p"], required=True, **ClickAttrs.checkbox())
     cli = click.Command("cli", params=[param], callback=lambda p: QThread.msleep(100))
 
     control = clickqt.qtgui_from_click(cli)
@@ -468,7 +468,7 @@ def test_gui_start_stop_execution():
     ],
 )
 def test_gui_exception(exception: Exception, output_expected: str):
-    param = click.Option(param_decls=["--p"], **ClickAttrs.checkbox())
+    param = click.Option(param_decls=["--p"], required=True, **ClickAttrs.checkbox())
     cli = click.Command("cli", params=[param], callback=lambda p: raise_(exception))
 
     control = clickqt.qtgui_from_click(cli)
