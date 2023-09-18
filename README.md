@@ -116,13 +116,14 @@ GUI in this case can be an entrypoint, created as described in [Wrapper with Ent
 With this you can map your own click types to specific QtWidgets of your choice if this is your choice.
 # Support
 ClickQt also supports the click extension to structure options of click commands in option groups (https://click-option-group.readthedocs.io/en/latest/).
+This extension is supported by generating collapsible sections for the option groups to see the structuring of the options.
 # Limitations
 
 Currently clickqt only supports the built-in features from click.
 This means that any user defined behaviour (e.g., custom ParamTypes / Commands / Contexts) will propably not work as expected.
 Furthermore, clickqt handles envvar options diffently from click.
 In particular clickqt always splits the envvar whereas click does this dependent on the ParamType.
-Future releases will take these issues into account.
+Future releases will take these issues into account. In the current stage of clickQt the special cases of option groups are not supported i.e MutuallyExclusiveOptionGroup (https://click-option-group.readthedocs.io/en/latest/tutorial.html#behavior-and-relationship-among-options).
 
 # Acknowledgments
 
