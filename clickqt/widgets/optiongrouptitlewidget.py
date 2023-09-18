@@ -25,17 +25,13 @@ class OptionGroupTitleWidget(BaseWidget):
             lambda: self.set_enabled_changeable(enabled=self.enabled_button.isChecked()) if self.can_change_enabled else None
         )        
         self.label.setText(f"<b>{self.widget_name}</b>")
+        self.layout.removeWidget(self.heading)
 
     def get_widget_value(self) -> t.Any:
         return ""
 
     def set_value(self, value: t.Any):
         pass
-
-    def set_enabled_changeable(self, enabled: bool | None = None, changeable: bool | None = None):
-        super().set_enabled_changeable(enabled, changeable)
-        for childbw in self.child_basewidgets:
-            childbw.set_enabled_changeable(enabled)
 
     def get_widget_value_cmdline(self) -> str:
         return ""

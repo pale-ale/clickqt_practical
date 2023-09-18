@@ -319,11 +319,6 @@ class Control(QObject):
                                 groups_command_name,
                                 param,
                             )
-                            basewidget = self.widget_registry[groups_command_name][param.name]
-                            basewidget.headinglayout.removeWidget(basewidget.enabled_button)
-                            basewidget.enabled_button.close()
-                            optiongroup:OptionGroupTitleWidget = self.widget_registry[groups_command_name][current_option_group]
-                            optiongroup.child_basewidgets.append(basewidget)
                             section_layout = option_group_layouts.get(
                                 current_option_group
                             )
@@ -589,18 +584,17 @@ class Control(QObject):
                 args: list[t.Any] = []
                 for ca in callback_args:  # Bring the args in the correct order
                     args.append(
-                            kwargs.pop(ca)
+                            kwargs.pop(ca, None)
                     )  # Remove explicitly mentioned args from kwargs
-
-                    print(
-                        f"For command details, please call '{self.command_to_string(hierarchy_str)} --help'"
-                    )
-                    print(self.command_to_cli_string(hierarchy))
-                    print(
-                        f"Current Command: {self.function_call_formatter(hierarchy_str, command, kwargs)} \n"
-                        + "Output:"
-                    )
-                    return lambda: command.callback(*args, **kwargs)
+                print(
+                    f"For command details, please call '{self.command_to_string(hierarchy_str)} --help'"
+                )
+                print(self.command_to_cli_string(hierarchy))
+                print(
+                    f"Current Command: {self.function_call_formatter(hierarchy_str, command, kwargs)} \n"
+                    + "Output:"
+                )
+                return lambda: command.callback(*args, **kwargs)
             else:
                 return lambda: command.callback(  # pylint: disable=unnecessary-lambda
                     **kwargs
