@@ -114,6 +114,8 @@ clickqtfy --custom-gui [GUI] ENTRYPOINT FUNCNAME
 ```
 GUI in this case can be an entrypoint, created as described in [Wrapper with Entrypoint](#wrapper_with_entrypoint) or it is the ui_handle you used to create this entrypoint.
 With this you can map your own click types to specific QtWidgets of your choice if this is your choice.
+# Support
+ClickQt also supports the click extension to structure options of click commands in option groups (https://click-option-group.readthedocs.io/en/latest/).
 # Limitations
 
 Currently clickqt only supports the built-in features from click.
