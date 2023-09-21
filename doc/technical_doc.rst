@@ -85,7 +85,7 @@ The most important methods in this class are:
 #. parse_cmd()
     * This method parses through every option and argument of the command for a simple QTabwidget
 
- #. parse_cmd_group()
+#. parse_cmd_group()
     * This method creates for every subcommand a QTabwidget and these subcommands are parsed seperately for the widget creation.
 
 3. :class:`clickqt.widgets.basewidget.BaseWidget`
