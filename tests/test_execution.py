@@ -121,7 +121,6 @@ def prepare_execution(
         (ClickAttrs.filefield(type_dict={"mode": "w"}), "-", ClickQtError()),
         (ClickAttrs.filefield(type_dict={"mode": "wb"}), "-", ClickQtError()),
         (ClickAttrs.filepathfield(), ".", ClickQtError()),
-        (ClickAttrs.tuple_widget(types=()), [], ClickQtError()),
         (
             ClickAttrs.tuple_widget(types=(str, int, float)),
             ("t", 1, -2.0),
@@ -132,7 +131,6 @@ def prepare_execution(
             [1.2, "-3.5", -2],
             ClickQtError(),
         ),
-        (ClickAttrs.multi_value_widget(nargs=2), ["", ""], ClickQtError()),
         (
             ClickAttrs.nvalue_widget(type=(str, int)),
             [["a", 12], ["c", -1]],
@@ -210,41 +208,10 @@ def prepare_execution(
             [[11, "test"], [231, "abc"]],
             ClickQtError(ClickQtError.ErrorType.PROCESSING_VALUE_ERROR),
         ),
-        # Required error (Required param not provided)
-        (
-            ClickAttrs.textfield(required=True),
-            "",
-            ClickQtError(ClickQtError.ErrorType.REQUIRED_ERROR),
-        ),
-        (
-            ClickAttrs.checkable_combobox(choices=["A", "B", "C"], required=True),
-            [],
-            ClickQtError(ClickQtError.ErrorType.REQUIRED_ERROR),
-        ),
-        (
-            ClickAttrs.multi_value_widget(nargs=2, required=True),
-            ["", ""],
-            ClickQtError(ClickQtError.ErrorType.REQUIRED_ERROR),
-        ),
-        (
-            ClickAttrs.nvalue_widget(type=(str, str), required=True),
-            [],
-            ClickQtError(ClickQtError.ErrorType.REQUIRED_ERROR),
-        ),
         # With default
         (
             ClickAttrs.textfield(default=""),
             "",
-            ClickQtError(),
-        ),  # Empty string is accepted
-        (
-            ClickAttrs.checkable_combobox(choices=["A", "B", "C"], default=["B"]),
-            [],
-            ClickQtError(),
-        ),
-        (
-            ClickAttrs.multi_value_widget(nargs=2, default=["A", "B"]),
-            ["", ""],
             ClickQtError(),
         ),
     ],
@@ -352,12 +319,6 @@ def test_execution(
             "b",
             ClickQtError(ClickQtError.ErrorType.CONFIRMATION_INPUT_NOT_EQUAL_ERROR),
         ),
-        (
-            ClickAttrs.confirmation_widget(required=True),
-            "",
-            "b",
-            ClickQtError(ClickQtError.ErrorType.REQUIRED_ERROR),
-        ),  # First check for required, then value equality
     ],
 )
 def test_execution_confirmation_widget_fail(

@@ -306,9 +306,9 @@ class Control(QObject):
                             groups_command_name,
                             param,
                         )
-                        required_optional_box[0 if widget_required else 1].layout().addWidget(
-                            created_widget
-                        )
+                        required_optional_box[
+                            0 if widget_required else 1
+                        ].layout().addWidget(created_widget)
                         current_option_group = param.name
                         section_layout = QVBoxLayout()
                         option_group_layouts[current_option_group] = section_layout
@@ -329,15 +329,17 @@ class Control(QObject):
                             groups_command_name,
                             param,
                         )
-                        required_optional_box[0 if widget_required else 1].layout().addWidget(
-                            created_widget
-                        )
+                        required_optional_box[
+                            0 if widget_required else 1
+                        ].layout().addWidget(created_widget)
                         widget = self.widget_registry[groups_command_name][param.name]
                         widget.set_enabled_changeable(
-                            enabled = widget_required or param.default is not None,
-                            changeable=not widget_required
+                            enabled=widget_required or param.default is not None,
+                            changeable=not widget_required,
                         )
-                        self.widget_registry[groups_command_name][param.name].set_enabled_changeable(changeable=not widget_required)
+                        self.widget_registry[groups_command_name][
+                            param.name
+                        ].set_enabled_changeable(changeable=not widget_required)
 
         for keys, values in option_group_layouts.items():
             self.widget_registry[groups_command_name][keys].widget.setContentLayout(
@@ -543,8 +545,10 @@ class Control(QObject):
                 # Check the values of all non dialog widgets for errors
                 for option_name, widget in self.widget_registry[hierarchy_str].items():
                     if not widget.is_enabled:
-                        if not widget.param.multiple: # multiple must return (), even when the option is unused
-                            continue
+                        kwargs[option_name] = widget.get_param_default(
+                            widget.param, () if widget.param.multiple else None
+                        )
+                        continue
                     if isinstance(widget, MessageBox):
                         dialog_widgets.append(
                             widget
@@ -584,7 +588,7 @@ class Control(QObject):
                 args: list[t.Any] = []
                 for ca in callback_args:  # Bring the args in the correct order
                     args.append(
-                            kwargs.pop(ca, None)
+                        kwargs.pop(ca, None)
                     )  # Remove explicitly mentioned args from kwargs
                 print(
                     f"For command details, please call '{self.command_to_string(hierarchy_str)} --help'"
