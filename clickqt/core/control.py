@@ -637,6 +637,7 @@ class Control(QObject):
 
     def import_cmdline(self) -> None:
         """Set the values of the widgets according to the text in the clipboard."""
+        self.gui.terminal_output.clear()
         cmdstr = self.get_clipboard()
         click.echo(f"Importing '{cmdstr}' ...")
         splitstrs = click.parser.split_arg_string(cmdstr)
