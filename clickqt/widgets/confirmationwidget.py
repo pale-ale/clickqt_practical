@@ -4,7 +4,6 @@ import typing as t
 
 import click
 from PySide6.QtWidgets import QWidget, QHBoxLayout
-from PySide6 import Qt
 
 from clickqt.widgets.basewidget import BaseWidget
 from clickqt.core.error import ClickQtError
