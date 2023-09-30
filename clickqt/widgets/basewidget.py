@@ -72,7 +72,7 @@ class BaseWidget(ABC):
         self.widget = self.create_widget()
         self.enabled_button = QToolButton(checkable=True, checked=True)
         self.enabled_button.clicked.connect(
-            lambda: self.set_enabled_changeable(enabled=self.enabled_button.isChecked())
+            lambda: self.set_enabled_changeable(enabled=not self.is_enabled)
             if self.can_change_enabled
             else None
         )
@@ -408,6 +408,7 @@ class MultiWidget(BaseWidget):
             child.label.setText(label_text + (":" if label_text else ""))
 
     def set_value(self, value: t.Iterable[t.Any]):
+        self.set_enabled_changeable(enabled=value is None or len(value) > 0)
         if len(value) != self.param.nargs:
             raise click.BadParameter(
                 ngettext(

@@ -694,6 +694,4 @@ class Control(QObject):
 
         for paramname, paramvalue in ctx.params.items():
             widget = relevant_widgets[paramname]
-            if paramvalue is not None:
-                widget.set_value(paramvalue)
-                widget.set_enabled_changeable(enabled=True)
+            widget.set_value(paramvalue)
