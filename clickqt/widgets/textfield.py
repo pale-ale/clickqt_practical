@@ -43,6 +43,9 @@ class TextField(BaseWidget):
                 self.set_value(BaseWidget.get_param_default(param, ""))
 
     def set_value(self, value: t.Any):
+        if value is None:
+            self.set_enabled_changeable(enabled=False)
+            return
         if isinstance(value, str):
             self.widget.setText(value)
         else:
@@ -53,6 +56,7 @@ class TextField(BaseWidget):
                     ctx=click.Context(self.click_command),
                 )
             )
+        self.set_enabled_changeable(enabled=True)
 
     def is_empty(self) -> bool:
         """Returns True if the current text is an empty string, False otherwise."""

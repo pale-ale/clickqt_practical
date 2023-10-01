@@ -180,6 +180,7 @@ def hello2():
 @hello2.command()
 @click.option("-ns", type=(int, str), multiple=True)
 def hello_ns2(ns):
+    print(ns)
     for i, s in ns:
         for _ in range(i):
             click.echo(f"{s}{i}")

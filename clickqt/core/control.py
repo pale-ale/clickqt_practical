@@ -24,6 +24,7 @@ from PySide6.QtGui import QPalette, QClipboard
 from clickqt.core.gui import GUI
 from clickqt.core.commandexecutor import CommandExecutor
 from clickqt.core.error import ClickQtError
+from clickqt.widgets.optiongrouptitlewidget import OptionGroupTitleWidget
 from clickqt.widgets.basewidget import BaseWidget
 from clickqt.widgets.messagebox import MessageBox
 from clickqt.widgets.filefield import FileField
@@ -276,6 +277,7 @@ class Control(QObject):
         feature_switches: dict[str, QLayout] = {}
         current_option_group: str = ""
         option_group_layouts: dict[str, list[QWidget]] = {}
+        widget_required = True
 
         for param in cmd.params:
             if isinstance(param, click.core.Parameter):
@@ -291,22 +293,22 @@ class Control(QObject):
                     feature_switches[param.name].append(param)
                 else:
                     if not is_option_group:
-                        widget_counter = 1
+                        widget_required = False
                         if (
                             param.required or isinstance(param, click.Argument)
                         ) and param.default is None:
-                            widget_counter = 0
+                            widget_required = True
                     else:
-                        widget_counter = 0
+                        widget_required = True
                     if isinstance(param, _GroupTitleFakeOption):
                         created_widget = self.parameter_to_widget(
                             cmd,
                             groups_command_name,
                             param,
                         )
-                        required_optional_box[widget_counter].layout().addWidget(
-                            created_widget
-                        )
+                        required_optional_box[
+                            0 if widget_required else 1
+                        ].layout().addWidget(created_widget)
                         current_option_group = param.name
                         section_layout = QVBoxLayout()
                         option_group_layouts[current_option_group] = section_layout
@@ -327,9 +329,18 @@ class Control(QObject):
                             groups_command_name,
                             param,
                         )
-                        required_optional_box[widget_counter].layout().addWidget(
-                            created_widget
+                        required_optional_box[
+                            0 if widget_required else 1
+                        ].layout().addWidget(created_widget)
+                        widget = self.widget_registry[groups_command_name][param.name]
+                        widget.set_enabled_changeable(
+                            enabled=widget_required or param.default is not None,
+                            changeable=not widget_required,
                         )
+                        self.widget_registry[groups_command_name][
+                            param.name
+                        ].set_enabled_changeable(changeable=not widget_required)
+
         for keys, values in option_group_layouts.items():
             self.widget_registry[groups_command_name][keys].widget.setContentLayout(
                 values
@@ -534,6 +545,9 @@ class Control(QObject):
                 # Check the values of all non dialog widgets for errors
                 for option_name, widget in self.widget_registry[hierarchy_str].items():
                     if not widget.is_enabled:
+                        kwargs[option_name] = widget.get_param_default(
+                            widget.param, () if widget.param.multiple else None
+                        )
                         continue
                     if isinstance(widget, MessageBox):
                         dialog_widgets.append(
@@ -574,18 +588,17 @@ class Control(QObject):
                 args: list[t.Any] = []
                 for ca in callback_args:  # Bring the args in the correct order
                     args.append(
-                        kwargs.pop(ca)
+                        kwargs.pop(ca, None)
                     )  # Remove explicitly mentioned args from kwargs
-
-                    print(
-                        f"For command details, please call '{self.command_to_string(hierarchy_str)} --help'"
-                    )
-                    print(self.command_to_cli_string(hierarchy))
-                    print(
-                        f"Current Command: {self.function_call_formatter(hierarchy_str, command, kwargs)} \n"
-                        + "Output:"
-                    )
-                    return lambda: command.callback(*args, **kwargs)
+                print(
+                    f"For command details, please call '{self.command_to_string(hierarchy_str)} --help'"
+                )
+                print(self.command_to_cli_string(hierarchy))
+                print(
+                    f"Current Command: {self.function_call_formatter(hierarchy_str, command, kwargs)} \n"
+                    + "Output:"
+                )
+                return lambda: command.callback(*args, **kwargs)
             else:
                 return lambda: command.callback(  # pylint: disable=unnecessary-lambda
                     **kwargs
@@ -682,6 +695,4 @@ class Control(QObject):
 
         for paramname, paramvalue in ctx.params.items():
             widget = relevant_widgets[paramname]
-            if paramvalue is not None:
-                widget.set_value(paramvalue)
-                widget.set_enabled(True)
+            widget.set_value(paramvalue)

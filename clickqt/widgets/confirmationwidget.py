@@ -26,7 +26,7 @@ class ConfirmationWidget(BaseWidget):
         otype: click.ParamType,
         param: click.Parameter,
         widgetsource: t.Callable[[t.Any], BaseWidget],
-        **kwargs
+        **kwargs,
     ):
         super().__init__(otype, param, **kwargs)
 
@@ -44,22 +44,21 @@ class ConfirmationWidget(BaseWidget):
             self.type, param, parent=self, vboxlayout=True, **kwargs
         )  #: Second (confirmation) input widget.
         self.param.confirmation_prompt = True
-        self.widget.setLayout(QHBoxLayout())
-        self.layout.removeWidget(self.label)
+        self.layout.setDirection(QHBoxLayout.Direction.LeftToRight)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.addWidget(self.field.container)
+        self.layout.addWidget(self.confirmation_field.container)
+        self.field.headinglayout.insertWidget(0, self.enabled_button)
+        self.heading.close()
         self.layout.removeWidget(self.widget)
-        self.label.deleteLater()
-        self.container.deleteLater()
-        self.container = self.widget
-        self.container.layout().setContentsMargins(0, 0, 0, 0)
-        self.widget.layout().addWidget(self.field.container)
-        self.widget.layout().addWidget(self.confirmation_field.container)
 
         if self.parent_widget is None:
             self.set_value(BaseWidget.get_param_default(param, None))
 
     def set_value(self, value: t.Any):
         """Sets **value** as widget value for :attr:`~clickqt.widgets.confirmationwidget.ConfirmationWidget.field` and
-        :attr:`~clickqt.widgets.confirmationwidget.ConfirmationWidget.confirmation_field` according to :func:`~clickqt.widgets.basewidget.BaseWidget.set_value`."""
+        :attr:`~clickqt.widgets.confirmationwidget.ConfirmationWidget.confirmation_field` according to :func:`~clickqt.widgets.basewidget.BaseWidget.set_value`.
+        """
 
         if value is not None:
             self.field.set_value(value)
@@ -67,7 +66,8 @@ class ConfirmationWidget(BaseWidget):
 
     def handle_valid(self, valid: bool):
         """Changes the widget border for :attr:`~clickqt.widgets.confirmationwidget.ConfirmationWidget.field` and
-        :attr:`~clickqt.widgets.confirmationwidget.ConfirmationWidget.confirmation_field` according to :func:`~clickqt.widgets.basewidget.BaseWidget.handle_valid`."""
+        :attr:`~clickqt.widgets.confirmationwidget.ConfirmationWidget.confirmation_field` according to :func:`~clickqt.widgets.basewidget.BaseWidget.handle_valid`.
+        """
 
         self.field.handle_valid(valid)
         self.confirmation_field.handle_valid(valid)

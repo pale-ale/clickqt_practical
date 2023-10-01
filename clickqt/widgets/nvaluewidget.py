@@ -46,8 +46,7 @@ class NValueWidget(MultiWidget):
         self.widget.setWidgetResizable(True)
         addfieldbtn = QPushButton("+", self.widget)
         # Add an empty widget
-        addfieldbtn.clicked.connect(
-            lambda: self.add_pair()
+        addfieldbtn.clicked.connect(lambda: self.add_pair()
         )  # pylint: disable=unnecessary-lambda
         self.vbox.layout().addWidget(addfieldbtn)
         self.widget.setWidget(self.vbox)
@@ -56,6 +55,8 @@ class NValueWidget(MultiWidget):
         self.children = self.buttondict.values()
 
         self.init()
+        if len(self.children) == 0 and self.can_change_enabled:
+            self.set_enabled_changeable(enabled=False)
 
     def add_pair(self, value: t.Any = None):
         """Adds a new (child-)widget of type **otype** with a remove button to this widget.
@@ -88,6 +89,8 @@ class NValueWidget(MultiWidget):
         self.vbox.layout().addWidget(clickqtwidget.container)
         self.buttondict[removebtn] = clickqtwidget
         self.widget.setWidget(self.vbox)
+        if not self.is_enabled and self.can_change_enabled:
+            self.set_enabled_changeable(enabled=True)
 
     def remove_button_pair(self, btn_to_remove: QPushButton):
         """Removes the widget assoziated with **btn_to_remove**.
@@ -112,7 +115,7 @@ class NValueWidget(MultiWidget):
         """
 
         value_missing = False
-        if len(self.children) == 0:
+        if len(self.children) == 0 or not self.is_enabled:
             default = BaseWidget.get_param_default(self.param, None)
 
             if self.param.required and default is None:
@@ -151,29 +154,7 @@ class NValueWidget(MultiWidget):
 
             # len(self.children)) < len(default): We set at most len(self.children)) defaults
             # len(self.children)) >= len(default): All defaults will be considered
-            for i, child in enumerate(self.children):
-                if child.is_empty():
-                    if child.param.required and default is None:
-                        self.handle_valid(False)
-                        return (
-                            None,
-                            ClickQtError(
-                                ClickQtError.ErrorType.REQUIRED_ERROR,
-                                child.widget_name,
-                                child.param.param_type_name,
-                            ),
-                        )
-                    if default is not None and i < len(
-                        default
-                    ):  # Overwrite the empty widget with the default value (if one exists)
-                        child.set_value(
-                            default[i]
-                        )  # If the widget is a tuple, all values will be overwritten
-                    else:  # No default exists -> Don't consider the value of this child
-                        # We can't remove the child because there would be a problem with out-of-focus-validation when
-                        # having multiple string based widgets (the validator would remove the widget before all child-widgets could be filled)
-                        continue
-
+            for child in self.children:
                 try:  # Try to convert the provided value into the corresponding click object type
                     values.append(
                         self.type.convert(
@@ -199,7 +180,6 @@ class NValueWidget(MultiWidget):
                         else messages.join(["[", "]"]),
                     ),
                 )
-
             if len(values) == 0:  # All widgets are empty
                 values = None
 

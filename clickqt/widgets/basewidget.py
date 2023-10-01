@@ -16,7 +16,12 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 import click
-from clickqt.widgets.styles import BLOB_BUTTON_STYLE_ENABLED, BLOB_BUTTON_STYLE_DISABLED
+from clickqt.widgets.styles import (
+    BLOB_BUTTON_STYLE_ENABLED,
+    BLOB_BUTTON_STYLE_DISABLED,
+    BLOB_BUTTON_STYLE_ENABLED_FORCED,
+    BLOB_BUTTON_STYLE_DISABLED_FORCED,
+)
 
 from clickqt.core.error import ClickQtError
 import clickqt.core  # FocusOutValidator
@@ -45,6 +50,7 @@ class BaseWidget(ABC):
         assert isinstance(otype, click.ParamType)
         assert isinstance(param, click.Parameter)
         self.is_enabled = True
+        self.can_change_enabled = True
         self.type = otype
         self.param = param
         self.parent_widget = parent
@@ -58,21 +64,25 @@ class BaseWidget(ABC):
         )
 
         self.heading = QWidget()
-        headinglayout = QHBoxLayout()
-        self.heading.setLayout(headinglayout)
+        self.headinglayout = QHBoxLayout()
+        self.heading.setLayout(self.headinglayout)
         self.label = QLabel(text=f"<b>{kwargs.get('label', '')}{self.widget_name}</b>")
         self.label.setTextFormat(Qt.TextFormat.RichText)  # Bold text
 
         self.widget = self.create_widget()
         self.enabled_button = QToolButton(checkable=True, checked=True)
         self.enabled_button.clicked.connect(
-            lambda: self.set_enabled(self.enabled_button.isChecked())
+            lambda: self.set_enabled_changeable(enabled=not self.is_enabled)
+            if self.can_change_enabled
+            else None
         )
-        self.set_enabled(self.is_enabled)  # update the button
+        self.set_enabled_changeable(
+            enabled=self.is_enabled, changeable=self.can_change_enabled
+        )  # update the button
 
         if self.parent_widget is None:
-            headinglayout.addWidget(self.enabled_button)
-        headinglayout.addWidget(self.label)
+            self.headinglayout.addWidget(self.enabled_button)
+        self.headinglayout.addWidget(self.label)
 
         self.layout.addWidget(self.heading)
         if (
@@ -106,7 +116,14 @@ class BaseWidget(ABC):
             else:
                 event.ignore()
 
+        def handlefocusin(event):
+            self.widget_type.focusInEvent(self.widget, event)
+            if self.can_change_enabled:
+                self.set_enabled_changeable(enabled=True)
+
         self.widget.wheelEvent = handlewheel  # Disable scrolling
+        if not isinstance(self, (MultiWidget)):
+            self.widget.focusInEvent = handlefocusin
 
     def create_widget(self) -> QWidget:
         """Creates the widget specified in :attr:`~clickqt.widgets.basewidget.BaseWidget.widget_type` and returns it."""
@@ -121,25 +138,40 @@ class BaseWidget(ABC):
         :raises click.BadParameter: **value** could not be converted into the corresponding click.ParamType
         """
 
-    def set_enabled(self, enabled: bool):
-        """Enable or disable the widget.
+    def set_enabled_changeable(
+        self, enabled: bool | None = None, changeable: bool | None = None
+    ):
+        """Enable/disable the widget, allow user to enable/disable the widget.
         A disabled widget's values are not used when the command is run or copied to cmdline.
 
         :param enabled: True if the widget should be enabled, False otherwise
+        :param changeable: True if the widget can be enabled/disabled by the user, False otherwise
         """
-
         btnsizehalf = 5
-        self.is_enabled = enabled
-        if self.is_enabled:
+        self.is_enabled = self.is_enabled if enabled is None else enabled
+        self.can_change_enabled = (
+            self.can_change_enabled if changeable is None else changeable
+        )
+        if self.can_change_enabled and self.is_enabled:
             self.enabled_button.setStyleSheet(BLOB_BUTTON_STYLE_ENABLED(btnsizehalf))
             self.enabled_button.setToolTip("Enabled: Option will be used.")
-        else:
+        elif self.can_change_enabled and (not self.is_enabled):
             self.enabled_button.setStyleSheet(BLOB_BUTTON_STYLE_DISABLED(btnsizehalf))
             self.enabled_button.setToolTip("Disabled: Option will be ignored.")
+        elif not self.can_change_enabled and self.is_enabled:
+            self.enabled_button.setStyleSheet(
+                BLOB_BUTTON_STYLE_ENABLED_FORCED(btnsizehalf)
+            )
+            self.enabled_button.setToolTip("Enabled: This option is required.")
+        elif not self.can_change_enabled and not self.is_enabled:
+            self.enabled_button.setStyleSheet(
+                BLOB_BUTTON_STYLE_DISABLED_FORCED(btnsizehalf)
+            )
+            self.enabled_button.setToolTip("Disabled: This option cannot be used.")
         self.enabled_button.setFixedSize(btnsizehalf * 2, btnsizehalf * 2)
         # This might be useless, since we cannot disable sub-widgets like tuples
         if enabled and self.parent_widget and not self.parent_widget.is_enabled:
-            self.parent_widget.set_enabled(True)
+            self.parent_widget.set_enabled_changeable(enabled=True)
 
     def is_empty(self) -> bool:
         """Checks whether the widget is empty. This can be the case for string-based widgets or the
@@ -157,98 +189,35 @@ class BaseWidget(ABC):
                  Invalid: (None, :class:`~clickqt.core.error.ClickQtError.ErrorType.CONVERTING_ERROR` or
                  :class:`~clickqt.core.error.ClickQtError.ErrorType.PROCESSING_VALUE_ERROR` or :class:`~clickqt.core.error.ClickQtError.ErrorType.REQUIRED_ERROR`)
         """
-        value: t.Any = None
+        if self.param.required and not self.is_enabled:
+            self.handle_valid(False)
+            return (
+                None,
+                ClickQtError(
+                    ClickQtError.ErrorType.REQUIRED_ERROR,
+                    self.widget_name,
+                    self.param.param_type_name,
+                ),
+            )
 
-        # Try to convert the provided value into the corresponding click object type
-        try:  # pylint: disable=too-many-try-statements, too-many-nested-blocks
-            default = BaseWidget.get_param_default(self.param, None)
-            # if statement is obtained by creating the corresponding truth table
-            if self.param.multiple or (
-                not isinstance(self.type, click.Tuple) and self.param.nargs != 1
-            ):
-                value_missing = False
-                widget_values: list = self.get_widget_value()
+        value = None
+        raw_value = self.get_widget_value()
+        multiple = self.param.multiple
+        is_tuple = isinstance(self.type, click.Tuple)
+        primitive_nargs = self.param.nargs > 1 and not is_tuple
 
-                if len(widget_values) == 0:  # Checkable combobox
-                    if self.param.required and default is None:
-                        self.handle_valid(False)
-                        return (
-                            None,
-                            ClickQtError(
-                                ClickQtError.ErrorType.REQUIRED_ERROR,
-                                self.widget_name,
-                                self.param.param_type_name,
-                            ),
-                        )
-                    # self.handle_parameter_missing_default(default)
-                    if default is not None:
-                        self.set_value(default)
-                        widget_values = self.get_widget_value()
-                    else:  # param is not required and there is no default -> value is None
-                        value_missing = True  # But callback should be considered
+        # conversion from widget contents to click data type
+        def convert(value):
+            return self.type.convert(
+                value, self.param, click.Context(self.click_command)
+            )
 
-                if not value_missing:
-                    value = []
-                    for i, v in enumerate(
-                        widget_values
-                    ):  # v is not a BaseWidget, but a primitive type
-                        if (
-                            str(v) == ""
-                        ):  # Empty widget (only possible for string based widgets)
-                            if self.param.required and default is None:
-                                self.handle_valid(False)
-                                return (
-                                    None,
-                                    ClickQtError(
-                                        ClickQtError.ErrorType.REQUIRED_ERROR,
-                                        self.widget_name,
-                                        self.param.param_type_name,
-                                    ),
-                                )
-                            if default is not None and i < len(
-                                default
-                            ):  # Overwrite the empty widget with the default value and execute with this (new) value
-                                values = self.get_widget_value()
-                                values[i] = default[
-                                    i
-                                ]  # Only overwrite the empty widget, not all
-                                self.set_value(values)
-                                v = default[i]
-                            else:  # param is not required, widget is empty and there is no default (click equivalent: option not provided in click command cmd)
-                                value = None
-                                break
-
-                        value.append(
-                            self.type.convert(
-                                value=v,
-                                param=self.param,
-                                ctx=click.Context(self.click_command),
-                            )
-                        )
+        try:
+            if multiple or primitive_nargs:
+                value = tuple((convert(value) for value in raw_value))
             else:
-                value_missing = False
-                if self.is_empty():
-                    if self.param.required and default is None:
-                        self.handle_valid(False)
-                        return (
-                            None,
-                            ClickQtError(
-                                ClickQtError.ErrorType.REQUIRED_ERROR,
-                                self.widget_name,
-                                self.param.param_type_name,
-                            ),
-                        )
-                    if default is not None:
-                        self.set_value(default)
-                    else:
-                        value_missing = True  # -> value is None
+                value = convert(self.get_widget_value())
 
-                if not value_missing:
-                    value = self.type.convert(
-                        value=self.get_widget_value(),
-                        param=self.param,
-                        ctx=click.Context(self.click_command),
-                    )
         except Exception as e:  # pylint: disable=broad-exception-caught
             self.handle_valid(False)
             return (
@@ -257,7 +226,6 @@ class BaseWidget(ABC):
                     ClickQtError.ErrorType.CONVERTING_ERROR, self.widget_name, e
                 ),
             )
-
         return self.handle_callback(value)
 
     def handle_callback(self, value: t.Any) -> tuple[t.Any, ClickQtError]:
@@ -440,6 +408,7 @@ class MultiWidget(BaseWidget):
             child.label.setText(label_text + (":" if label_text else ""))
 
     def set_value(self, value: t.Iterable[t.Any]):
+        self.set_enabled_changeable(enabled=value is None or len(value) > 0)
         if len(value) != self.param.nargs:
             raise click.BadParameter(
                 ngettext(
