@@ -24,7 +24,6 @@ from PySide6.QtGui import QPalette, QClipboard
 from clickqt.core.gui import GUI
 from clickqt.core.commandexecutor import CommandExecutor
 from clickqt.core.error import ClickQtError
-from clickqt.widgets.optiongrouptitlewidget import OptionGroupTitleWidget
 from clickqt.widgets.basewidget import BaseWidget
 from clickqt.widgets.messagebox import MessageBox
 from clickqt.widgets.filefield import FileField
@@ -487,14 +486,6 @@ class Control(QObject):
         msg = " ".join(msgpieces).strip()
         return msg
 
-    def function_call_formatter(
-        self, hierarchy_selected_command_name: str, selected_command_name: str, args
-    ):
-        params = self.get_params(hierarchy_selected_command_name, args)
-        message = f"{selected_command_name} \n"
-        parameter_message = "Current Command parameters: \n" + "\n".join(params)
-        return message + parameter_message
-
     @Slot()
     def stop_execution(self):
         """Qt-Slot, which stops the execution of the command(-hierarchy) which is currently running."""
@@ -594,10 +585,6 @@ class Control(QObject):
                     f"For command details, please call '{self.command_to_string(hierarchy_str)} --help'"
                 )
                 print(self.command_to_cli_string(hierarchy))
-                print(
-                    f"Current Command: {self.function_call_formatter(hierarchy_str, command, kwargs)} \n"
-                    + "Output:"
-                )
                 return lambda: command.callback(*args, **kwargs)
             else:
                 return lambda: command.callback(  # pylint: disable=unnecessary-lambda
