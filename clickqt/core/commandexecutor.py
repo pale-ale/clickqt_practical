@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import sys
 import typing as t
-
+import traceback
 import click
 from PySide6.QtCore import Signal, QObject, Slot
 
@@ -32,7 +32,7 @@ class CommandExecutor(QObject):
                 task()
             except SystemExit as e:
                 print(f"SystemExit-Exception, return code: {e.code}", file=sys.stderr)
-            except Exception as e: # pylint: disable=broad-exception-caught
-                print(f"Exception: {str(e)}", file=sys.stderr)
+            except Exception as e:  # pylint: disable=broad-exception-caught
+                traceback.print_exc(file=sys.stderr)
 
         self.finished.emit()
