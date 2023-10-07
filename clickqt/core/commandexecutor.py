@@ -33,6 +33,6 @@ class CommandExecutor(QObject):
             except SystemExit as e:
                 print(f"SystemExit-Exception, return code: {e.code}", file=sys.stderr)
             except Exception as e:  # pylint: disable=broad-exception-caught
-                print(traceback.format_exc(), file=sys.stderr)
+                print(traceback.format_exc(), file=sys.stdout)
 
         self.finished.emit()
