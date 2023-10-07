@@ -122,12 +122,12 @@ class GUI:
 
     def __del__(self):
         """Resets the default streams"""
+        
+        #if isinstance(sys.stdout, OutputStream):
+        #    sys.stdout = sys.stdout.stream
 
-        if isinstance(sys.stdout, OutputStream):
-            sys.stdout = sys.stdout.stream
-
-        if isinstance(sys.stderr, OutputStream):
-            sys.stderr = sys.stderr.stream
+        #if isinstance(sys.stderr, OutputStream):
+        #    sys.stderr = sys.stderr.stream
 
     def construct(self):
         """Resize and reposition the window."""
