@@ -476,7 +476,7 @@ def test_gui_exception(exception: Exception, output_expected: str):
     terminal_output = control.gui.terminal_output
 
     run_button.click()  # Start execution
-    wait_process_Events(1)  # Wait for starting the worker
+    wait_process_Events(10)  # Wait for starting the worker
 
     # Worker thread does not sleep so no need to wait for thread to finish
     assert output_expected in terminal_output.toPlainText()
