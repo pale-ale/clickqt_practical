@@ -473,9 +473,10 @@ def test_gui_exception(exception: Exception, output_expected: str):
 
     control = clickqt.qtgui_from_click(cli)
     run_button = control.gui.run_button
+    terminal_output = control.gui.terminal_output
 
     run_button.click()  # Start execution
     wait_process_Events(1)  # Wait for starting the worker
 
     # Worker thread does not sleep so no need to wait for thread to finish
-    assert output_expected in control.gui.terminal_output.toPlainText()
+    assert output_expected in terminal_output.toPlainText()
