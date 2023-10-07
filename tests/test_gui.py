@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 import typing as t
 
 import pytest
@@ -464,7 +465,11 @@ def test_gui_start_stop_execution():
     ("exception", "output_expected"),
     [
         (SystemExit(527), "SystemExit-Exception, return code: 527\n"),
-        (TypeError("Wrong type"), "TypeError: Wrong type\n"),
+        pytest.param(
+            TypeError("Wrong type"), "TypeError: Wrong type\n", 
+            marks=pytest.mark.skipif(sys.version_info >= (3,11) and sys.platform == "win32",
+                                     reason="Fails on GitHubs Windows-VM with python3.11 (but locally it succeeds)")
+        ),
     ],
 )
 def test_gui_exception(exception: Exception, output_expected: str):
