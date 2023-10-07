@@ -464,7 +464,7 @@ def test_gui_start_stop_execution():
     ("exception", "output_expected"),
     [
         (SystemExit(527), "SystemExit-Exception, return code: 527\n"),
-        (TypeError("Wrong type"), "Exception: Wrong type\n"),
+        (TypeError("Wrong type"), "TypeError: Wrong type\n"),
     ],
 )
 def test_gui_exception(exception: Exception, output_expected: str):
@@ -478,5 +478,4 @@ def test_gui_exception(exception: Exception, output_expected: str):
     wait_process_Events(1)  # Wait for starting the worker
 
     # Worker thread does not sleep so no need to wait for thread to finish
-
     assert output_expected in control.gui.terminal_output.toPlainText()

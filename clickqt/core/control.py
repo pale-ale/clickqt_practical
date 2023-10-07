@@ -251,7 +251,7 @@ class Control(QObject):
         # parameter name to flag values
         feature_switches: dict[str, QLayout] = {}
         current_option_group: str = ""
-        option_group_layouts: dict[str, list[QWidget]] = {}
+        option_group_layouts: dict[str, QVBoxLayout] = {}
 
         for param in cmd.params:
             is_flag = hasattr(param, "is_flag") and param.is_flag
@@ -260,7 +260,8 @@ class Control(QObject):
             widget_required = param.required or isinstance(param, click.Argument)
             is_option_group = isinstance(param, _GroupTitleFakeOption)
             is_grouped_option = isinstance(param, GroupedOption)
-            target_layout = None
+            target_layout = (required_box if widget_required else optional_box).layout()
+            created_widget = None
 
             if not isinstance(param, click.core.Parameter):
                 continue
@@ -278,9 +279,6 @@ class Control(QObject):
                 )
                 if is_option_group:
                     # the "heading" of the option group, creates a new section
-                    target_layout = (
-                        required_box if widget_required else optional_box
-                    ).layout()
                     current_option_group = param.name
                     option_group_layouts[current_option_group] = QVBoxLayout()
                 else:
@@ -290,10 +288,6 @@ class Control(QObject):
                             current_option_group is not None
                         ), "Option groups are out of order!"
                         target_layout = option_group_layouts.get(current_option_group)
-                    else:
-                        target_layout = (
-                            required_box if widget_required else optional_box
-                        ).layout()
                     self.widget_registry[groups_command_name][
                         param.name
                     ].set_enabled_changeable(
@@ -305,8 +299,9 @@ class Control(QObject):
                         ),
                         changeable=not widget_required,
                     )
-            assert target_layout is not None, "No target layout for widget"
-            target_layout.addWidget(created_widget)
+            if created_widget is not None:
+                assert target_layout is not None, "No target layout for widget"
+                target_layout.addWidget(created_widget)
 
         for keys, values in option_group_layouts.items():
             self.widget_registry[groups_command_name][keys].widget.setContentLayout(
