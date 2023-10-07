@@ -225,7 +225,7 @@ class Control(QObject):
         cmdbox.layout().setAlignment(Qt.AlignmentFlag.AlignTop)
 
         required_optional_box: list[QWidget] = []
-        for i in range(3):
+        for i in range(2):
             box = QWidget()
             box.setLayout(QVBoxLayout())
             box_label = QLabel(
@@ -342,7 +342,10 @@ class Control(QObject):
                 )
             )
             self.widget_registry[groups_command_name][param_name].set_value(default)
-
+        helptext = cmd.help
+        cmdbox.layout().addWidget(
+            QLabel(text=helptext.strip() if helptext else "<No docstring provided>")
+        )
         for box in required_optional_box:
             if len(box.children()) > INITIAL_CHILD_WIDGETS:
                 cmdbox.layout().addWidget(box)

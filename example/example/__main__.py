@@ -21,6 +21,11 @@ def utilgroup():
 @click.option("--optional", type=str, required=False)
 @click.option("--required", type=str, required=True)
 def optreq(**kwargs):
+    """
+    Blah blah i
+    am a long
+    text
+    """
     print(kwargs)
 
 
