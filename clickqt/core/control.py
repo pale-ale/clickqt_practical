@@ -401,17 +401,6 @@ class Control(QObject):
             widget = widget.currentWidget()
         return fulfilled_cmds, widget
 
-    def get_params(self, selected_command_name: str, args):
-        """Returns an array of strings that are used for the output field."""
-        params = [k for k, v in self.widget_registry[selected_command_name].items()]
-        if "yes" in params:
-            params.remove("yes")
-        command_help = self.command_registry.get(selected_command_name)
-        tuples_array = list(command_help.values())
-        for i, param in enumerate(args):
-            params[i] = "--" + param + f": {tuples_array[i]}: " + f"{args[param]}"
-        return params
-
     def clean_command_string(self, word, text):
         """Returns a string without any special characters using regex."""
         text = re.sub(rf"\b{re.escape(word)}\b", "", text)
